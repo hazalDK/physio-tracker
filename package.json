@@ -5,6 +5,7 @@
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
+    "build-windows": "npx expo export --output-dir web-build && move web-build\\index.html ..\\api\\templates\\api\\spa\\.",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
