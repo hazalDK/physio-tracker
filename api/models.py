@@ -7,15 +7,28 @@ from django.contrib.auth.models import AbstractUser
 # GET: get a list of all exercises in database
 # POST: users can add their own exercises to the database
 # PUT: users can edit or update the exercises in the database
-class Exercises(models.Model):
+class Exercise(models.Model):
     '''
     Exercise model with str and as_dict function, including video link.
     '''
     name = models.CharField(default="Exercise", max_length=100, unique=True)
     description = models.TextField(default="Description", max_length=500)
-    reps = models.IntegerField(default=0)
-    sets = models.IntegerField(default=0)
-    video_link = models.URLField(default="", blank=True, max_length=500)  # New field for video links
+    video_link = models.URLField(default="", blank=True, max_length=500)  
+
+    BEGINNER = 'Beginner'
+    INTERMEDIATE = 'Intermediate'
+    ADVANCED = 'Advanced'
+    DIFFICULTY_LEVEL_CHOICES = [
+        (BEGINNER, 'Beginner'),
+        (INTERMEDIATE, 'Intermediate'),
+        (ADVANCED, 'Advanced'),
+    ]
+    
+    difficulty_level = models.CharField(
+        max_length=12,
+        choices=DIFFICULTY_LEVEL_CHOICES,
+        default=BEGINNER,
+    )
 
     def __str__(self):
         return self.name
@@ -41,7 +54,7 @@ class UserExercise(models.Model):
     Through table for storing user-specific exercise details.
     '''
     user = models.ForeignKey('User', on_delete=models.CASCADE)
-    exercise = models.ForeignKey(Exercises, on_delete=models.CASCADE)
+    exercise = models.ForeignKey('Exercises', on_delete=models.CASCADE)
     sets = models.IntegerField(default=0)
     reps = models.IntegerField(default=0)
 
@@ -64,7 +77,8 @@ class User(AbstractUser):
     # Fields 
     full_name = models.CharField(max_length=100)
     date_of_birth = models.DateField(blank=True, null=True)
-    exercises = models.ManyToManyField(Exercises) #many to many relationship with Hobby model
+    exercises = models.ManyToManyField(Exercise,  through="UserExercise") #many to many relationship with Exercises model
+    pain_level = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.full_name}, {self.email}"
