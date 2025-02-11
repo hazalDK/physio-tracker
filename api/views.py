@@ -61,8 +61,8 @@ def axios_endpoints(request, model_type: str, pk_id=-1):
     passes a pk_id if it is a axios delete or axios put query
     If there is a pk_id and the method = POST a 400 will be returned
     '''
-    if not request.user.is_authenticated: #COMMENT WHEN USING POSTMAN
-        return HttpResponseForbidden("Anonymous Users cannot access API")
+    # if not request.user.is_authenticated: #COMMENT WHEN USING POSTMAN
+    #     return HttpResponseForbidden("Anonymous Users cannot access API")
     match (request.method):
         case "GET":
             return getData(request, model_type, pk_id)
@@ -126,23 +126,20 @@ def postData(request, model_type: str):
     try:
         match (model_type):
             case "user":
-                # Extract and handle hobbies
+                # Extract and handle exercises
                 exercise_objects = []
-                for exercise in body.get("userExercises", []):
-                    if exercise.isnumeric():
-                        exerciseObj = get_object_or_404(Exercise, pk=exercise)
-                    else:
-                        exerciseObj = get_object_or_404(Exercise, name=exercise)
+                for exercise in body.get("exercises", []):
+                    exerciseObj = get_object_or_404(Exercise, name=exercise)
                     exercise_objects.append(exerciseObj)
 
-                # Remove hobbies from the body before creating the user
-                del body["exercise"]
+                # Remove exercises from the body before creating the user
+                del body["exercises"]
 
                 # Create the User object
                 item = User.objects.create(**body)
 
                 # Set the many-to-many relationship
-                item.exercise.set(exercise_objects)
+                item.exercises.set(exercise_objects)
                 item.save()
             case "user exercises":
                 if (body["user"].isnumeric()):
@@ -191,9 +188,9 @@ def putData(request, model_type: str, pk_id: int):
                     if key != "exercise":
                         setattr(item, key, value)
                 
-                if "exercise" in body:
+                if "exercises" in body:
                     exercise_objects = []
-                    for exercise in body.get("exercise", []):
+                    for exercise in body.get("exercises", []):
                         if isinstance(exercise, int):
                             exerciseObj = get_object_or_404(Exercise, pk=exercise)
                         else:
@@ -203,7 +200,6 @@ def putData(request, model_type: str, pk_id: int):
                 item.save()
             case "user Exercise":
                 # do not update the models linked to the through model
-                body.pop('exercise', None)
                 body.pop('user', None)
                 UserExercise.objects.filter(pk=pk_id).update(**body)
             case "exercise":

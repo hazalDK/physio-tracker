@@ -7,28 +7,13 @@ from django.contrib.auth.models import AbstractUser
 # GET: get a list of all exercises in database
 # POST: users can add their own exercises to the database
 # PUT: users can edit or update the exercises in the database
-class Exercise(models.Model):
+class ExerciseCategory(models.Model):
     '''
     Exercise model with str and as_dict function, including video link.
     '''
     name = models.CharField(default="Exercise", max_length=100, unique=True)
     description = models.TextField(default="Description", max_length=500)
     video_link = models.URLField(default="", blank=True, max_length=500)  
-
-    BEGINNER = 'Beginner'
-    INTERMEDIATE = 'Intermediate'
-    ADVANCED = 'Advanced'
-    DIFFICULTY_LEVEL_CHOICES = [
-        (BEGINNER, 'Beginner'),
-        (INTERMEDIATE, 'Intermediate'),
-        (ADVANCED, 'Advanced'),
-    ]
-    
-    difficulty_level = models.CharField(
-        max_length=12,
-        choices=DIFFICULTY_LEVEL_CHOICES,
-        default=BEGINNER,
-    )
 
     def __str__(self):
         return self.name
@@ -38,8 +23,44 @@ class Exercise(models.Model):
             'id': self.id,
             'name': self.name,
             'description': self.description,
-            'difficulty_level': self.difficulty_level,
             'video_link': self.video_link,
+        }
+    
+
+# Exercise Variant Model (Different versions of the same exercise)
+class Exercise(models.Model):
+    '''
+    A variant of an exercise with a specific difficulty level.
+    '''
+    exercise = models.ForeignKey(ExerciseCategory, on_delete=models.CASCADE)
+    name = models.CharField(default="", max_length=100)
+
+    BEGINNER = 'Beginner'
+    INTERMEDIATE = 'Intermediate'
+    ADVANCED = 'Advanced'
+    DIFFICULTY_LEVEL_CHOICES = [
+        (BEGINNER, 'Beginner'),
+        (INTERMEDIATE, 'Intermediate'),
+        (ADVANCED, 'Advanced'),
+    ]
+
+    difficulty_level = models.CharField(
+        max_length=12,
+        choices=DIFFICULTY_LEVEL_CHOICES,
+        default=BEGINNER,
+    )
+    additional_notes = models.TextField(default="", blank=True)
+
+    def __str__(self):
+        return f"{self.exercise.name} ({self.difficulty_level})"
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'exercise': self.exercise.as_dict(),
+            'difficulty_level': self.difficulty_level,
+            'additional_notes': self.additional_notes,
         }
 
 
@@ -117,3 +138,27 @@ class User(AbstractUser):
         # Update full_name with first_name and last_name from Abstract User
         self.full_name = f"{self.first_name} {self.last_name}"
         super().save(*args, **kwargs)
+
+# Report model for tracking user progress over time
+class Report(models.Model):
+    '''
+    Tracks user progress, pain levels, and exercise completion over time.
+    '''
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reports")
+    date = models.DateField(auto_now_add=True)
+    pain_level = models.IntegerField(default=0)  # Pain rating at the time of report
+    exercises_completed = models.ManyToManyField(UserExercise, blank=True)  # Exercises performed during the session
+    notes = models.TextField(default="", blank=True)  # Optional notes on progress
+
+    def __str__(self):
+        return f"Report for {self.user.full_name} on {self.date}"
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'user': self.user.priv_as_dict(),
+            'date': self.date,
+            'pain_level': self.pain_level,
+            'exercises_completed': list(self.exercises_completed.values('id', 'exercise__name', 'sets', 'reps')),
+            'notes': self.notes,
+        }

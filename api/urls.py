@@ -18,8 +18,15 @@ from django.contrib import admin
 from django.urls import include, path
 from django.http import HttpResponse
 
-from .views import main_spa
+from .views import main_spa, axios_endpoints, authCheck
 
 urlpatterns = [
     path('', main_spa),
+    path('user', axios_endpoints, {'model_type': 'user'}, name='user'),
+    # path('auth', authCheck, name='auth'),
+    path('user/<int:pk_id>', axios_endpoints, {'model_type': 'user'}, name='user_id'),
+    path('userExercise', axios_endpoints, {'model_type': 'user exercises'}, name='user_exercise'),
+    path('userExercise/<int:pk_id>', axios_endpoints, {'model_type': 'user exercises'}, name='user_exercise_id'),
+    path('exercise', axios_endpoints, {'model_type': 'exercise'}, name='exercise'),
+    path('exercise/<int:pk_id>', axios_endpoints, {'model_type': 'exercise'}, name='exercise_id'),
 ]
