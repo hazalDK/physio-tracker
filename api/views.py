@@ -93,7 +93,7 @@ def getData(request, model_type: str, pk_id: int):
                 model_type: returnVal
             })
         case "user exercises":
-            returnVal = UserExercise.objects.all()
+            returnVal = UserExercise.objects.all().filter(user=request.user)
             return JsonResponse({
                 model_type: [
                     d.as_dict()
@@ -145,7 +145,17 @@ def postData(request, model_type: str):
                 item.exercise.set(exercise_objects)
                 item.save()
             case "user exercises":
-                item = UserExercise.objects.create(**body)
+                if (body["user"].isnumeric()):
+                    userObj = get_object_or_404(User, pk=body["user"])
+                else:
+                    userObj = get_object_or_404(User, name=body["user"])
+                if (body["exercise"].isnumeric()):
+                    exerciseObj = get_object_or_404(User, pk=body["exercise"])
+                else:
+                    exerciseObj = get_object_or_404(User, name=body["exercise"])
+                del body["user"]
+                del body["exercise"]
+                item = UserExercise.objects.create(user=userObj, exercise=exerciseObj, **body)
             case "exercise":
                 item = Exercise.objects.create(**body)
     except Exception as e:
@@ -189,11 +199,11 @@ def putData(request, model_type: str, pk_id: int):
                         else:
                             exerciseObj = get_object_or_404(Exercise, name=exercise)
                         exercise_objects.append(exerciseObj)
-                    item.exercises.set(exercise_objects)
+                    item.exercise.set(exercise_objects)
                 item.save()
             case "user Exercise":
                 # do not update the models linked to the through model
-                body.pop('friend', None)
+                body.pop('exercise', None)
                 body.pop('user', None)
                 UserExercise.objects.filter(pk=pk_id).update(**body)
             case "exercise":

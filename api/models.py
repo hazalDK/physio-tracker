@@ -38,9 +38,8 @@ class Exercise(models.Model):
             'id': self.id,
             'name': self.name,
             'description': self.description,
-            "reps": self.reps,
-            "sets": self.sets,
-            "video_link": self.video_link,
+            'difficulty_level': self.difficulty_level,
+            'video_link': self.video_link,
         }
 
 
@@ -54,7 +53,7 @@ class UserExercise(models.Model):
     Through table for storing user-specific exercise details.
     '''
     user = models.ForeignKey('User', on_delete=models.CASCADE)
-    exercise = models.ForeignKey('Exercises', on_delete=models.CASCADE)
+    exercise = models.ForeignKey('Exercise', on_delete=models.CASCADE)
     sets = models.IntegerField(default=0)
     reps = models.IntegerField(default=0)
 
@@ -63,6 +62,16 @@ class UserExercise(models.Model):
 
     def __str__(self):
         return f"{self.user.full_name} - {self.exercise.name} (Sets: {self.sets}, Reps: {self.reps})"
+    
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'user': self.user.priv_as_dict(),
+            'username': self.user.username,
+            'exercise': self.exercise.as_dict(),
+            'sets': self.sets,
+            'reps': self.reps,
+        }
 
 # Custom user model
 # GET: two variants: get physiotherapist user's details (viewing their profile etc)
