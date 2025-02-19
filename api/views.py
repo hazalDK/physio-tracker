@@ -108,7 +108,7 @@ def getData(request, model_type: str, pk_id: int):
                     for d in returnVal
                 ]
             })
-        case "exercise catagory":
+        case "exercise category":
             returnVal = ExerciseCategory.objects.all()
             return JsonResponse({
                 model_type: [
@@ -175,10 +175,16 @@ def postData(request, model_type: str):
                 else:
                     userObj = get_object_or_404(User, name=body["user"])
                 del body["user"]
-                item = Report.objects.create(user=userObj, **body)
+                if (body["exercises_completed"].isnumeric()):
+                    exerciseObj = get_object_or_404(UserExercise, pk=body["exercises_completed"])
+                else:
+                    exerciseObj = get_object_or_404(UserExercise, name=body["exercises_completed"])
+                del body["exercises_completed"]
+                del body["user"]
+                item = Report.objects.create(user=userObj, exercise_completed=exerciseObj, **body)
             case "exercise":
                 item = Exercise.objects.create(**body)
-            case "exercise catagory":
+            case "exercise category":
                 item = ExerciseCategory.objects.create(**body)
     except Exception as e:
         print(e)
@@ -228,13 +234,12 @@ def putData(request, model_type: str, pk_id: int):
                 body.pop('user', None)
                 UserExercise.objects.filter(pk=pk_id).update(**body)
             case "report":
-                # do not update the models linked to the through model
                 body.pop('user', None)
                 Report.objects.filter(pk=pk_id).update(**body)
-            case "exercise catagory":
+            case "exercise category":
                 ExerciseCategory.objects.filter(pk=pk_id).update(**body)
             case "exercise":
-                body.pop('exercise', None)
+                body.pop('category', None)
                 Exercise.objects.filter(pk=pk_id).update(**body)
     except Exception as e:
         print(e)
@@ -262,7 +267,7 @@ def deleteData(request, model_type: str, pk_id: int):
                 UserExercise.objects.get(pk=pk_id).delete()
             case "exercise":
                 Exercise.objects.get(pk=pk_id).delete()
-            case "exercise catagory":
+            case "exercise category":
                 ExerciseCategory.objects.get(pk=pk_id).delete()
             case "report":
                 Report.objects.get(pk=pk_id).delete()

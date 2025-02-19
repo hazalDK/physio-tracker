@@ -29,4 +29,8 @@ urlpatterns = [
     path('userExercise/<int:pk_id>', axios_endpoints, {'model_type': 'user exercises'}, name='user_exercise_id'),
     path('exercise', axios_endpoints, {'model_type': 'exercise'}, name='exercise'),
     path('exercise/<int:pk_id>', axios_endpoints, {'model_type': 'exercise'}, name='exercise_id'),
+    path('exerciseCategory', axios_endpoints, {'model_type': 'exercise category'}, name='exercise_category'),
+    path('exerciseCategory/<int:pk_id>', axios_endpoints, {'model_type': 'exercise category'}, name='exercise_category_id'),
+    path('report', axios_endpoints, {'model_type': 'report'}, name='report'),
+    path('report/<int:pk_id>', axios_endpoints, {'model_type': 'report'}, name='report_id'),
 ]

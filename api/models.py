@@ -34,7 +34,7 @@ class Exercise(models.Model):
     '''
     A variant of an exercise with a specific difficulty level.
     '''
-    exercise = models.ForeignKey(ExerciseCategory, on_delete=models.CASCADE)
+    category = models.ForeignKey(ExerciseCategory, on_delete=models.CASCADE)
     name = models.CharField(default="", max_length=100)
 
     BEGINNER = 'Beginner'
@@ -54,13 +54,13 @@ class Exercise(models.Model):
     additional_notes = models.TextField(default="", blank=True)
 
     def __str__(self):
-        return f"{self.exercise.name} ({self.difficulty_level})"
+        return f"{self.category.name} ({self.difficulty_level})"
 
     def as_dict(self):
         return {
             'id': self.id,
             'name': self.name,
-            'exercise': self.exercise.as_dict(),
+            'category': self.category.as_dict(),
             'difficulty_level': self.difficulty_level,
             'additional_notes': self.additional_notes,
         }
