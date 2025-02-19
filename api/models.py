@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
+
 
 # Create your models here.
 
@@ -149,6 +151,14 @@ class Report(models.Model):
     pain_level = models.IntegerField(default=0)  # Pain rating at the time of report
     exercises_completed = models.ManyToManyField(UserExercise, blank=True)  # Exercises performed during the session
     notes = models.TextField(default="", blank=True)  # Optional notes on progress
+    summary = models.TextField(default="", blank=True)
+    
+    def clean(self):
+        if self.pain_level < 0 or self.pain_level > 10:
+            raise ValidationError("Pain level must be between 0 and 10.")
+
+    class Meta:
+        unique_together = ('user', 'date')  # Ensures one report per user per day
 
     def __str__(self):
         return f"Report for {self.user.full_name} on {self.date}"

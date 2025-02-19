@@ -8,7 +8,7 @@ from django.views.generic import CreateView
 from django.views.decorators.csrf import csrf_exempt
 
 
-from .models import User, UserExercise, Exercise
+from .models import User, UserExercise, Exercise, ExerciseCategory, Report
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
@@ -108,6 +108,22 @@ def getData(request, model_type: str, pk_id: int):
                     for d in returnVal
                 ]
             })
+        case "exercise catagory":
+            returnVal = ExerciseCategory.objects.all()
+            return JsonResponse({
+                model_type: [
+                    d.as_dict()
+                    for d in returnVal
+                ]
+            })
+        case "report":
+            returnVal = Report.objects.all().filter(user=request.user)
+            return JsonResponse({
+                model_type: [
+                    d.as_dict()
+                    for d in returnVal
+                ]
+            })
     return returnVal
 
 def postData(request, model_type: str):
@@ -153,8 +169,17 @@ def postData(request, model_type: str):
                 del body["user"]
                 del body["exercise"]
                 item = UserExercise.objects.create(user=userObj, exercise=exerciseObj, **body)
+            case "report":
+                if (body["user"].isnumeric()):
+                    userObj = get_object_or_404(User, pk=body["user"])
+                else:
+                    userObj = get_object_or_404(User, name=body["user"])
+                del body["user"]
+                item = Report.objects.create(user=userObj, **body)
             case "exercise":
                 item = Exercise.objects.create(**body)
+            case "exercise catagory":
+                item = ExerciseCategory.objects.create(**body)
     except Exception as e:
         print(e)
         return HttpResponseBadRequest(f"Incorrect POST body format for {model_type}. Exception: {e}")
@@ -202,7 +227,14 @@ def putData(request, model_type: str, pk_id: int):
                 # do not update the models linked to the through model
                 body.pop('user', None)
                 UserExercise.objects.filter(pk=pk_id).update(**body)
+            case "report":
+                # do not update the models linked to the through model
+                body.pop('user', None)
+                Report.objects.filter(pk=pk_id).update(**body)
+            case "exercise catagory":
+                ExerciseCategory.objects.filter(pk=pk_id).update(**body)
             case "exercise":
+                body.pop('exercise', None)
                 Exercise.objects.filter(pk=pk_id).update(**body)
     except Exception as e:
         print(e)
@@ -230,6 +262,10 @@ def deleteData(request, model_type: str, pk_id: int):
                 UserExercise.objects.get(pk=pk_id).delete()
             case "exercise":
                 Exercise.objects.get(pk=pk_id).delete()
+            case "exercise catagory":
+                ExerciseCategory.objects.get(pk=pk_id).delete()
+            case "report":
+                Report.objects.get(pk=pk_id).delete()
     except Exception as e:
         print(e)
         return HttpResponseNotFound(f"Id {pk_id} not found for {model_type}. Exception: {e}")
