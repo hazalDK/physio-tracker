@@ -1,41 +1,43 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
+from django.urls import reverse
+from django.utils.text import slugify
 
 
-# Create your models here.
-
-# Exercise model
-# GET: get a list of all exercises in database
-# POST: users can add their own exercises to the database
-# PUT: users can edit or update the exercises in the database
 class ExerciseCategory(models.Model):
-    '''
-    Exercise model with str and as_dict function, including video link.
-    '''
     name = models.CharField(default="Exercise", max_length=100, unique=True)
     description = models.TextField(default="Description", max_length=500)
-    video_link = models.URLField(default="", blank=True, max_length=500)  
+    video_link = models.URLField(default="", blank=True, max_length=500)
+    slug = models.SlugField(unique=True, blank=True, null=True)
 
     def __str__(self):
         return self.name
-    
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
     def as_dict(self):
         return {
             'id': self.id,
             'name': self.name,
             'description': self.description,
             'video_link': self.video_link,
+            'slug': self.slug,
         }
-    
 
-# Exercise Variant Model (Different versions of the same exercise)
+    class Meta:
+        verbose_name = "Exercise Category"
+        verbose_name_plural = "Exercise Categories"
+        ordering = ['name']
+
+
 class Exercise(models.Model):
-    '''
-    A variant of an exercise with a specific difficulty level.
-    '''
-    category = models.ForeignKey(ExerciseCategory, on_delete=models.CASCADE)
+    category = models.ForeignKey(ExerciseCategory, on_delete=models.CASCADE, related_name='exercises')
     name = models.CharField(default="", max_length=100)
+    slug = models.SlugField(unique=True, blank=True, null=True)
 
     BEGINNER = 'Beginner'
     INTERMEDIATE = 'Intermediate'
@@ -56,6 +58,11 @@ class Exercise(models.Model):
     def __str__(self):
         return f"{self.category.name} ({self.difficulty_level})"
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
     def as_dict(self):
         return {
             'id': self.id,
@@ -63,7 +70,11 @@ class Exercise(models.Model):
             'category': self.category.as_dict(),
             'difficulty_level': self.difficulty_level,
             'additional_notes': self.additional_notes,
+            'slug': self.slug,
         }
+
+    class Meta:
+        ordering = ['name']
 
 
 # User Exercise model
@@ -110,7 +121,7 @@ class InjuryType(models.Model):
             'id': self.id,
             'name': self.name,
             'description': self.description,
-            'treatment': list(self.treatment.values('id', 'name', 'category__name', 'difficulty_level')),
+            'treatment': list(self.treatment.values('id', 'name', 'category_name', 'difficulty_level')),
         }
 
 # Custom user model
@@ -139,7 +150,7 @@ class User(AbstractUser):
             'email': self.email,
             'date_of_birth': self.date_of_birth,
             'injury_type': self.injury_type.as_dict() if self.injury_type else None,
-            'exercises': list(self.exercises.values('id', 'name', 'category__name', 'difficulty_level')),
+            'exercises': list(self.exercises.values('id', 'name', 'category_name', 'difficulty_level')),
         }
 
     def priv_as_dict(self):
@@ -191,6 +202,6 @@ class Report(models.Model):
             'user': self.user.priv_as_dict(),
             'date': self.date,
             'pain_level': self.pain_level,
-            'exercises_completed': list(self.exercises_completed.values('id', 'exercise__name', 'sets', 'reps')),
+            'exercises_completed': list(self.exercises_completed.values('id', 'exercise_name', 'sets', 'reps')),
             'notes': self.notes,
         }

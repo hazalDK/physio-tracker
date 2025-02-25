@@ -76,20 +76,48 @@ class ReportViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
-
-    def update_exercise_level_based_on_pain(self, user, pain_level):
+    
+    def update_exercise_level_based_on_pain(self, user, pain_level, exercise_name):
         """
         Helper method to update exercise level based on pain level.
+        Reassigns the user to a different exercise in the same category using match case.
         """
         if pain_level > 4:
-            # Get the user's exercises
+            # Get the user's current exercise
             user_exercises = UserExercise.objects.filter(user=user)
             for user_exercise in user_exercises:
-                # Update exercise level to "beginner" or remove the exercise
-                user_exercise.exercise_level = "beginner"  # Assuming exercise_level is a field in UserExercise
-                user_exercise.save()
-                # Alternatively, to remove the exercise:
-                # user_exercise.delete()
+                if user_exercise.exercise.name == exercise_name:
+                    current_exercise = user_exercise.exercise
+                    current_category = current_exercise.category
+
+                    try:
+                        # Use match case to handle different difficulty levels
+                        match current_exercise.difficulty_level:
+                            case "Advanced":
+                                new_exercise = Exercise.objects.filter(
+                                    category=current_category,
+                                    difficulty_level="Intermediate"
+                                ).first()
+                            case "Intermediate":
+                                new_exercise = Exercise.objects.filter(
+                                    category=current_category,
+                                    difficulty_level="Beginner"
+                                ).first()
+                            case "Beginner":
+                                # If the user is already at the beginner level, delete the exercise
+                                user_exercise.delete()
+                                return
+                    except Exercise.DoesNotExist as e:
+                        print(e)
+
+                    # If a new exercise is found, reassign the user to it
+                    if new_exercise:
+                        user_exercise.exercise = new_exercise
+                        user_exercise.save()
+                        print(f"User {user} reassigned to {new_exercise.name} ({new_exercise.difficulty_level}).")
+                    else:
+                        print(f"No suitable exercise found in category '{current_category.name}' for user {user}.")
+                    break
 
     def create(self, request, *args, **kwargs):
         """
@@ -120,9 +148,10 @@ class ReportViewSet(viewsets.ModelViewSet):
         
         # Get the pain level from the updated report
         pain_level = serializer.validated_data.get('pain_level', 0)
+        exercise_name = serializer.validated_data.get('exercises_completed', [])[0].exercise.name
         user = request.user
         
         # Update exercise level based on pain level
-        self.update_exercise_level_based_on_pain(user, pain_level)
+        self.update_exercise_level_based_on_pain(user, pain_level, exercise_name)
         
         return Response(serializer.data)
