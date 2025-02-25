@@ -2,10 +2,10 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view
 from django.shortcuts import get_object_or_404
-from .models import User, Exercise, ExerciseCategory, UserExercise, Report
+from .models import User, Exercise, ExerciseCategory, UserExercise, Report, InjuryType
 from .serializers import (
     UserSerializer, ExerciseSerializer, ExerciseCategorySerializer,
-    UserExerciseSerializer, ReportSerializer
+    UserExerciseSerializer, ReportSerializer, InjuryTypeSerializer
 )
 
 @api_view(['GET'])
@@ -27,6 +27,10 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(request.user)
             return Response(serializer.data)
         return Response({"detail": "Not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
+
+class InjuryTypeViewSet(viewsets.ModelViewSet):
+    queryset = InjuryType.objects.all()
+    serializer_class = InjuryTypeSerializer
 
 class ExerciseViewSet(viewsets.ModelViewSet):
     queryset = Exercise.objects.all()

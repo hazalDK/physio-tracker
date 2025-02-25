@@ -72,9 +72,6 @@ class Exercise(models.Model):
 # PUT: users can edit or update the amount of exercises they have
 # DELETE: users can remove assigned exercises from themselves.
 class UserExercise(models.Model):
-    '''
-    Through table for storing user-specific exercise details.
-    '''
     user = models.ForeignKey('User', on_delete=models.CASCADE)
     exercise = models.ForeignKey('Exercise', on_delete=models.CASCADE)
     sets = models.IntegerField(default=0)
@@ -85,7 +82,7 @@ class UserExercise(models.Model):
 
     def __str__(self):
         return f"{self.user.full_name} - {self.exercise.name} (Sets: {self.sets}, Reps: {self.reps})"
-    
+
     def as_dict(self):
         return {
             'id': self.id,
@@ -96,6 +93,26 @@ class UserExercise(models.Model):
             'reps': self.reps,
         }
 
+    def clean(self):
+        if self.sets < 0 or self.reps < 0:
+            raise ValidationError("Sets and reps must be non-negative.")
+    
+class InjuryType(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(default="", max_length=500)
+    treatment = models.ManyToManyField(Exercise, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'treatment': list(self.treatment.values('id', 'name', 'category__name', 'difficulty_level')),
+        }
+
 # Custom user model
 # GET: two variants: get physiotherapist user's details (viewing their profile etc)
 #                    get patient user's details (viewing their profile etc)
@@ -103,18 +120,15 @@ class UserExercise(models.Model):
 # PUT: edit or update details about the user - name, dob, exercise list
 # DELETE: delete user in profile (only for current user)
 class User(AbstractUser):
-    '''
-    User account model with str and as_dict function.
-    '''
-    # Fields 
     full_name = models.CharField(max_length=100)
+    injury_type = models.ForeignKey(InjuryType, on_delete=models.CASCADE, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
-    exercises = models.ManyToManyField(Exercise,  through="UserExercise") #many to many relationship with Exercises model
+    exercises = models.ManyToManyField(Exercise, through="UserExercise")
     pain_level = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.full_name}, {self.email}"
-    
+
     def as_dict(self):
         return {
             'id': self.id,
@@ -124,9 +138,10 @@ class User(AbstractUser):
             'full_name': self.full_name,
             'email': self.email,
             'date_of_birth': self.date_of_birth,
-            'exercises': list(self.exercises.values('id', 'name')),
+            'injury_type': self.injury_type.as_dict() if self.injury_type else None,
+            'exercises': list(self.exercises.values('id', 'name', 'category__name', 'difficulty_level')),
         }
-    
+
     def priv_as_dict(self):
         return {
             'id': self.id,
@@ -135,24 +150,31 @@ class User(AbstractUser):
             'date_of_birth': self.date_of_birth,
             'exercises': list(self.exercises.values('id', 'name')),
         }
-    
+
     def save(self, *args, **kwargs):
         # Update full_name with first_name and last_name from Abstract User
         self.full_name = f"{self.first_name} {self.last_name}"
+
+        # Validate pain_level
+        if self.pain_level < 0 or self.pain_level > 10:
+            raise ValidationError("Pain level must be between 0 and 10.")
+
+        # Assign exercises based on injury type
+        if self.injury_type:
+            for exercise in self.injury_type.treatment.all():
+                UserExercise.objects.get_or_create(user=self, exercise=exercise, defaults={'sets': 4, 'reps': 8})
+
         super().save(*args, **kwargs)
 
 # Report model for tracking user progress over time
 class Report(models.Model):
-    '''
-    Tracks user progress, pain levels, and exercise completion over time.
-    '''
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reports")
     date = models.DateField(auto_now_add=True)
     pain_level = models.IntegerField(default=0)  # Pain rating at the time of report
     exercises_completed = models.ManyToManyField(UserExercise, blank=True)  # Exercises performed during the session
     notes = models.TextField(default="", blank=True)  # Optional notes on progress
     summary = models.TextField(default="", blank=True)
-    
+
     def clean(self):
         if self.pain_level < 0 or self.pain_level > 10:
             raise ValidationError("Pain level must be between 0 and 10.")
