@@ -67,7 +67,7 @@ class Exercise(models.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'category': self.category.as_dict(),
+            'category': self.category.name,
             'difficulty_level': self.difficulty_level,
             'additional_notes': self.additional_notes,
             'slug': self.slug,
@@ -87,6 +87,8 @@ class UserExercise(models.Model):
     exercise = models.ForeignKey('Exercise', on_delete=models.CASCADE)
     sets = models.IntegerField(default=0)
     reps = models.IntegerField(default=0)
+    pain_level = models.IntegerField(default=0)
+    completed = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('user', 'exercise')
@@ -102,6 +104,8 @@ class UserExercise(models.Model):
             'exercise': self.exercise.as_dict(),
             'sets': self.sets,
             'reps': self.reps,
+            'pain_level': self.pain_level,
+            'completed': self.completed,
         }
 
     def clean(self):
@@ -121,7 +125,7 @@ class InjuryType(models.Model):
             'id': self.id,
             'name': self.name,
             'description': self.description,
-            'treatment': list(self.treatment.values('id', 'name', 'category_name', 'difficulty_level')),
+            'treatment': list(self.treatment.values('id', 'name', 'category', 'difficulty_level')),
         }
 
 # Custom user model
@@ -150,7 +154,7 @@ class User(AbstractUser):
             'email': self.email,
             'date_of_birth': self.date_of_birth,
             'injury_type': self.injury_type.as_dict() if self.injury_type else None,
-            'exercises': list(self.exercises.values('id', 'name', 'category_name', 'difficulty_level')),
+            'exercises': list(self.exercises.values('id', 'name', 'category', 'difficulty_level')),
         }
 
     def priv_as_dict(self):

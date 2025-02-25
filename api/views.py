@@ -58,17 +58,34 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         user = request.user
         latest_report = Report.objects.filter(user=user).first()
 
-        # If a report exists and pain level is greater than 4, update exercise level
-        if latest_report and latest_report.pain_level > 4:
-            # Force the exercise level to "beginner"
-            serializer.validated_data['exercise_level'] = "beginner"
         if not latest_report:
-            # No report exists, force the exercise level to "beginner"
-            Report.objects.create(user=user, pain_level=0)  # Create a dummy report
+            Report.objects.create(user=user, pain_level=0)
         # Save the UserExercise
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        """
+        Override update method to update completed exercises.
+        """
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        # Get the pain level from the updated report
+        pain_level = serializer.validated_data.get('pain_level', 0)
+        user = request.user
+        latest_report = Report.objects.filter(user=user).first()
+        
+        # update the report with the completed exercise
+        if latest_report:
+            latest_report.exercises_completed.add(instance)
+            latest_report.pain_level = pain_level
+            latest_report.save()
+        
+        return Response(serializer.data)
     
 class ReportViewSet(viewsets.ModelViewSet):
     queryset = Report.objects.all()
