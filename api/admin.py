@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Exercise, UserExercise, ExerciseCategory, Report, InjuryType
+from .models import ReportExercise, User, Exercise, UserExercise, ExerciseCategory, Report, InjuryType
 
 class UserExerciseInline(admin.TabularInline):  # Use StackedInline for a different layout
     model = UserExercise
@@ -36,4 +36,5 @@ admin.site.register(UserExercise)
 admin.site.register(ExerciseCategory)
 admin.site.register(Report)
 admin.site.register(InjuryType)
+admin.site.register(ReportExercise)
 

@@ -2,9 +2,9 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view
 from django.shortcuts import get_object_or_404
-from .models import User, Exercise, ExerciseCategory, UserExercise, Report, InjuryType
+from .models import ReportExercise, User, Exercise, ExerciseCategory, UserExercise, Report, InjuryType
 from .serializers import (
-    UserSerializer, ExerciseSerializer, ExerciseCategorySerializer,
+    ReportExerciseSerializer, UserSerializer, ExerciseSerializer, ExerciseCategorySerializer,
     UserExerciseSerializer, ReportSerializer, InjuryTypeSerializer
 )
 
@@ -31,6 +31,10 @@ class UserViewSet(viewsets.ModelViewSet):
 class InjuryTypeViewSet(viewsets.ModelViewSet):
     queryset = InjuryType.objects.all()
     serializer_class = InjuryTypeSerializer
+
+class ReportExerciseViewSet(viewsets.ModelViewSet):
+    queryset = ReportExercise.objects.all()
+    serializer_class = ReportExerciseSerializer
 
 class ExerciseViewSet(viewsets.ModelViewSet):
     queryset = Exercise.objects.all()
@@ -138,37 +142,72 @@ class ReportViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """
-        Override create method to handle pain level logic.
+        Override create method to handle pain level logic and track completed reps/sets.
         """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        
-        # Get the pain level from the created report
-        pain_level = serializer.validated_data.get('pain_level', 0)
-        user = request.user
-        
+
+        # Create the report
+        report = Report.objects.create(
+            user=request.user,
+            date=serializer.validated_data.get('date'),
+            pain_level=serializer.validated_data.get('pain_level', 0),
+            notes=serializer.validated_data.get('notes', ''),
+        )
+
+        # Add exercises with completed reps/sets
+        exercises_completed_data = request.data.get('exercises_completed', [])
+        for exercise_data in exercises_completed_data:
+            user_exercise_id = exercise_data.get('user_exercise_id')
+            completed_reps = exercise_data.get('completed_reps', 0)
+            completed_sets = exercise_data.get('completed_sets', 0)
+
+            user_exercise = UserExercise.objects.get(id=user_exercise_id)
+            ReportExercise.objects.create(
+                report=report,
+                user_exercise=user_exercise,
+                completed_reps=completed_reps,
+                completed_sets=completed_sets,
+            )
+
         # Update exercise level based on pain level
-        self.update_exercise_level_based_on_pain(user, pain_level)
-        
+        pain_level = serializer.validated_data.get('pain_level', 0)
+        self.update_exercise_level_based_on_pain(request.user, pain_level)
+
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def update(self, request, *args, **kwargs):
         """
-        Override update method to handle pain level logic.
+        Override update method to handle pain level logic and track completed reps/sets.
         """
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        
-        # Get the pain level from the updated report
-        pain_level = serializer.validated_data.get('pain_level', 0)
-        exercise_name = serializer.validated_data.get('exercises_completed', [])[0].exercise.name
-        user = request.user
-        
+
+        # Update the report
+        instance.pain_level = serializer.validated_data.get('pain_level', instance.pain_level)
+        instance.notes = serializer.validated_data.get('notes', instance.notes)
+        instance.save()
+
+        # Clear existing exercises_completed and add new ones
+        instance.exercises_completed.clear()
+        exercises_completed_data = request.data.get('exercises_completed', [])
+        for exercise_data in exercises_completed_data:
+            user_exercise_id = exercise_data.get('user_exercise_id')
+            completed_reps = exercise_data.get('completed_reps', 0)
+            completed_sets = exercise_data.get('completed_sets', 0)
+
+            user_exercise = UserExercise.objects.get(id=user_exercise_id)
+            ReportExercise.objects.create(
+                report=instance,
+                user_exercise=user_exercise,
+                completed_reps=completed_reps,
+                completed_sets=completed_sets,
+            )
+
         # Update exercise level based on pain level
-        self.update_exercise_level_based_on_pain(user, pain_level, exercise_name)
-        
+        pain_level = serializer.validated_data.get('pain_level', 0)
+        self.update_exercise_level_based_on_pain(request.user, pain_level)
+
         return Response(serializer.data)

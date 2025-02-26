@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Exercise, ExerciseCategory, UserExercise, Report, InjuryType
+from .models import ReportExercise, User, Exercise, ExerciseCategory, UserExercise, Report, InjuryType
 
 class ExerciseCategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -40,18 +40,9 @@ class InjuryTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = InjuryType
         fields = '__all__'
-    
-    def get_fields(self):
-        fields = super().get_fields()
-        if self.context['request'].method == 'POST':
-            # Allow 'user' and 'exercise' to be writable during POST
-            fields['user'].read_only = False
-        else:
-            # Make 'user' and 'exercise' read-only during updates
-            fields['user'].read_only = True
-        return fields
 
 class UserSerializer(serializers.ModelSerializer):
+    exercises = ExerciseSerializer(many=True, read_only=False)
     class Meta:
         model = User
         fields = 'username', 'email', 'full_name', 'date_of_birth', 'exercises', 'injury_type'
@@ -77,7 +68,15 @@ class UserSerializer(serializers.ModelSerializer):
 
         return user
 
+class ReportExerciseSerializer(serializers.ModelSerializer):
+    user_exercise = UserExerciseSerializer(read_only=True)
+
+    class Meta:
+        model = ReportExercise
+        fields = ['user_exercise', 'completed_reps', 'completed_sets']
+
 class ReportSerializer(serializers.ModelSerializer):
+    exercises_completed = ReportExerciseSerializer(many=True, read_only=True, source='report_exercises')
     class Meta:
         model = Report
         fields = '__all__'

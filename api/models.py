@@ -181,12 +181,21 @@ class User(AbstractUser):
 
         super().save(*args, **kwargs)
 
+class ReportExercise(models.Model):
+    report = models.ForeignKey('Report', on_delete=models.CASCADE, related_name='report_exercises')
+    user_exercise = models.ForeignKey('UserExercise', on_delete=models.CASCADE)
+    completed_reps = models.IntegerField(default=0)  # Track completed reps
+    completed_sets = models.IntegerField(default=0)  # Track completed sets
+
+    def __str__(self):
+        return f"{self.user_exercise.exercise} - {self.completed_reps} reps"
+
 # Report model for tracking user progress over time
 class Report(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reports")
     date = models.DateField(auto_now_add=True)
     pain_level = models.IntegerField(default=0)  # Pain rating at the time of report
-    exercises_completed = models.ManyToManyField(UserExercise, blank=True)  # Exercises performed during the session
+    exercises_completed = models.ManyToManyField(UserExercise, through=ReportExercise)  # Use through model
     notes = models.TextField(default="", blank=True)  # Optional notes on progress
     summary = models.TextField(default="", blank=True)
 
