@@ -8,7 +8,6 @@ from django.utils.text import slugify
 class ExerciseCategory(models.Model):
     name = models.CharField(default="Exercise", max_length=100, unique=True)
     description = models.TextField(default="Description", max_length=500)
-    video_link = models.URLField(default="", blank=True, max_length=500)
     slug = models.SlugField(unique=True, blank=True, null=True)
 
     def __str__(self):
@@ -24,7 +23,6 @@ class ExerciseCategory(models.Model):
             'id': self.id,
             'name': self.name,
             'description': self.description,
-            'video_link': self.video_link,
             'slug': self.slug,
         }
 
@@ -38,6 +36,7 @@ class Exercise(models.Model):
     category = models.ForeignKey(ExerciseCategory, on_delete=models.CASCADE, related_name='exercises')
     name = models.CharField(default="", max_length=100)
     slug = models.SlugField(unique=True, blank=True, null=True)
+    video_link = models.URLField(default="", blank=True, max_length=500)
 
     BEGINNER = 'Beginner'
     INTERMEDIATE = 'Intermediate'
@@ -68,6 +67,7 @@ class Exercise(models.Model):
             'id': self.id,
             'name': self.name,
             'category': self.category.name,
+            'video_link': self.video_link,
             'difficulty_level': self.difficulty_level,
             'additional_notes': self.additional_notes,
             'slug': self.slug,
@@ -150,7 +150,6 @@ class User(AbstractUser):
             'username': self.username,
             'first_name': self.first_name,
             'last_name': self.last_name,
-            'full_name': self.full_name,
             'email': self.email,
             'date_of_birth': self.date_of_birth,
             'injury_type': self.injury_type.as_dict() if self.injury_type else None,

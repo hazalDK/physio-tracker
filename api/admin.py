@@ -13,7 +13,7 @@ class CustomUserAdmin(UserAdmin):
 
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'full_name', 'date_of_birth')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'full_name', 'date_of_birth', 'injury_type')}),  # Add 'exercises' field
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
@@ -21,11 +21,11 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'email', 'password1', 'password2', 'full_name', 'date_of_birth'),
+            'fields': ('username', 'email', 'password1', 'password2', 'full_name', 'date_of_birth','injury_type'),
         }),
     )
 
-    list_display = ('username', 'email', 'full_name', 'date_of_birth', 'is_staff')
+    list_display = ('username', 'email', 'full_name', 'date_of_birth','injury_type', 'is_staff')
     search_fields = ('username', 'email', 'full_name')
     ordering = ('username',)
 

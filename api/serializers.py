@@ -45,7 +45,7 @@ class UserSerializer(serializers.ModelSerializer):
     exercises = ExerciseSerializer(many=True, read_only=False)
     class Meta:
         model = User
-        fields = 'username', 'email', 'full_name', 'date_of_birth', 'exercises', 'injury_type'
+        fields = 'username', 'email', 'first_name', 'last_name', 'date_of_birth', 'exercises', 'injury_type'
 
     def create(self, validated_data):
         exercises = validated_data.pop('exercises', [])  # Extract exercises from validated data
@@ -73,7 +73,7 @@ class ReportExerciseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ReportExercise
-        fields = ['user_exercise', 'completed_reps', 'completed_sets']
+        fields = '__all__'
 
 class ReportSerializer(serializers.ModelSerializer):
     exercises_completed = ReportExerciseSerializer(many=True, read_only=True, source='report_exercises')
