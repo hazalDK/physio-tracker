@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view
@@ -125,9 +126,13 @@ class ReportViewSet(viewsets.ModelViewSet):
                                     difficulty_level="Beginner"
                                 ).first()
                             case "Beginner":
-                                # If the user is already at the beginner level, delete the exercise
-                                user_exercise.delete()
-                                return
+                                # If the user is already at the beginner level, will print a message on frontend
+                                message = "You are already at the Beginner level."
+                                response_data = {
+                                    'exercise': current_exercise,
+                                    'message': message if new_exercise is None else None,
+                                }
+                                return JsonResponse(response_data)
                     except Exercise.DoesNotExist as e:
                         print(e)
 
