@@ -185,9 +185,20 @@ class ReportExercise(models.Model):
     user_exercise = models.ForeignKey('UserExercise', on_delete=models.CASCADE)
     completed_reps = models.IntegerField(default=0)  # Track completed reps
     completed_sets = models.IntegerField(default=0)  # Track completed sets
+    pain_level = models.IntegerField(default=0)  # Pain level during exercise
 
     def __str__(self):
         return f"{self.user_exercise.exercise} - {self.completed_reps} reps"
+    
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'report': self.report.as_dict(),
+            'user_exercise': self.user_exercise.as_dict(),
+            'completed_reps': self.completed_reps,
+            'completed_sets': self.completed_sets,
+            'pain_level': self.pain_level,
+        }
 
 # Report model for tracking user progress over time
 class Report(models.Model):
