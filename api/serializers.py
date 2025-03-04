@@ -76,7 +76,11 @@ class ReportExerciseSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ReportSerializer(serializers.ModelSerializer):
-    exercises_completed = ReportExerciseSerializer(many=True, read_only=True, source='report_exercises')
+    # exercises = ReportExerciseSerializer(many=True, read_only=True, source='report_exercises')
+    # exercises_completed = UserExerciseSerializer(many=True, read_only=False)
+    exercises_completed = serializers.PrimaryKeyRelatedField(
+        queryset=UserExercise.objects.all(), many=True, required=False
+    )
     class Meta:
         model = Report
         fields = '__all__'
@@ -86,7 +90,9 @@ class ReportSerializer(serializers.ModelSerializer):
         if self.context['request'].method == 'POST':
             # Allow 'user' and 'exercise' to be writable during POST
             fields['user'].read_only = False
+            fields['exercises_completed'].read_only = False
         else:
             # Make 'user' and 'exercise' read-only during updates
             fields['user'].read_only = True
+            fields['exercises_completed'].read_only = False
         return fields
