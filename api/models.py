@@ -89,6 +89,8 @@ class UserExercise(models.Model):
     reps = models.IntegerField(default=0)
     pain_level = models.IntegerField(default=0)
     completed = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)  # Track active/inactive exercises
+
 
     class Meta:
         unique_together = ('user', 'exercise')
@@ -106,6 +108,7 @@ class UserExercise(models.Model):
             'reps': self.reps,
             'pain_level': self.pain_level,
             'completed': self.completed,
+            'is_active': self.is_active,
         }
 
     def clean(self):
