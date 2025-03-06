@@ -87,32 +87,33 @@ def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
                 return new_user_exercise
             return None
     
-def has_consistent_low_pain(report, user_exercise, num_reports=3, max_pain_level=4):
+def has_consistent_low_pain(user_exercise, num_reports=3, max_pain_level=4):
     """
     Check if the user has consistent low pain levels in their recent reports.
     """
-    # Debug: Print filter criteria
-    print("Report ID:", report.id)
-    print("UserExercise ID:", user_exercise.id)
-    
-    # Define the date range for recent reports (e.g., last 24 hours)
-    today = timezone.now().date()
-    start_date = today - timedelta(days=1)
+    # # Debug: Print filter criteria
+    # print("Report ID:", report.id)
+    # print("UserExercise ID:", user_exercise.id)
 
-    # Retrieve the most recent ReportExercise entries for the last 24 hours
-    recent_reports = ReportExercise.objects.filter(
-        report=report,
-        user_exercise=user_exercise,
-        report__date__range=[start_date, today]
-    ).order_by('-id')[:num_reports]
+    # Retrieve all ReportExercise entries for the given report and user_exercise
+    all_reports = ReportExercise.objects.filter(
+        user_exercise=user_exercise,  # Filter by user_exercise
+    ).order_by('-id')  # Order by most recent first
+
+    # Debug: Print total number of reports
+    # print("Total Reports Found:", all_reports.count())
+
+    # Retrieve the most recent `num_reports`
+    recent_reports = all_reports[:num_reports]
 
     # Debug: Print recent reports
-    print("Recent Reports:")
-    for re in recent_reports:
-        print(re.id, re.report.date, re.user_exercise.exercise.name, re.pain_level)
+    # print("Recent Reports:")
+    # for re in recent_reports:
+    #     print(re.id, re.report.date, re.user_exercise.exercise.name, re.pain_level)
 
     # Ensure there are enough reports
     if len(recent_reports) < num_reports:
+        print(f"Not enough reports. Expected {num_reports}, found {len(recent_reports)}")
         return False
     
     # Check if all recent reports have pain levels below or equal to the threshold
@@ -257,8 +258,7 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         if not latest_report:
             latest_report = Report.objects.create(user=request.user, date=today)
         
-        if has_consistent_low_pain(latest_report, instance):
-            print("has consistent low pain", has_consistent_low_pain(latest_report, instance))
+        if has_consistent_low_pain(instance):
             new_user_exercise = increase_difficulty(request.user, instance.exercise.name)
 
         # Retrieve the latest ReportExercise for today
@@ -360,7 +360,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             if update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name) is not None:
                 user_exercise = update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name)
 
-            if has_consistent_low_pain(instance, user_exercise):
+            if has_consistent_low_pain(user_exercise):
                 if increase_difficulty(request.user, user_exercise.exercise.name) is not None:
                     user_exercise = increase_difficulty(request.user, user_exercise.exercise.name)
             
@@ -427,8 +427,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             if update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name) is not None:
                 user_exercise = update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name)
 
-            if has_consistent_low_pain(instance, user_exercise):
-                print("has consistent low pain", has_consistent_low_pain(instance, user_exercise))  
+            if has_consistent_low_pain(user_exercise): 
                 if increase_difficulty(request.user, user_exercise.exercise.name) is not None:
                     user_exercise = increase_difficulty(request.user, user_exercise.exercise.name)
             
