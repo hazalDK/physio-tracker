@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from django.utils import timezone
+from datetime import timedelta
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view
@@ -29,80 +30,62 @@ def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
         if user_exercise.exercise.name == exercise_name:
             current_exercise = user_exercise.exercise
             current_category = current_exercise.category
+            new_exercise = None
 
             try:
                 # Use match case to handle different difficulty levels
                 match current_exercise.difficulty_level:
                     case "Advanced":
                         if pain_level > 4:
+                            print("Pain level is high - advanced")
                             # If pain level is high, move to intermediate
                             new_exercise = Exercise.objects.filter(
                                 category=current_category,
                                 difficulty_level="Intermediate"
                             ).first()
-                        else:
-                            # If pain level is low, stay at advanced
-                            new_exercise = None
                     case "Intermediate":
                         if pain_level > 4:
+                            print("Pain level is high - intermediate")
                             # If pain level is high, move to beginner
                             new_exercise = Exercise.objects.filter(
                                 category=current_category,
                                 difficulty_level="Beginner"
                             ).first()
-                        else:
-                            # If pain level is low, move to advanced
-                            new_exercise = Exercise.objects.filter(
-                                category=current_category,
-                                difficulty_level="Advanced"
-                            ).first()
                     case "Beginner":
                         if pain_level > 4:
+                            print("Pain level is high - beginner")
                             # If pain level is high, stay at beginner
-                            new_exercise = None
                             message = "You are already at the Beginner level."
                             response_data = {
                                 'exercise': current_exercise,
                                 'message': message,
                             }
                             return JsonResponse(response_data)
-                        else:
-                            # If pain level is low, move to intermediate
-                            new_exercise = Exercise.objects.filter(
-                                category=current_category,
-                                difficulty_level="Intermediate"
-                            ).first()
             except Exercise.DoesNotExist as e:
                 print(e)
 
-            # Mark the old UserExercise as inactive
-            user_exercise.is_active = False
-            user_exercise.save()
-
             # Create a new UserExercise instance with the updated exercise
             if new_exercise:
-                new_user_exercise = UserExercise.objects.create(
-                    user=user,
-                    exercise=new_exercise,
-                    sets=user_exercise.sets,
-                    reps=user_exercise.reps,
-                    pain_level=pain_level,
-                    is_active=True,  # Mark the new instance as active
-                )
+                user_exercises = UserExercise.objects.filter(user=user, exercise = new_exercise)
+                if user_exercises.exists():
+                    new_user_exercise = user_exercises.first()
+                    new_user_exercise.pain_level = 0
+                    new_user_exercise.completed = False
+                    new_user_exercise.is_active = True
+                    new_user_exercise.save()
+                else:
+                    new_user_exercise = UserExercise.objects.create(
+                        user=user,
+                        exercise=new_exercise,
+                        sets=user_exercise.sets,
+                        reps=user_exercise.reps,
+                        pain_level=0,
+                        is_active=True,  # Mark the new instance as active
+                    )
                 print(f"User {user} reassigned to {new_exercise.name} ({new_exercise.difficulty_level}).")
-            else:
-                # If no new exercise is found, create a new UserExercise with the same exercise
-                new_user_exercise = UserExercise.objects.create(
-                    user=user,
-                    exercise=current_exercise,
-                    sets=user_exercise.sets,
-                    reps=user_exercise.reps,
-                    pain_level=pain_level,
-                    is_active=True,  # Mark the new instance as active
-                )
-                print(f"No suitable exercise found in category '{current_category.name}' for user {user}.")
 
-            return new_user_exercise
+                return new_user_exercise
+            return None
     
 def has_consistent_low_pain(report, user_exercise, num_reports=3, max_pain_level=4):
     """
@@ -111,11 +94,16 @@ def has_consistent_low_pain(report, user_exercise, num_reports=3, max_pain_level
     # Debug: Print filter criteria
     print("Report ID:", report.id)
     print("UserExercise ID:", user_exercise.id)
+    
+    # Define the date range for recent reports (e.g., last 24 hours)
+    today = timezone.now().date()
+    start_date = today - timedelta(days=1)
 
-    # Retrieve the most recent ReportExercise entries for today
+    # Retrieve the most recent ReportExercise entries for the last 24 hours
     recent_reports = ReportExercise.objects.filter(
         report=report,
-        user_exercise=user_exercise
+        user_exercise=user_exercise,
+        report__date__range=[start_date, today]
     ).order_by('-id')[:num_reports]
 
     # Debug: Print recent reports
@@ -127,8 +115,61 @@ def has_consistent_low_pain(report, user_exercise, num_reports=3, max_pain_level
     if len(recent_reports) < num_reports:
         return False
     
-    # Check if all recent reports have pain levels below the threshold
-    return all(report.pain_level < max_pain_level for report in recent_reports)
+    # Check if all recent reports have pain levels below or equal to the threshold
+    return all(report.pain_level <= max_pain_level for report in recent_reports)
+
+def increase_difficulty(user, exercise_name):
+    user_exercises = UserExercise.objects.filter(user=user, is_active=True)
+    for user_exercise in user_exercises:
+        if user_exercise.exercise.name == exercise_name:
+            current_exercise = user_exercise.exercise
+            current_category = current_exercise.category
+
+            try:
+                # Use match case to handle different difficulty levels
+                match current_exercise.difficulty_level:
+                    case "Advanced":
+                            print("Pain level is low - advanced")
+                            # If pain level is low, stay at advanced
+                            new_exercise = None
+                    case "Intermediate":
+                            print("Pain level is low - intermediate")
+                            # If pain level is low, move to advanced
+                            new_exercise = Exercise.objects.filter(
+                                category=current_category,
+                                difficulty_level="Advanced"
+                            ).first()
+                    case "Beginner":
+                            print("Pain level is low - beginner")
+                            # If pain level is low, move to intermediate
+                            new_exercise = Exercise.objects.filter(
+                                category=current_category,
+                                difficulty_level="Intermediate"
+                            ).first()
+            except Exercise.DoesNotExist as e:
+                print(e)
+
+            # Create a new UserExercise instance with the updated exercise
+            if new_exercise:
+                user_exercises = UserExercise.objects.filter(user=user, exercise = new_exercise)
+                if user_exercises.exists():
+                    new_user_exercise = user_exercises.first()
+                    new_user_exercise.pain_level = 0
+                    new_user_exercise.completed = False
+                    new_user_exercise.is_active = True
+                    new_user_exercise.save()
+                else:
+                    new_user_exercise = UserExercise.objects.create(
+                        user=user,
+                        exercise=new_exercise,
+                        sets=user_exercise.sets,
+                        reps=user_exercise.reps,
+                        pain_level=0,
+                        is_active=True,  # Mark the new instance as active
+                    )
+                print(f"User {user} reassigned to {new_exercise.name} ({new_exercise.difficulty_level}).")
+
+            return new_user_exercise
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -192,13 +233,18 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         # Get the updated data
+        completed = serializer.validated_data.get('completed', instance.completed)
         completed_sets = serializer.validated_data.get('sets', instance.sets)
         completed_reps = serializer.validated_data.get('reps', instance.reps)
-        updated_pain_level = serializer.validated_data.get('pain_level', instance.pain_level)
+        instance.exercise = serializer.validated_data.get('exercise', instance.exercise)
+        instance.sets = completed_sets
+        instance.reps = completed_reps
+        instance.save()
 
-        # Mark the old UserExercise as inactive
-        # instance.is_active = False
-        # instance.save()
+        if not completed:
+            return Response(serializer.data)
+        
+        updated_pain_level = serializer.validated_data.get('pain_level', instance.pain_level)
 
         # Create a new UserExercise instance with the updated data
         new_user_exercise = update_exercise_level_based_on_pain(request.user, updated_pain_level, instance.exercise.name)
@@ -212,21 +258,17 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
             latest_report = Report.objects.create(user=request.user, date=today)
         
         if has_consistent_low_pain(latest_report, instance):
-            new_user_exercise = update_exercise_level_based_on_pain(request.user, updated_pain_level, instance.exercise.name)
+            print("has consistent low pain", has_consistent_low_pain(latest_report, instance))
+            new_user_exercise = increase_difficulty(request.user, instance.exercise.name)
 
         # Retrieve the latest ReportExercise for today
         latest_report_exercise = ReportExercise.objects.filter(
             user_exercise=instance,
             report__date=today  # Filter by today's date
         ).order_by('-id').first()
-        print("Latest Report Exercise:", latest_report_exercise)
-        print("Completed Sets:", completed_sets)
-        print("Completed Reps:", completed_reps)
-        print("User Exercise Pain Level:", instance.pain_level)
 
         # If no report exists, create one
         if not latest_report_exercise:
-            print("Creating new Report Exercise")
             ReportExercise.objects.create(
                 report=latest_report,
                 user_exercise=instance,
@@ -235,7 +277,6 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
                 pain_level=instance.pain_level,
             )
         else:
-            print("Updating existing Report Exercise")
             # Update the latest report exercise with the completed sets and reps
             latest_report_exercise.completed_sets = completed_sets
             latest_report_exercise.completed_reps = completed_reps
@@ -244,7 +285,19 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         
 
         # Add the new UserExercise to the Report's exercises_completed
-        latest_report.exercises_completed.add(new_user_exercise)
+        if completed:
+            instance.pain_level = updated_pain_level
+            instance.completed = completed
+            instance.is_active = True
+            instance.save()
+            latest_report.exercises_completed.add(instance)
+        if new_user_exercise:
+            if new_user_exercise.completed:
+                latest_report.exercises_completed.add(new_user_exercise)
+            # Mark the old UserExercise as inactive
+            instance.is_active = False
+            instance.save()
+
 
         return Response(serializer.data)
 
@@ -259,6 +312,7 @@ class ReportViewSet(viewsets.ModelViewSet):
         """
         Override create method to handle pain level logic and track completed reps/sets.
         """
+        instance = self.get_object()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -278,8 +332,6 @@ class ReportViewSet(viewsets.ModelViewSet):
 
         for exercise_data in exercises_completed_data:
             user_exercise_id = exercise_data.get('user_exercise_id')
-            completed_reps = exercise_data.get('completed_reps', 0)
-            completed_sets = exercise_data.get('completed_sets', 0)
 
             user_exercise = UserExercise.objects.get(id=user_exercise_id)
             latest_report_exercise = ReportExercise.objects.filter(user_exercise = user_exercise).order_by('-id').first()
@@ -289,16 +341,12 @@ class ReportViewSet(viewsets.ModelViewSet):
             # If no report exists, create one
             if not latest_report_exercise:
                 ReportExercise.objects.create(
-                    report=latest_report,
+                    report=instance,
                     user_exercise=user_exercise,
-                    completed_sets=completed_sets,
-                    completed_reps=completed_reps,
                     pain_level=user_exercise.pain_level,
                 )
             else:
                 # Update the latest report exercise with the completed sets and reps
-                latest_report_exercise.completed_sets = completed_sets
-                latest_report_exercise.completed_reps = completed_reps
                 latest_report_exercise.pain_level = user_exercise.pain_level
                 latest_report_exercise.save()
 
@@ -309,13 +357,17 @@ class ReportViewSet(viewsets.ModelViewSet):
             total_pain_level += exercise_pain_level
 
             # Update exercise level based on pain level
-            update_exercise_level_based_on_pain(request.user, exercise_pain_level, )
-
-            # Add the UserExercise to the Report's exercises_completed
-            report.exercises_completed.add(user_exercise)
+            if update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name) is not None:
+                user_exercise = update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name)
 
             if has_consistent_low_pain(instance, user_exercise):
-                increase_difficulty(request.user)
+                if increase_difficulty(request.user, user_exercise.exercise.name) is not None:
+                    user_exercise = increase_difficulty(request.user, user_exercise.exercise.name)
+            
+            # Add the UserExercise to the Report's exercises_completed
+            instance.exercises_completed.add(user_exercise)
+            user_exercise.is_active = True
+            user_exercise.save()
             
         # Calculate average pain level for the report
         if num_exercises > 0:
@@ -344,18 +396,14 @@ class ReportViewSet(viewsets.ModelViewSet):
         exercises_completed_data = request.data.get('exercises_completed', [])
         total_pain_level = instance.pain_level * instance.exercises_completed.count()  # Start with existing pain levels
         num_exercises = instance.exercises_completed.count()
-        print('exercise_data:', exercises_completed_data)
         for exercise_data in exercises_completed_data:
-            print('exercise_data:', exercise_data)
-            # user_exercise_id = exercise_data.get('user_exercise_id')
 
-
+            
             user_exercise = UserExercise.objects.get(id=exercise_data)
             user_exercise.is_active = False
             user_exercise.save()
             instance.exercises_completed.remove(user_exercise)
             exercise_pain_level = user_exercise.pain_level
-            print(exercise_pain_level)
 
             if not instance.exercises_completed.filter(id=user_exercise.id).exists():
                 latest_report_exercise = ReportExercise.objects.filter(user_exercise = user_exercise).order_by('-id').first()
@@ -363,32 +411,31 @@ class ReportViewSet(viewsets.ModelViewSet):
                 # If no report exists, create one
                 if not latest_report_exercise:
                     ReportExercise.objects.create(
-                        report=latest_report,
+                        report=instance,
                         user_exercise=user_exercise,
-                        # completed_sets=completed_sets,
-                        # completed_reps=completed_reps,
                         pain_level=user_exercise.pain_level,
                     )
                 else:
                     # Update the latest report exercise with the completed sets and reps
-                    # latest_report_exercise.completed_sets = completed_sets
-                    # latest_report_exercise.completed_reps = completed_reps
                     latest_report_exercise.pain_level = user_exercise.pain_level
                     latest_report_exercise.save()
 
             # Accumulate pain level for average calculation
             total_pain_level += exercise_pain_level
 
-            print("exercise", user_exercise.exercise.name)
             # Update exercise level based on pain level
-            user_exercise = update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name)
-
-            # Add the UserExercise to the Report's exercises_completed
-            instance.exercises_completed.add(user_exercise)
-            print("instance.exercises_completed", instance.exercises_completed)
+            if update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name) is not None:
+                user_exercise = update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name)
 
             if has_consistent_low_pain(instance, user_exercise):
-                user_exercise = update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name)
+                print("has consistent low pain", has_consistent_low_pain(instance, user_exercise))  
+                if increase_difficulty(request.user, user_exercise.exercise.name) is not None:
+                    user_exercise = increase_difficulty(request.user, user_exercise.exercise.name)
+            
+            # Add the UserExercise to the Report's exercises_completed
+            instance.exercises_completed.add(user_exercise)
+            user_exercise.is_active = True
+            user_exercise.save()
             
         # Calculate average pain level for the report
         if num_exercises > 0:
