@@ -4,16 +4,26 @@ from datetime import timedelta
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view
-from django.shortcuts import get_object_or_404
 from .models import ReportExercise, User, Exercise, ExerciseCategory, UserExercise, Report, InjuryType
 from .serializers import (
     ReportExerciseSerializer, UserSerializer, ExerciseSerializer, ExerciseCategorySerializer,
     UserExerciseSerializer, ReportSerializer, InjuryTypeSerializer
 )
 
+def reset_user_exercises(user):
+    now = timezone.now()
+    if user.last_reset is None or (now - user.last_reset) > timedelta(days=1):
+        # Reset completed and pain_level for the user's active exercises
+        UserExercise.objects.filter(user=user, is_active=True).update(completed=False, pain_level=0)
+        user.last_reset = now
+        user.save()
+        print(f"Reset UserExercise for {user.username}.")
+
 @api_view(['GET'])
 def auth_check(request):
     if request.user.is_authenticated:
+        print(f"User {request.user} is authenticated.")
+        reset_user_exercises(request.user)
         return Response({
             "auth": True,
             "user": UserSerializer(request.user).data
