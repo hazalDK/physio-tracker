@@ -142,7 +142,6 @@ class User(AbstractUser):
     injury_type = models.ForeignKey(InjuryType, on_delete=models.CASCADE, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     exercises = models.ManyToManyField(Exercise, through="UserExercise")
-    pain_level = models.IntegerField(default=0)
     last_reset = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):

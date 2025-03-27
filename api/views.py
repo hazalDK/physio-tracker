@@ -46,7 +46,7 @@ def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
                 # Use match case to handle different difficulty levels
                 match current_exercise.difficulty_level:
                     case "Advanced":
-                        if pain_level > 4:
+                        if pain_level >= 4:
                             print("Pain level is high - advanced")
                             # If pain level is high, move to intermediate
                             new_exercise = Exercise.objects.filter(
@@ -54,7 +54,7 @@ def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
                                 difficulty_level="Intermediate"
                             ).first()
                     case "Intermediate":
-                        if pain_level > 4:
+                        if pain_level >= 4:
                             print("Pain level is high - intermediate")
                             # If pain level is high, move to beginner
                             new_exercise = Exercise.objects.filter(
@@ -62,7 +62,7 @@ def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
                                 difficulty_level="Beginner"
                             ).first()
                     case "Beginner":
-                        if pain_level > 4:
+                        if pain_level >= 4:
                             print("Pain level is high - beginner")
                             # If pain level is high, stay at beginner
                             message = "You are already at the Beginner level."
@@ -107,8 +107,8 @@ def has_consistent_low_pain(user_exercise, num_reports=3, max_pain_level=4):
 
     # Retrieve all ReportExercise entries for the given report and user_exercise
     all_reports = ReportExercise.objects.filter(
-        user_exercise=user_exercise,  # Filter by user_exercise
-    ).order_by('-id')  # Order by most recent first
+        user_exercise=user_exercise,  
+    ).order_by('-id') 
 
     # Debug: Print total number of reports
     # print("Total Reports Found:", all_reports.count())
@@ -127,7 +127,7 @@ def has_consistent_low_pain(user_exercise, num_reports=3, max_pain_level=4):
         return False
     
     # Check if all recent reports have pain levels below or equal to the threshold
-    return all(report.pain_level <= max_pain_level for report in recent_reports)
+    return all(report.pain_level < max_pain_level for report in recent_reports)
 
 def increase_difficulty(user, exercise_name):
     user_exercises = UserExercise.objects.filter(user=user, is_active=True)
