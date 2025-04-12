@@ -1,66 +1,65 @@
-import { Image, StyleSheet, Platform, ScrollView } from "react-native";
+import React, { useEffect, useState } from "react";
+import * as Progress from "react-native-progress";
 
-import { HelloWave } from "@/components/HelloWave";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
+import { StyleSheet, Text, View, Image, Button, FlatList } from "react-native";
 
-export default function HomeScreen() {
+import axios from "axios";
+
+export default function Index() {
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:8000")
+
+      .then((response) => {
+        setMessage(response.data.message);
+      })
+
+      .catch((error) => {
+        console.log(error);
+      });
+  }, []);
+
+  const items = [
+    { id: 1, text: "Exercise 1", image: "https://example.com/image1.png" },
+    { id: 2, text: "Exercise 2", image: "https://example.com/image2.png" },
+    { id: 3, text: "Exercise 3", image: "https://example.com/image3.png" },
+    { id: 4, text: "Exercise 4", image: "https://example.com/image4.png" },
+  ];
+
   return (
-    <ScrollView>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit{" "}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText>{" "}
-          to see changes. Press{" "}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: "cmd + d", android: "cmd + m" })}
-          </ThemedText>{" "}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this
-          starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{" "}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText>{" "}
-          to get a fresh <ThemedText type="defaultSemiBold">app</ThemedText>{" "}
-          directory. This will move the current{" "}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{" "}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ScrollView>
+    <View style={styles.container}>
+      <Text className="mt-3">Completed {30}%</Text>
+      <Progress.Bar progress={0.3} width={200} />
+      <FlatList
+        data={items}
+        numColumns={2}
+        renderItem={({ item }) => {
+          return (
+            <View>
+              <Image
+                source={{ uri: item.image }}
+                style={{ width: 100, height: 100 }}
+              />
+              <Text>{item.text}</Text>
+            </View>
+          );
+        }}
+      />
+      <Button title="hi" onPress={() => {}} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: "row",
+  container: {
+    flex: 1,
+
+    backgroundColor: "#fff",
+
     alignItems: "center",
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: "absolute",
+
+    justifyContent: "center",
   },
 });
