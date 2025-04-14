@@ -4,6 +4,7 @@ import * as Progress from "react-native-progress";
 import { StyleSheet, Text, View, Image, Button, FlatList } from "react-native";
 
 import axios from "axios";
+import tw from "tailwind-react-native-classnames";
 
 export default function Index() {
   const [message, setMessage] = useState("");
@@ -30,7 +31,7 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <Text className="mt-3">Completed {30}%</Text>
+      <Text style={tw`text-blue-500 mt-10 text-lg`}>Completed {30}%</Text>
       <Progress.Bar progress={0.3} width={200} />
       <FlatList
         data={items}
