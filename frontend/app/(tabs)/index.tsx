@@ -1,10 +1,20 @@
 import React, { useEffect, useState } from "react";
 import * as Progress from "react-native-progress";
 
-import { StyleSheet, Text, View, Image, Button, FlatList } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  Button,
+  FlatList,
+  Pressable,
+} from "react-native";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 import axios from "axios";
 import tw from "tailwind-react-native-classnames";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function Index() {
   const [message, setMessage] = useState("");
@@ -30,10 +40,11 @@ export default function Index() {
   ];
 
   return (
-    <View style={styles.container}>
-      <Text style={tw`text-blue-500 mt-10 text-lg`}>Completed {30}%</Text>
-      <Progress.Bar progress={0.3} width={200} />
+    <View style={tw`flex-1 bg-white justify-center items-center`}>
+      <Text style={tw`mt-10 text-lg`}>Completed {30}%</Text>
+      <Progress.Bar progress={0.3} width={200} color="#14b8a6" />
       <FlatList
+        style={tw`mx-auto`}
         data={items}
         numColumns={2}
         renderItem={({ item }) => {
@@ -41,14 +52,23 @@ export default function Index() {
             <View>
               <Image
                 source={{ uri: item.image }}
-                style={{ width: 100, height: 100 }}
+                style={tw`w-32 h-32 rounded-full mx-auto`}
               />
-              <Text>{item.text}</Text>
+              <Text style={tw`text-center`}>{item.text}</Text>
             </View>
           );
         }}
       />
-      <Button title="hi" onPress={() => {}} />
+      <Pressable
+        style={[tw`p-4 rounded-full mt-5 mb-2`, { backgroundColor: "#14b8a6" }]}
+      >
+        <MaterialCommunityIcons
+          name="robot-happy-outline"
+          size={24}
+          color="white"
+          style={tw`mx-auto`}
+        />
+      </Pressable>
     </View>
   );
 }
