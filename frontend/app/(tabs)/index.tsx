@@ -14,19 +14,26 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 import axios from "axios";
 import tw from "tailwind-react-native-classnames";
-import { Ionicons } from "@expo/vector-icons";
 
 export default function Index() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8000")
+    const token = localStorage.getItem("token"); // or however you store it
+    if (!token) {
+      console.error("Token not found");
+      return;
+    }
 
+    axios
+      .get("http://127.0.0.1:8000/users/active_exercises", {
+        headers: {
+          Authorization: `Token ${token}`, // or `Bearer ${token}` for JWT
+        },
+      })
       .then((response) => {
         setMessage(response.data.message);
       })
-
       .catch((error) => {
         console.log(error);
       });

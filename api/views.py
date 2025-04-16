@@ -1,7 +1,9 @@
 from django.http import JsonResponse
 from django.utils import timezone
 from datetime import timedelta
-from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import viewsets, status, generics
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view
 from .models import ReportExercise, User, Exercise, ExerciseCategory, UserExercise, Report, InjuryType
@@ -181,15 +183,52 @@ def increase_difficulty(user, exercise_name):
                 print(f"User {user} reassigned to {new_exercise.name} ({new_exercise.difficulty_level}).")
 
             return new_user_exercise
+    
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    permission_classes = (AllowAny,)
 
+    def post(self, request, *args, **kwargs):
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        if username and password:
+            user = User.objects.create_user(username=username, password=password)
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }, status=status.HTTP_201_CREATED)
+        return Response({"error": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+# @api_view(['GET'])
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
 
     @action(detail=False, methods=['GET'])
     def me(self, request):
         if request.user.is_authenticated:
             serializer = self.get_serializer(request.user)
+            return Response(serializer.data)
+        return Response({"detail": "Not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
+    
+
+    @action(detail=False, methods=['GET'])
+    def active_exercises(self, request):
+        """Get only active exercises for the current user"""
+        print("Request received, authenticated:", request.user.is_authenticated)
+        if request.user.is_authenticated:
+            # print("User is authenticated")
+            active_user_exercises = UserExercise.objects.filter(
+                user=request.user, 
+                is_active=True
+            ).select_related('exercise')
+            
+            active_exercises = [ue.exercise for ue in active_user_exercises]
+            # Pass the request in the context
+            serializer = ExerciseSerializer(active_exercises, many=True, context={'request': request})
             return Response(serializer.data)
         return Response({"detail": "Not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
 
