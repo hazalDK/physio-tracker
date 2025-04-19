@@ -172,10 +172,6 @@ class User(AbstractUser):
         # Update full_name with first_name and last_name from Abstract User
         self.full_name = f"{self.first_name} {self.last_name}"
 
-        # Validate pain_level
-        if self.pain_level < 0 or self.pain_level > 10:
-            raise ValidationError("Pain level must be between 0 and 10.")
-
         # Assign exercises based on injury type
         if self.injury_type:
             for exercise in self.injury_type.treatment.all():

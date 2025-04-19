@@ -1,6 +1,10 @@
 from django.http import JsonResponse
 from django.utils import timezone
 from datetime import timedelta
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.contrib.auth import authenticate, login
+from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import viewsets, status, generics
@@ -183,7 +187,37 @@ def increase_difficulty(user, exercise_name):
                 print(f"User {user} reassigned to {new_exercise.name} ({new_exercise.difficulty_level}).")
 
             return new_user_exercise
-    
+
+@method_decorator(csrf_exempt, name='dispatch')
+class UserLoginView(APIView):
+    # Convert a user token into user data
+    def get(self, request, format=None):
+
+        if request.user.is_authenticated == False or request.user.is_active == False:
+            return Response("Invalid Credentials", status=403)
+
+        user = UserSerializer(request.user)
+        return Response(user.data, status=200)
+
+    def post(self, request, format=None):
+        username = request.POST["username"]
+        password = request.POST["password"]
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            # credentials = {
+            #     'username': user_obj.username,
+            #     'password': request.data['password']
+            # }
+            # user = authenticate(**credentials)
+
+            if user.is_active:
+                login(request, user)  # <--- This sets the session
+                user_serializer = UserSerializer(user)
+                return Response(user_serializer.data, status=200)
+
+        return Response("Invalid Credentials", status=403)
+        
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
@@ -191,14 +225,14 @@ class RegisterView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         username = request.data.get("username")
         password = request.data.get("password")
-
-        if username and password:
-            user = User.objects.create_user(username=username, password=password)
+        user = authenticate(username=username, password=password)
+        if user:
             refresh = RefreshToken.for_user(user)
             return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }, status=status.HTTP_201_CREATED)
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user": UserSerializer(user).data
+            })
         return Response({"error": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
 # @api_view(['GET'])

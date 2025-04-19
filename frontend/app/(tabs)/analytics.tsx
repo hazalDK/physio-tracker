@@ -9,7 +9,7 @@ function GraphOne() {
   return (
     <View style={tw`flex flex-1 items-center bg-white px-4`}>
       <View
-        style={tw`flex flex-2 items-center border-2 border-gray-300 rounded-lg w-full mt-32 p-4 mx-6`}
+        style={tw`flex items-center border-2 border-gray-300 rounded-lg w-full mt-32 p-4 mx-6`}
       >
         <Text>Average Adherence: {}%</Text>
       </View>
