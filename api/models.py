@@ -37,6 +37,7 @@ class Exercise(models.Model):
     name = models.CharField(default="", max_length=100)
     slug = models.SlugField(unique=True, blank=True, null=True)
     video_link = models.URLField(default="", blank=True, max_length=500)
+    video_id = models.CharField(default="", max_length=100, blank=True)  # Store the video ID separately for easier access
 
     BEGINNER = 'Beginner'
     INTERMEDIATE = 'Intermediate'
@@ -68,6 +69,7 @@ class Exercise(models.Model):
             'name': self.name,
             'category': self.category.name,
             'video_link': self.video_link,
+            'video_id': self.video_id,
             'difficulty_level': self.difficulty_level,
             'additional_notes': self.additional_notes,
             'slug': self.slug,
@@ -87,6 +89,7 @@ class UserExercise(models.Model):
     exercise = models.ForeignKey('Exercise', on_delete=models.CASCADE)
     sets = models.IntegerField(default=0)
     reps = models.IntegerField(default=0)
+    hold = models.IntegerField(default=0)  # Hold time in seconds
     pain_level = models.IntegerField(default=0)
     completed = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)  # Track active/inactive exercises
@@ -106,6 +109,7 @@ class UserExercise(models.Model):
             'exercise': self.exercise.as_dict(),
             'sets': self.sets,
             'reps': self.reps,
+            'hold': self.hold,
             'pain_level': self.pain_level,
             'completed': self.completed,
             'is_active': self.is_active,

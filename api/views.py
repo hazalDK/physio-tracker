@@ -321,8 +321,6 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         completed_sets = serializer.validated_data.get('sets', instance.sets)
         completed_reps = serializer.validated_data.get('reps', instance.reps)
         instance.exercise = serializer.validated_data.get('exercise', instance.exercise)
-        instance.sets = completed_sets
-        instance.reps = completed_reps
         instance.save()
 
         if not completed:

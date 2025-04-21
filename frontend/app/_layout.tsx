@@ -13,6 +13,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useNavigation } from "@react-navigation/native";
+import Exercise from "./exercise";
 
 SplashScreen.preventAutoHideAsync();
 
