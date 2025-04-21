@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { Link, useNavigation } from "@react-navigation/native";
 import { View, Text, Pressable, Alert } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { TextInput } from "react-native-gesture-handler";
@@ -114,7 +114,10 @@ export default function Login() {
         placeholder="****"
       ></TextInput>
       <Text style={[tw`mt-2`, { color: "#8f8e8e" }]}>
-        Don't have an account? Create an account here
+        Don't have an account? Create an account{" "}
+        <Link screen="signup" params={{}}>
+          here
+        </Link>
       </Text>
       <Pressable
         style={({ pressed, hovered }) => [

@@ -308,7 +308,7 @@ export default function Exercise() {
 
       {/* Exercise details - now closer to video */}
       <View style={tw`mt-4 px-4`}>
-        <Text style={tw`text-lg text-center`}>
+        <Text style={tw`text-lg text-center font-semibold`}>
           Reps: {userExercise?.reps}
           <Text style={[tw`text-4xl`, { color: "#14b8a6" }]}> • </Text>
           Sets: {userExercise?.sets}
@@ -321,12 +321,14 @@ export default function Exercise() {
             ))}
         </Text>
 
-        <Text style={tw`text-lg text-center mt-2`}>
+        <Text style={tw`text-lg text-center font-semibold mt-2`}>
           Difficulty: {exercise.difficulty_level}
         </Text>
 
         {exercise.additional_notes && (
-          <Text style={tw`text-center mt-2`}>{exercise.additional_notes}</Text>
+          <Text style={tw`text-lg text-center mt-2`}>
+            {exercise.additional_notes}
+          </Text>
         )}
       </View>
 

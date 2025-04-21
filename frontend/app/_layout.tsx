@@ -5,7 +5,7 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { router, Stack } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
@@ -13,7 +13,6 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useNavigation } from "@react-navigation/native";
-import Exercise from "./exercise";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -45,7 +44,7 @@ export default function RootLayout() {
     if (loaded && authState !== "checking") {
       SplashScreen.hideAsync();
       if (authState === "unauthenticated") {
-        router.replace("/login");
+        navigation.navigate("login" as never);
       }
     }
   }, [loaded, authState]);
