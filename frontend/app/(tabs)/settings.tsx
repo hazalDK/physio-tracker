@@ -1,8 +1,9 @@
+import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { View, Text, Pressable, Alert, Modal, TextInput } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import * as SecureStore from "expo-secure-store";
-import { useState } from "react";
+import ReminderComponent from "../reminderComponent";
 
 export default function Settings() {
   const navigation = useNavigation();
@@ -11,7 +12,7 @@ export default function Settings() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [secureEntry, setSecureEntry] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false); // New loading state
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Password requirements validation
   const validatePassword = (password: string) => {
@@ -107,19 +108,9 @@ export default function Settings() {
     <View style={tw`flex flex-1 items-center bg-white`}>
       <Text style={tw`text-lg mt-10`}>Customisable Reminder:</Text>
 
-      <Pressable
-        style={({ pressed, hovered }) => [
-          tw`flex items-center p-4 rounded-2xl mt-5 mb-2 w-28`,
-          {
-            // When hovered, change to a darker teal; otherwise use the default teal
-            backgroundColor: hovered ? "#0d9488" : "#14b8a6",
-            // Slightly reduce the opacity when the button is pressed
-            opacity: pressed ? 0.8 : 1,
-          },
-        ]}
-      >
-        <Text style={tw`text-white font-semibold`}>Save</Text>
-      </Pressable>
+      {/* Using the extracted ReminderComponent */}
+      <ReminderComponent />
+
       <Text style={tw`text-lg`}>Privacy</Text>
       <Pressable
         style={({ pressed, hovered }) => [
@@ -138,9 +129,7 @@ export default function Settings() {
         style={({ pressed, hovered }) => [
           tw`flex items-center p-4 rounded-2xl mb-2 border-2 w-60`,
           {
-            // When hovered, change to a darker teal; otherwise use the default teal
             backgroundColor: hovered ? "#eeeee4" : "#FFFFFF",
-            // Slightly reduce the opacity when the button is pressed
             opacity: pressed ? 0.8 : 1,
             borderColor: "#14b8a6",
           },

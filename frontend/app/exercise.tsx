@@ -331,8 +331,6 @@ export default function Exercise() {
           </Text>
         )}
       </View>
-
-      {/* Complete button */}
       <View style={tw`absolute bottom-10 w-full items-center`}>
         <Pressable
           style={({ pressed, hovered }) => [
