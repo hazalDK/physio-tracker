@@ -134,38 +134,67 @@ export default function ReminderComponent() {
 
   // Schedule notification function with improved logging
   const scheduleReminder = async () => {
+    // Triple cancellation to ensure clean slate (Android workaround)
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    await new Promise((resolve) => setTimeout(resolve, 300));
     await Notifications.cancelAllScheduledNotificationsAsync();
 
     const triggerTime = new Date(reminderTime);
     console.log(
-      `Scheduling reminder for ${triggerTime.getHours()}:${triggerTime.getMinutes()}`
+      `Scheduling for ${triggerTime.getHours()}:${triggerTime.getMinutes()}`
     );
 
     try {
-      const notificationContent = {
-        title: "Physiotherapy Reminder",
-        body: "It's time to do your physiotherapy exercises!",
-        sound: true,
-        priority: Notifications.AndroidNotificationPriority.HIGH,
-        ...(Platform.OS === "ios" ? { interruptionLevel: "active" } : {}),
-      };
+      // 1. First create the notification channel (Android only)
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("daily-reminder", {
+          name: "Daily Reminder",
+          importance: Notifications.AndroidImportance.MAX,
+          sound: "default",
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#FF231F7C",
+          lockscreenVisibility:
+            Notifications.AndroidNotificationVisibility.PUBLIC,
+        });
+      }
 
+      // 2. Schedule the notification with platform-specific options
       const identifier = await Notifications.scheduleNotificationAsync({
-        content: notificationContent,
+        content: {
+          title: "Physiotherapy Reminder",
+          body: "It's time to do your physiotherapy exercises!",
+          sound: true,
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          ...(Platform.OS === "ios"
+            ? {
+                interruptionLevel: "critical",
+                relevanceScore: 1,
+              }
+            : {}),
+        },
         trigger: {
+          type: "calendar",
           hour: triggerTime.getHours(),
           minute: triggerTime.getMinutes(),
           repeats: true,
-          channelId: "daily-reminder",
-          timezone: "GMT",
+          ...(Platform.OS === "android" ? { channelId: "daily-reminder" } : {}),
         },
       });
 
-      console.log("Notification scheduled with ID:", identifier);
+      console.log("Scheduled with ID:", identifier);
+
+      // 3. Verify it was actually scheduled
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      console.log("Verified scheduled:", scheduled.length);
+
+      if (scheduled.length === 0) {
+        throw new Error("System failed to persist notification");
+      }
+
       return true;
     } catch (error) {
-      console.error("Scheduling error:", error);
-      Alert.alert("Error", "Failed to schedule notification: " + error.message);
+      console.error("Scheduling failed:", error);
       return false;
     }
   };
@@ -274,25 +303,14 @@ export default function ReminderComponent() {
           priority: Notifications.AndroidNotificationPriority.MAX,
           interruptionLevel: "active",
         },
-        trigger: { second: 2, timezone: "GMT" }, // Show after 2 seconds
-      });
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      identifier = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "TEST - Physiotherapy Reminder",
-          body: "This is a test notification",
-          sound: true,
-          priority: Notifications.AndroidNotificationPriority.MAX,
-          interruptionLevel: "active",
-        },
-        trigger: { second: 2, timezone: "GMT" }, // Show after 2 seconds
+        trigger: null,
       });
 
       Alert.alert(
         "Test Sent",
         "Notification should appear in 2 seconds. Close the app to test background delivery."
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error("Test notification error:", error);
       Alert.alert("Error", "Failed to send test: " + error.message);
     }
