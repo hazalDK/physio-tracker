@@ -42,19 +42,27 @@ class InjuryTypeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
-    exercises = ExerciseSerializer(many=True, read_only=False)
+    password = serializers.CharField(write_only=True)
+    # injury_type = InjuryTypeSerializer(many=True, required=False)  # Allow multiple injury types
+    
     class Meta:
         model = User
-        fields = 'username', 'email', 'first_name', 'last_name', 'date_of_birth', 'exercises', 'injury_type'
-
+        fields = ('username', 'email', 'password', 'first_name', 'last_name', 
+                 'date_of_birth', 'injury_type')
+    
     def create(self, validated_data):
-        exercises = validated_data.pop('exercises', [])  # Extract exercises from validated data
-        user = super().create(validated_data)  # Create the user
-
-        # Create UserExercise instances for each exercise
-        for exercise in exercises:
-            UserExercise.objects.create(user=user, exercise=exercise)
-
+        # Extract password to hash it properly
+        password = validated_data.pop('password')
+        injury_type = validated_data.pop('injury_type')
+        
+        # Create user with remaining data
+        user = User.objects.create_user(
+            **validated_data,
+            password=password  # This will properly hash the password
+        )
+        user.injury_type = injury_type  # Assign injury type if provided
+        user.save()
+        
         return user
 
     def update(self, instance, validated_data):

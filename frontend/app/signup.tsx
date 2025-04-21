@@ -1,32 +1,161 @@
-import { Link } from "@react-navigation/native";
-import { useState } from "react";
-import { View, Text, Pressable, TouchableOpacity } from "react-native";
+import { Link, useNavigation } from "@react-navigation/native";
+import { useEffect, useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import axios from "axios";
+import { View, Text, Pressable, TouchableOpacity, Alert } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import { TextInput } from "react-native-gesture-handler";
 import tw from "tailwind-react-native-classnames";
 import DateTimePicker from "@react-native-community/datetimepicker";
+
+// Interface for the injury types data
+interface injuryTypesData {
+  id: number;
+  name: string;
+  description: string;
+  treatment: [number];
+}
 
 export default function Signup() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState(new Date());
   const [open, setOpen] = useState(false);
-  const [injuryType, setInjuryType] = useState("");
+  const [injuryTypes, setInjuryTypes] = useState([] as injuryTypesData[]);
+  const [injuryType, setInjuryType] = useState();
+  const [passwordError, setPasswordError] = useState("");
   const [securePassword, setSecurePassword] = useState(false);
   const [secureConfirmPassword, setSecureConfirmPassword] = useState(false);
+  const navigation = useNavigation();
+
+  // Register the user
+  async function handleRegister() {
+    // Check if email is valid
+    if (!validateEmail(email)) {
+      setEmailError("Invalid email format.");
+      Alert.alert("Error", "Invalid email format.");
+      return;
+    }
+
+    // Check if password meets criteria
+    if (!validatePassword(password)) {
+      setPasswordError("Password does not meet requirements.");
+      Alert.alert(
+        "Error",
+        "Password must be at least 8 characters long, contain uppercase and lowercase letters, a number, and a special character."
+      );
+      return;
+    }
+
+    // Validation first
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match");
+      return;
+    }
+
+    if (
+      !firstName ||
+      !lastName ||
+      !username ||
+      !email ||
+      !password ||
+      !dateOfBirth
+    ) {
+      Alert.alert("Error", "Please fill all required fields");
+      return;
+    }
+
+    try {
+      const apiUrl = process.env.API_URL || "http://192.168.68.111:8000";
+
+      // Format the date properly
+      const formattedDate = dateOfBirth.toISOString().split("T")[0];
+
+      const response = await axios.post(
+        `${apiUrl}/users/register/`,
+        {
+          username: username.trim(),
+          email: email.trim(),
+          password: password,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          date_of_birth: formattedDate,
+          injury_type: injuryType || null, // Handle case where injuryType is undefined
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      // Store tokens
+      await SecureStore.setItemAsync("access_token", response.data.access);
+      await SecureStore.setItemAsync("refresh_token", response.data.refresh);
+
+      // Navigate to the home screen
+      navigation.navigate("(tabs)" as never);
+    } catch (error: any) {
+      console.error(
+        "Registration failed:",
+        error.response?.data || error.message
+      );
+
+      let errorMessage = "Please check your information and try again";
+      if (error.response?.data) {
+        // Handle different types of error responses
+        if (error.response.data.username) {
+          errorMessage = `Username: ${error.response.data.username.join(" ")}`;
+        } else if (error.response.data.email) {
+          errorMessage = `Email: ${error.response.data.email.join(" ")}`;
+        } else if (error.response.data.non_field_errors) {
+          errorMessage = error.response.data.non_field_errors.join(" ");
+        } else if (error.response.data.detail) {
+          errorMessage = error.response.data.detail;
+        }
+      }
+
+      Alert.alert("Registration Failed", errorMessage);
+    }
+  }
+
+  useEffect(() => {
+    const fetchInjuryTypes = async () => {
+      try {
+        const apiUrl = process.env.API_URL || "http://192.168.68.111:8000";
+        const response = await axios.get<injuryTypesData[]>(
+          `${apiUrl}/injury-types/`
+        );
+        setInjuryTypes(response.data);
+      } catch (error) {
+        console.error("Error fetching injury types:", error);
+      }
+    };
+    fetchInjuryTypes();
+  }, []);
+
+  const validatePassword = (password: string) => {
+    const regex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return regex.test(password);
+  };
+
+  const validateEmail = (email: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email regex
+    return regex.test(email);
+  };
 
   // Injury type data for dropdown
-  const injuryData = [
-    { label: "ACL Injury", value: "acl" },
-    { label: "Rotator Cuff", value: "rotator" },
-    { label: "Tennis Elbow", value: "tennis_elbow" },
-    { label: "Hamstring Strain", value: "hamstring" },
-    { label: "Other", value: "other" },
-  ];
+  const injuryData = injuryTypes.map((item) => ({
+    label: item.name,
+    value: item.id,
+  }));
 
   return (
     <View style={tw`flex-1 justify-center items-center bg-white`}>
@@ -46,11 +175,10 @@ export default function Signup() {
           here
         </Link>
       </Text>
-      {/* First Name */}
       <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>First Name:</Text>
       <TextInput
         style={[
-          tw`flex text-center bg-gray-200 w-48 h-8 border rounded justify-center mb-4`,
+          tw`flex text-center bg-gray-200 w-56 h-8 border rounded justify-center mb-4`,
           {
             color: "#8f8e8e",
             borderColor: "#e5e7eb",
@@ -62,11 +190,10 @@ export default function Signup() {
         value={firstName}
         onChangeText={setFirstName}
       />
-      {/* Last Name */}
       <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>Last Name:</Text>
       <TextInput
         style={[
-          tw`flex text-center bg-gray-200 w-48 h-8 border rounded justify-center mb-4`,
+          tw`flex text-center bg-gray-200 w-56 h-8 border rounded justify-center mb-4`,
           {
             color: "#8f8e8e",
             borderColor: "#e5e7eb",
@@ -78,11 +205,10 @@ export default function Signup() {
         value={lastName}
         onChangeText={setLastName}
       />
-      {/* Username */}
       <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>Username:</Text>
       <TextInput
         style={[
-          tw`flex text-center bg-gray-200 w-48 h-8 border rounded justify-center mb-4`,
+          tw`flex text-center bg-gray-200 w-56 h-8 border rounded justify-center mb-4`,
           {
             color: "#8f8e8e",
             borderColor: "#e5e7eb",
@@ -94,11 +220,10 @@ export default function Signup() {
         value={username}
         onChangeText={setUsername}
       />
-      {/* Email */}
       <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>Email:</Text>
       <TextInput
         style={[
-          tw`flex text-center bg-gray-200 w-48 h-8 border rounded justify-center mb-4`,
+          tw`flex text-center bg-gray-200 w-56 h-8 border rounded justify-center mb-4`,
           {
             color: "#8f8e8e",
             borderColor: "#e5e7eb",
@@ -108,10 +233,18 @@ export default function Signup() {
         ]}
         placeholder="example@gmail.com"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => {
+          setEmail(text);
+          if (!validateEmail(text)) {
+            setEmailError(
+              "Please enter a valid email (e.g., user@example.com)."
+            );
+          } else {
+            setEmailError("");
+          }
+        }}
         keyboardType="email-address"
       />
-      {/* Password */}
       <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>Password:</Text>
       <View style={tw`flex-row items-center mb-4`}>
         <TextInput
@@ -127,7 +260,16 @@ export default function Signup() {
           placeholder="****"
           secureTextEntry={!securePassword}
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            setPassword(text);
+            if (!validatePassword(text)) {
+              setPasswordError(
+                "Password must be 8+ chars with uppercase, lowercase, number, and special char."
+              );
+            } else {
+              setPasswordError("");
+            }
+          }}
         />
         <TouchableOpacity
           style={tw`ml-2`}
@@ -136,7 +278,6 @@ export default function Signup() {
           <Text>{securePassword ? "🙈" : "👁️"}</Text>
         </TouchableOpacity>
       </View>
-      {/* Confirm Password */}
       <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>Confirm password:</Text>
       <View style={tw`flex-row items-center mb-4`}>
         <TextInput
@@ -152,7 +293,16 @@ export default function Signup() {
           placeholder="****"
           secureTextEntry={!secureConfirmPassword}
           value={confirmPassword}
-          onChangeText={setConfirmPassword}
+          onChangeText={(text) => {
+            setConfirmPassword(text);
+            if (!validatePassword(text)) {
+              setPasswordError(
+                "Password must be 8+ chars with uppercase, lowercase, number, and special char."
+              );
+            } else {
+              setPasswordError("");
+            }
+          }}
         />
         <TouchableOpacity
           style={tw`ml-2`}
@@ -161,7 +311,6 @@ export default function Signup() {
           <Text>{secureConfirmPassword ? "🙈" : "👁️"}</Text>
         </TouchableOpacity>
       </View>
-      {/* Date of Birth */}
       <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>Date of birth:</Text>
       {open && (
         <DateTimePicker
@@ -177,10 +326,9 @@ export default function Signup() {
           maximumDate={new Date()}
         />
       )}
-      // And update your touchable to:
       <TouchableOpacity
         style={[
-          tw`flex text-center bg-gray-200 w-48 h-8 border rounded justify-center mb-4`,
+          tw`flex text-center bg-gray-200 w-56 h-8 border rounded justify-center mb-4`,
           {
             borderColor: "#e5e7eb",
             borderWidth: 1,
@@ -192,11 +340,10 @@ export default function Signup() {
           {dateOfBirth.toLocaleDateString()}
         </Text>
       </TouchableOpacity>
-      {/* Injury Type */}
       <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>Injury type:</Text>
       <Dropdown
         style={[
-          tw`flex bg-gray-200 w-48 h-8 border rounded justify-center mb-6 px-2`,
+          tw`flex bg-gray-200 w-56 h-8 border rounded justify-center mb-6 px-2`,
           {
             borderColor: "#e5e7eb",
             borderWidth: 1,
@@ -211,7 +358,6 @@ export default function Signup() {
         value={injuryType}
         onChange={(item) => setInjuryType(item.value)}
       />
-      {/* Sign Up Button */}
       <Pressable
         style={({ pressed, hovered }) => [
           tw`flex items-center p-4 rounded-xl mt-5 mb-2 w-60`,
@@ -221,17 +367,7 @@ export default function Signup() {
           },
         ]}
         onPress={() => {
-          // Handle sign up logic here
-          console.log({
-            firstName,
-            lastName,
-            username,
-            email,
-            password,
-            confirmPassword,
-            dateOfBirth: dateOfBirth.toISOString().split("T")[0],
-            injuryType,
-          });
+          handleRegister();
         }}
       >
         <Text style={tw`text-white font-semibold`}>Sign Up</Text>

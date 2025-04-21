@@ -4,10 +4,11 @@ from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.hashers import check_password
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import viewsets, status, generics
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view
 from .models import ReportExercise, User, Exercise, ExerciseCategory, UserExercise, Report, InjuryType
@@ -205,11 +206,6 @@ class UserLoginView(APIView):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            # credentials = {
-            #     'username': user_obj.username,
-            #     'password': request.data['password']
-            # }
-            # user = authenticate(**credentials)
 
             if user.is_active:
                 login(request, user)  # <--- This sets the session
@@ -230,7 +226,8 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         return Response({"detail": "Not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
     
-    def post(self, request, *args, **kwargs):
+    @action(detail=False, methods=['POST'], permission_classes=[AllowAny])
+    def register(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -240,6 +237,34 @@ class UserViewSet(viewsets.ModelViewSet):
             'access': str(refresh.access_token),
             'user': serializer.data
         }, status=status.HTTP_201_CREATED)
+    
+    @action(detail=False, methods=['PUT'])
+    def update_password(self, request):
+        user = request.user  # Get the currently authenticated user
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+
+        # Validation checks
+        if not current_password or not new_password:
+            return Response(
+                {'error': 'Both current and new password are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not check_password(current_password, user.password):
+            return Response(
+                {'error': 'Current password is incorrect'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update the password
+        user.set_password(new_password)
+        user.save()
+
+        return Response(
+            {'success': 'Password updated successfully'},
+            status=status.HTTP_200_OK
+        )
     
 
     @action(detail=False, methods=['GET'])
@@ -259,7 +284,9 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         return Response({"detail": "Not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
 
+
 class InjuryTypeViewSet(viewsets.ModelViewSet):
+    permission_classes =[AllowAny]
     queryset = InjuryType.objects.all()
     serializer_class = InjuryTypeSerializer
 

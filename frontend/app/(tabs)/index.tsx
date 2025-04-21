@@ -32,7 +32,6 @@ interface UserExerciseItem {
 }
 
 export default function Index() {
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [userExercises, setUserExercises] = useState<UserExerciseItem[]>([]);
   const [exercises, setExercises] = useState<ExerciseItem[]>([]);
