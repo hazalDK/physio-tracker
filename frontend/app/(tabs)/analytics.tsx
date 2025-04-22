@@ -13,9 +13,11 @@ function GraphOne() {
       >
         <Text>Average Adherence: {}%</Text>
       </View>
-      <Text style={tw`text-lg mt-10`}>Exercise History</Text>
       <View style={tw`flex flex-1 items-center justify-center w-full mt-4`}>
-        <View>
+        <Text style={tw`text-lg`}>Exercise History</Text>
+        <View
+          style={tw`flex border-2 border-gray-300 rounded-lg w-full mt-4 p-4 mx-6`}
+        >
           <Text>Monday 1st March</Text>
           <Text>4/4 exercises completed</Text>
         </View>
@@ -26,9 +28,21 @@ function GraphOne() {
 
 function GraphTwo() {
   return (
-    <View style={tw`flex flex-1 items-center justify-center bg-white`}>
-      <Text>Graph Two</Text>
-      {/* Your graph rendering code goes here */}
+    <View style={tw`flex flex-1 items-center bg-white px-4`}>
+      <View
+        style={tw`flex items-center border-2 border-gray-300 rounded-lg w-full mt-32 p-4 mx-6`}
+      >
+        <Text>Average Pain Level: {}%</Text>
+      </View>
+      <View style={tw`flex flex-1 items-center justify-center w-full mt-4`}>
+        <Text style={tw`text-lg`}>Exercise History</Text>
+        <View
+          style={tw`flex border-2 border-gray-300 rounded-lg w-full mt-4 p-4 mx-6`}
+        >
+          <Text>Monday 1st March</Text>
+          <Text>4/4 exercises completed</Text>
+        </View>
+      </View>
     </View>
   );
 }
