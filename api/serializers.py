@@ -48,7 +48,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email', 'password', 'first_name', 'last_name', 
-                 'date_of_birth', 'injury_type')
+                 'date_of_birth', 'injury_type', 'last_reset', 'exercises')
     
     def create(self, validated_data):
         # Extract password to hash it properly

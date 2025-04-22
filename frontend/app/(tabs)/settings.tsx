@@ -89,7 +89,6 @@ export default function Settings() {
             "The password you entered doesn't match your current password. Please try again."
           );
         } else {
-          // Generic error for other cases
           Alert.alert("Error", data.error || "Failed to update password");
         }
       }
@@ -100,18 +99,19 @@ export default function Settings() {
         "Network error. Please check your connection and try again."
       );
     } finally {
-      setIsUpdating(false); // Hide loading state
+      setIsUpdating(false);
     }
   };
 
   return (
     <View style={tw`flex flex-1 items-center bg-white`}>
-      <Text style={tw`text-lg mt-10`}>Customisable Reminder:</Text>
+      <Text style={tw`text-lg font-semibold mt-10`}>
+        Customisable Reminder:
+      </Text>
 
-      {/* Using the extracted ReminderComponent */}
       <ReminderComponent />
 
-      <Text style={tw`text-lg`}>Privacy</Text>
+      <Text style={tw`text-lg font-semibold`}>Privacy</Text>
       <Pressable
         style={({ pressed, hovered }) => [
           tw`flex items-center p-4 rounded-2xl mt-4 mb-2 border-2 w-60`,
@@ -151,7 +151,6 @@ export default function Settings() {
           <View style={tw`bg-white p-6 rounded-lg w-80`}>
             <Text style={tw`text-xl font-bold mb-4`}>Update Password</Text>
 
-            {/* Current Password */}
             <Text style={tw`mb-1`}>Current Password:</Text>
             <TextInput
               style={tw`border border-gray-300 text-black p-2 mb-3 rounded`}
@@ -162,7 +161,6 @@ export default function Settings() {
               editable={!isUpdating}
             />
 
-            {/* New Password */}
             <Text style={tw`mb-1`}>New Password:</Text>
             <TextInput
               style={tw`border border-gray-300 p-2 mb-3 rounded`}
@@ -172,8 +170,6 @@ export default function Settings() {
               onChangeText={setNewPassword}
               editable={!isUpdating}
             />
-
-            {/* Confirm Password */}
             <Text style={tw`mb-1`}>Confirm New Password:</Text>
             <TextInput
               style={tw`border border-gray-300 p-2 mb-4 rounded`}
@@ -194,7 +190,6 @@ export default function Settings() {
               </Text>
             </Pressable>
 
-            {/* Action Buttons */}
             <View style={tw`flex-row justify-between`}>
               <Pressable
                 style={[tw`px-4 py-2 rounded`, { backgroundColor: "#e5e7eb" }]}

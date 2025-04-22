@@ -268,53 +268,6 @@ export default function ReminderComponent() {
     }
   }, [isLoading]);
 
-  const checkScheduledNotifications = async () => {
-    try {
-      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-      console.log(
-        "Currently scheduled notifications:",
-        JSON.stringify(scheduled, null, 2)
-      );
-
-      if (scheduled.length === 0) {
-        Alert.alert("No Notifications", "There are no scheduled notifications");
-      } else {
-        Alert.alert(
-          "Notifications Found",
-          `Found ${scheduled.length} scheduled notification(s)`
-        );
-      }
-    } catch (error) {
-      console.error("Error checking notifications:", error);
-    }
-  };
-
-  // Improved testNotification function
-  const testNotification = async () => {
-    try {
-      const permissionGranted = await requestPermissions();
-      if (!permissionGranted) return;
-
-      let identifier = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "TEST - Physiotherapy Reminder",
-          body: "This is a test notification",
-          sound: true,
-          priority: Notifications.AndroidNotificationPriority.MAX,
-          interruptionLevel: "active",
-        },
-        trigger: null,
-      });
-
-      Alert.alert(
-        "Test Sent",
-        "Notification should appear in 2 seconds. Close the app to test background delivery."
-      );
-    } catch (error: any) {
-      console.error("Test notification error:", error);
-      Alert.alert("Error", "Failed to send test: " + error.message);
-    }
-  };
   return (
     <View
       style={tw`items-center mt-2 p-4 border-2 border-gray-200 rounded-xl mb-4 w-80`}
@@ -334,7 +287,7 @@ export default function ReminderComponent() {
       <Pressable
         onPress={() => toggleReminder(!reminderEnabled)}
         style={({ pressed, hovered }) => [
-          tw`flex items-center p-4 rounded-xl mt-4 w-36`,
+          tw`flex items-center p-4 rounded-xl mt-4 w-60`,
           {
             backgroundColor: reminderEnabled
               ? hovered
@@ -355,34 +308,14 @@ export default function ReminderComponent() {
       <Pressable
         onPress={saveSettings}
         style={({ pressed, hovered }) => [
-          tw`flex items-center p-4 rounded-xl mt-4 w-36`,
+          tw`flex items-center p-4 rounded-xl mt-4 w-60`,
           {
             backgroundColor: hovered ? "#0d9488" : "#14b8a6",
             opacity: pressed ? 0.8 : 1,
           },
         ]}
       >
-        <Text style={tw`text-white font-semibold`}>Save Settings</Text>
-      </Pressable>
-
-      {/* Debug button - can be removed in production */}
-      <Pressable
-        onPress={checkScheduledNotifications}
-        style={({ pressed }) => [
-          tw`flex items-center p-2 mt-2`,
-          { opacity: pressed ? 0.7 : 1 },
-        ]}
-      >
-        <Text style={tw`text-blue-500 text-sm`}>Check Notifications</Text>
-      </Pressable>
-      <Pressable
-        onPress={testNotification}
-        style={({ pressed }) => [
-          tw`flex items-center p-4 rounded-xl mt-2 w-36 bg-blue-500`,
-          { opacity: pressed ? 0.8 : 1 },
-        ]}
-      >
-        <Text style={tw`text-white font-semibold`}>Test Notification</Text>
+        <Text style={tw`text-white font-semibold`}>Save Setting</Text>
       </Pressable>
     </View>
   );

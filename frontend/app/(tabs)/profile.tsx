@@ -10,7 +10,7 @@ export default function Profile() {
       <Text>Date of birth:{}</Text>
       <Pressable
         style={({ pressed, hovered }) => [
-          tw`items-center p-4 rounded-2xl w-28`,
+          tw`items-center p-4 rounded-2xl w-60`,
           {
             backgroundColor: hovered ? "#0d9488" : "#14b8a6",
             opacity: pressed ? 0.8 : 1,

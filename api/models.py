@@ -161,6 +161,7 @@ class User(AbstractUser):
             'date_of_birth': self.date_of_birth,
             'injury_type': self.injury_type.as_dict() if self.injury_type else None,
             'exercises': list(self.exercises.values('id', 'name', 'category', 'difficulty_level')),
+            'last_reset': self.last_reset,
         }
 
     def priv_as_dict(self):

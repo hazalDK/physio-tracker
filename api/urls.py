@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import (
 )
 from .views import (
     ReportExerciseViewSet, UserViewSet, ExerciseViewSet, ExerciseCategoryViewSet,
-    UserExerciseViewSet, ReportViewSet, InjuryTypeViewSet, auth_check, UserLoginView
+    UserExerciseViewSet, ReportViewSet, InjuryTypeViewSet
 )
 
 router = DefaultRouter()
@@ -22,6 +22,4 @@ urlpatterns = [
     path('', include(router.urls)),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('auth-check/', auth_check, name='auth-check'),
-    path('login/', UserLoginView.as_view(), name='login'),
 ]

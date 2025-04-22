@@ -26,17 +26,6 @@ def reset_user_exercises(user):
         user.save()
         print(f"Reset UserExercise for {user.username}.")
 
-@api_view(['GET'])
-def auth_check(request):
-    if request.user.is_authenticated:
-        print(f"User {request.user} is authenticated.")
-        reset_user_exercises(request.user)
-        return Response({
-            "auth": True,
-            "user": UserSerializer(request.user).data
-        })
-    return Response({"auth": False}, status=status.HTTP_401_UNAUTHORIZED)
-
 def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
     """
     Update exercise level based on pain level.
@@ -188,31 +177,6 @@ def increase_difficulty(user, exercise_name):
                 print(f"User {user} reassigned to {new_exercise.name} ({new_exercise.difficulty_level}).")
 
             return new_user_exercise
-
-@method_decorator(csrf_exempt, name='dispatch')
-class UserLoginView(APIView):
-    # Convert a user token into user data
-    def get(self, request, format=None):
-
-        if request.user.is_authenticated == False or request.user.is_active == False:
-            return Response("Invalid Credentials", status=403)
-
-        user = UserSerializer(request.user)
-        return Response(user.data, status=200)
-
-    def post(self, request, format=None):
-        username = request.POST["username"]
-        password = request.POST["password"]
-        user = authenticate(request, username=username, password=password)
-
-        if user is not None:
-
-            if user.is_active:
-                login(request, user)  # <--- This sets the session
-                user_serializer = UserSerializer(user)
-                return Response(user_serializer.data, status=200)
-
-        return Response("Invalid Credentials", status=403)
     
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -237,6 +201,15 @@ class UserViewSet(viewsets.ModelViewSet):
             'access': str(refresh.access_token),
             'user': serializer.data
         }, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['PUT'])
+    def update_profile(self, request):
+        user = request.user
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+    
     
     @action(detail=False, methods=['PUT'])
     def update_password(self, request):
@@ -270,9 +243,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'])
     def active_exercises(self, request):
         """Get only active exercises for the current user"""
-        print("Request received, authenticated:", request.user.is_authenticated)
         if request.user.is_authenticated:
-            # print("User is authenticated")
             active_user_exercises = UserExercise.objects.filter(
                 user=request.user, 
                 is_active=True
@@ -307,6 +278,7 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
     serializer_class = UserExerciseSerializer
 
     def get_queryset(self):
+        reset_user_exercises(self.request.user)
         return self.queryset.filter(user=self.request.user, is_active=True)
     
     def create(self, request, *args, **kwargs):
