@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { View, Text, Pressable, Alert, Modal, TextInput } from "react-native";
 import tw from "tailwind-react-native-classnames";
+import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import ReminderComponent from "../reminderComponent";
 
@@ -44,6 +45,14 @@ export default function Settings() {
       return;
     }
 
+    if (currentPassword === newPassword) {
+      Alert.alert(
+        "Error",
+        "New password cannot be the same as current password."
+      );
+      return;
+    }
+
     if (!validatePassword(newPassword)) {
       Alert.alert(
         "Error",
@@ -56,48 +65,46 @@ export default function Settings() {
 
     try {
       const token = await SecureStore.getItemAsync("access_token");
-      const response = await fetch(
+
+      const response = await axios.put(
         "http://192.168.68.111:8000/users/update_password/",
         {
-          method: "PUT",
+          current_password: currentPassword,
+          new_password: newPassword,
+        },
+        {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            current_password: currentPassword,
-            new_password: newPassword,
-          }),
         }
       );
 
-      const data = await response.json(); // Always parse the response
-      if (response.ok) {
-        Alert.alert("Success", "Password updated successfully!");
-        setIsModalVisible(false);
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-      } else {
-        // SPECIFIC ALERT FOR INCORRECT PASSWORD
-        if (
-          response.status === 400 &&
-          data.error === "Current password is incorrect"
-        ) {
+      Alert.alert("Success", "Password updated successfully!");
+      setIsModalVisible(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const message = error.response?.data?.error;
+
+        if (status === 400 && message === "Current password is incorrect") {
           Alert.alert(
             "Incorrect Password",
             "The password you entered doesn't match your current password. Please try again."
           );
         } else {
-          Alert.alert("Error", data.error || "Failed to update password");
+          Alert.alert("Error", message || "Failed to update password");
         }
+      } else {
+        console.error("Update password error:", error);
+        Alert.alert(
+          "Error",
+          "Network error. Please check your connection and try again."
+        );
       }
-    } catch (error) {
-      console.error("Update password error:", error);
-      Alert.alert(
-        "Error",
-        "Network error. Please check your connection and try again."
-      );
     } finally {
       setIsUpdating(false);
     }

@@ -66,14 +66,19 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
-        exercises = validated_data.pop('exercises', [])  # Extract exercises from validated data
-        user = super().update(instance, validated_data)  # Update the user
-
-        # Clear existing UserExercise instances and create new ones
-        UserExercise.objects.filter(user=user).delete()
-        for exercise in exercises:
-            UserExercise.objects.create(user=user, exercise=exercise)
-
+        # Only handle exercises if they're in the validated data
+        if 'exercises' in validated_data:
+            exercises = validated_data.pop('exercises')
+            user = super().update(instance, validated_data)
+            
+            # Clear existing UserExercise instances and create new ones
+            UserExercise.objects.filter(user=user).delete()
+            for exercise in exercises:
+                UserExercise.objects.create(user=user, exercise=exercise)
+        else:
+            # Just update the user without touching exercises
+            user = super().update(instance, validated_data)
+        
         return user
 
 class ReportExerciseSerializer(serializers.ModelSerializer):
