@@ -1,21 +1,112 @@
-from django.http import JsonResponse
+import json
+import os
+import openai
 from django.utils import timezone
 from datetime import timedelta
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from django.contrib.auth import authenticate, login
 from django.contrib.auth.hashers import check_password
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action, api_view, permission_classes
 from .models import ReportExercise, User, Exercise, ExerciseCategory, UserExercise, Report, InjuryType
 from .serializers import (
     ReportExerciseSerializer, UserSerializer, ExerciseSerializer, ExerciseCategorySerializer,
     UserExerciseSerializer, ReportSerializer, InjuryTypeSerializer
 )
+
+
+# Set up OpenAI client
+openai.api_key = os.environ.get('OPENAI_API_KEY')  # Set in your Django settings
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def chatbot(request):
+    try:
+        user_message = request.data.get('message', '')
+        exercise_context_json = request.data.get('exerciseContext', '{}')
+        exercise_context = json.loads(exercise_context_json)
+
+        user = request.user
+
+        user_exercises = UserExercise.objects.filter(user=user, is_active=True)
+        recent_reports = Report.objects.filter(user=user).order_by('-date')[:5]
+
+        exercises_info = [
+            {
+                'name': ue.exercise.name,
+                'category': ue.exercise.category.name,
+                'difficulty': ue.exercise.difficulty_level,
+                'sets': ue.sets,
+                'reps': ue.reps,
+                'pain_level': ue.pain_level,
+                'completed': ue.completed
+            }
+            for ue in user_exercises
+        ]
+
+        reports_info = [
+            {
+                'date': report.date.strftime('%Y-%m-%d'),
+                'pain_level': report.pain_level,
+                'notes': report.notes
+            }
+            for report in recent_reports
+        ]
+
+        system_prompt = f"""
+        You are a physiotherapy assistant AI for a rehabilitation app. 
+
+        GUIDELINES:
+        1. Start with a disclaimer.
+        2. Be encouraging.
+        3. Emphasize form and safety.
+        4. Tailor suggestions to the user's pain and exercise history.
+        5. Do not diagnose.
+        6. Recommend seeking professional help when needed.
+
+        USER PROFILE:
+        - Injury: {user.injury_type.name if user.injury_type else "Not specified"}
+        - Exercises: {json.dumps(exercises_info)}
+        - Reports: {json.dumps(reports_info)}
+        """
+
+        # -- Chat Memory: Pull from session or init --
+        if 'chat_history' not in request.session:
+            request.session['chat_history'] = []
+
+        chat_history = request.session['chat_history']
+
+        # Build message history: system + chat memory + new user message
+        messages = [{"role": "system", "content": system_prompt}]
+        messages += chat_history
+        messages.append({"role": "user", "content": user_message})
+
+        # Call OpenAI
+        response = openai.chat.completions.create(
+            model="gpt-4",
+            messages=messages,
+            max_tokens=500,
+            temperature=0.7
+        )
+
+        ai_message = response.choices[0].message.content
+
+        # Update chat history in session
+        chat_history.append({"role": "user", "content": user_message})
+        chat_history.append({"role": "assistant", "content": ai_message})
+        request.session['chat_history'] = chat_history
+
+        return Response({'message': ai_message, 'status': 'success'})
+
+    except Exception as e:
+        return Response({'message': f"Sorry, error: {str(e)}", 'status': 'error'}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def reset_chat_history(request):
+    request.session['chat_history'] = []
+    return Response({'message': 'Chat history reset.'})
 
 def reset_user_exercises(user):
     now = timezone.now()
