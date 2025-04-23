@@ -5,9 +5,12 @@ import {
   ScrollView,
   ActivityIndicator,
   Dimensions,
+  Alert,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import tw from "tailwind-react-native-classnames";
+import * as SecureStore from "expo-secure-store";
 import { Ionicons } from "@expo/vector-icons";
 import Entypo from "@expo/vector-icons/Entypo";
 import { LineChart, BarChart } from "react-native-chart-kit";
@@ -33,13 +36,24 @@ function AdherenceGraph() {
   const [averageAdherence, setAverageAdherence] = useState(0);
   const [exerciseHistory, setExerciseHistory] = useState([]);
   const [error, setError] = useState(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     // Get the stored token from AsyncStorage or another storage method
     const getToken = async () => {
       try {
         // Replace with your token retrieval method
-        const token = "your-auth-token"; // This should be dynamically retrieved
+        const token = await SecureStore.getItemAsync("access_token");
+
+        if (!token) {
+          Alert.alert("Login Required", "Please sign in to continue", [
+            {
+              text: "OK",
+              onPress: () => navigation.navigate("login" as never),
+            },
+          ]);
+          return;
+        }
 
         // Fetch adherence stats from the API
         const response = await axios.get(
@@ -47,6 +61,7 @@ function AdherenceGraph() {
           {
             headers: {
               Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
             },
           }
         );
@@ -57,13 +72,76 @@ function AdherenceGraph() {
           setExerciseHistory(response.data.history);
           setLoading(false);
         }
-      } catch (err) {
-        console.error("Error fetching adherence data:", err);
-        setError("Failed to load adherence data");
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          try {
+            // Attempt token refresh
+            const refreshToken = await SecureStore.getItemAsync(
+              "refresh_token"
+            );
+            if (!refreshToken) throw new Error("No refresh token available");
+
+            const refreshUrl =
+              process.env.API_URL || "http://192.168.68.111:8000";
+            const refreshResponse = await axios.post(
+              `${refreshUrl}/api/token/refresh/`,
+              { refresh: refreshToken }
+            );
+
+            // Store new tokens
+            const newToken = refreshResponse.data.access;
+            const newRefreshToken = refreshResponse.data.refresh;
+
+            await Promise.all([
+              SecureStore.setItemAsync("access_token", newToken),
+              SecureStore.setItemAsync("refresh_token", newRefreshToken),
+            ]);
+
+            // Retry both requests with new token
+            const api = axios.create({
+              baseURL: process.env.API_URL || "http://192.168.68.111:8000",
+              timeout: 10000,
+              headers: { Authorization: `Bearer ${newToken}` },
+            });
+
+            const response = await axios.get(
+              `${api}/reports/adherence_stats/`,
+              {}
+            );
+            if (response.data) {
+              setAdherenceData(response.data.chart_data);
+              setAverageAdherence(response.data.average_adherence);
+              setExerciseHistory(response.data.history);
+              setLoading(false);
+            }
+          } catch (refreshError) {
+            console.error("Token refresh failed:", refreshError);
+
+            // Clear tokens and redirect
+            await Promise.all([
+              SecureStore.deleteItemAsync("access_token"),
+              SecureStore.deleteItemAsync("refresh_token"),
+            ]);
+
+            Alert.alert("Session Expired", "Please login again", [
+              {
+                text: "OK",
+                onPress: () => navigation.navigate("login" as never),
+              },
+            ]);
+          }
+        } else {
+          // Handle other errors
+          console.error("API request failed:", error);
+          Alert.alert(
+            "Error",
+            "Failed to load your exercises. Please check your connection and try again."
+          );
+        }
+      } finally {
         setLoading(false);
       }
     };
-
     getToken();
   }, []);
 
@@ -86,13 +164,10 @@ function AdherenceGraph() {
   return (
     <ScrollView style={tw`flex-1 bg-white px-4`}>
       {/* Average Adherence Card */}
-      <View style={tw`items-center mt-6`}>
+      <View style={tw`items-center mt-32`}>
         <View style={tw`border-2 border-gray-300 rounded-lg w-full p-4`}>
           <Text style={tw`text-center text-lg font-bold`}>
-            Average Adherence
-          </Text>
-          <Text style={tw`text-center text-3xl font-bold text-teal-500 mt-2`}>
-            {averageAdherence}%
+            Average Adherence : {averageAdherence}%
           </Text>
         </View>
       </View>
@@ -162,13 +237,24 @@ function PainLevelGraph() {
   const [averagePain, setAveragePain] = useState(0);
   const [painHistory, setPainHistory] = useState([]);
   const [error, setError] = useState(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     // Get the stored token from AsyncStorage or another storage method
     const getToken = async () => {
       try {
         // Replace with your token retrieval method
-        const token = "your-auth-token"; // This should be dynamically retrieved
+        const token = await SecureStore.getItemAsync("access_token");
+
+        if (!token) {
+          Alert.alert("Login Required", "Please sign in to continue", [
+            {
+              text: "OK",
+              onPress: () => navigation.navigate("login" as never),
+            },
+          ]);
+          return;
+        }
 
         // Fetch pain stats from the API
         const response = await axios.get(`${API_URL}/reports/pain_stats/`, {
@@ -183,13 +269,73 @@ function PainLevelGraph() {
           setPainHistory(response.data.history);
           setLoading(false);
         }
-      } catch (err) {
-        console.error("Error fetching pain data:", err);
-        setError("Failed to load pain level data");
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          try {
+            // Attempt token refresh
+            const refreshToken = await SecureStore.getItemAsync(
+              "refresh_token"
+            );
+            if (!refreshToken) throw new Error("No refresh token available");
+
+            const refreshUrl =
+              process.env.API_URL || "http://192.168.68.111:8000";
+            const refreshResponse = await axios.post(
+              `${refreshUrl}/api/token/refresh/`,
+              { refresh: refreshToken }
+            );
+
+            // Store new tokens
+            const newToken = refreshResponse.data.access;
+            const newRefreshToken = refreshResponse.data.refresh;
+
+            await Promise.all([
+              SecureStore.setItemAsync("access_token", newToken),
+              SecureStore.setItemAsync("refresh_token", newRefreshToken),
+            ]);
+
+            // Retry both requests with new token
+            const api = axios.create({
+              baseURL: process.env.API_URL || "http://192.168.68.111:8000",
+              timeout: 10000,
+              headers: { Authorization: `Bearer ${newToken}` },
+            });
+
+            const response = await axios.get(`${api}/reports/pain_stats/`, {});
+            if (response.data) {
+              setPainData(response.data.chart_data);
+              setAveragePain(response.data.average_pain);
+              setPainHistory(response.data.history);
+              setLoading(false);
+            }
+          } catch (refreshError) {
+            console.error("Token refresh failed:", refreshError);
+
+            // Clear tokens and redirect
+            await Promise.all([
+              SecureStore.deleteItemAsync("access_token"),
+              SecureStore.deleteItemAsync("refresh_token"),
+            ]);
+
+            Alert.alert("Session Expired", "Please login again", [
+              {
+                text: "OK",
+                onPress: () => navigation.navigate("login" as never),
+              },
+            ]);
+          }
+        } else {
+          // Handle other errors
+          console.error("API request failed:", error);
+          Alert.alert(
+            "Error",
+            "Failed to load your exercises. Please check your connection and try again."
+          );
+        }
+      } finally {
         setLoading(false);
       }
     };
-
     getToken();
   }, []);
 
@@ -212,13 +358,10 @@ function PainLevelGraph() {
   return (
     <ScrollView style={tw`flex-1 bg-white px-4`}>
       {/* Average Pain Level Card */}
-      <View style={tw`items-center mt-6`}>
+      <View style={tw`items-center mt-32`}>
         <View style={tw`border-2 border-gray-300 rounded-lg w-full p-4`}>
           <Text style={tw`text-center text-lg font-bold`}>
-            Average Pain Level
-          </Text>
-          <Text style={tw`text-center text-3xl font-bold text-red-500 mt-2`}>
-            {averagePain}/10
+            Average Pain Level : {averagePain}/10
           </Text>
         </View>
       </View>
