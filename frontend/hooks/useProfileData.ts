@@ -2,10 +2,6 @@ import { useState, useEffect } from "react";
 import { Alert } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
-import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParamsList } from "@/types/navigation";
-import { injuryTypesData } from "@/types/Injury";
 import { userProfileType } from "@/types/user";
 import { useAuth } from "./useAuth";
 import { useInjuryData } from "./useInjuryData";
@@ -24,8 +20,6 @@ export function useProfileData() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [loading, setLoading] = useState(true);
   const { createApiInstance, refreshToken } = useAuth();
-  const navigation =
-    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
 
   const fetchUserProfile = async () => {
     try {
@@ -64,7 +58,6 @@ export function useProfileData() {
   };
 
   useEffect(() => {
-    useInjuryData();
     fetchUserProfile();
   }, []);
 
