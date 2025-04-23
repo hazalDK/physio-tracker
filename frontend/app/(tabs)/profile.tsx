@@ -6,6 +6,7 @@ import {
   Modal,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as SecureStore from "expo-secure-store";
@@ -197,8 +198,8 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <View style={tw`flex-1 bg-white justify-center items-center`}>
-        <Text style={tw`text-lg`}>Loading...</Text>
+      <View style={tw`flex-1 items-center justify-center bg-white`}>
+        <ActivityIndicator size="large" color="#14b8a6" />
       </View>
     );
   }

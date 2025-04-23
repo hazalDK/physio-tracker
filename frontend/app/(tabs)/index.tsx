@@ -1,6 +1,14 @@
 import React, { useEffect, useState, useCallback } from "react";
 import * as Progress from "react-native-progress";
-import { Text, View, Image, FlatList, Pressable, Alert } from "react-native";
+import {
+  Text,
+  View,
+  Image,
+  FlatList,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import axios from "axios";
 import tw from "tailwind-react-native-classnames";
@@ -196,8 +204,8 @@ export default function Index() {
 
   if (loading) {
     return (
-      <View style={tw`flex-1 bg-white justify-center items-center`}>
-        <Text style={tw`text-lg`}>Loading...</Text>
+      <View style={tw`flex-1 items-center justify-center bg-white`}>
+        <ActivityIndicator size="large" color="#14b8a6" />
       </View>
     );
   }

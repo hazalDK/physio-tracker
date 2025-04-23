@@ -5,6 +5,7 @@ import {
   Alert,
   Modal,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
 import * as SecureStore from "expo-secure-store";
@@ -202,7 +203,12 @@ export default function Exercise() {
     }
   }, []);
 
-  const numbers = Array.from({ length: 20 }, (_, i) => ({
+  const repsVals = Array.from({ length: userExercise?.reps ?? 20 }, (_, i) => ({
+    label: `${i + 1}`,
+    value: i + 1,
+  }));
+
+  const setsVals = Array.from({ length: userExercise?.sets ?? 10 }, (_, i) => ({
     label: `${i + 1}`,
     value: i + 1,
   }));
@@ -375,8 +381,8 @@ export default function Exercise() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Loading...</Text>
+      <View style={tw`flex-1 items-center justify-center bg-white`}>
+        <ActivityIndicator size="large" color="#14b8a6" />
       </View>
     );
   }
@@ -423,13 +429,13 @@ export default function Exercise() {
           Reps: {userExercise?.reps}
           <Text style={[tw`text-4xl`, { color: "#14b8a6" }]}> • </Text>
           Sets: {userExercise?.sets}
-          {userExercise?.hold ??
-            (0 > 0 && (
-              <>
-                <Text style={[tw`text-4xl`, { color: "#14b8a6" }]}> • </Text>
-                Hold: {userExercise?.hold}
-              </>
-            ))}
+          {(userExercise?.hold ?? 0) > 0 && (
+            <>
+              {"  "}
+              <Text style={[tw`text-4xl`, { color: "#14b8a6" }]}>• </Text>
+              <Text>Hold: {userExercise?.hold}s</Text>
+            </>
+          )}
         </Text>
 
         <Text style={tw`text-lg text-center font-semibold mt-2`}>
@@ -482,7 +488,7 @@ export default function Exercise() {
                       style={tw`border border-gray-300 rounded-lg p-3 mt-1`}
                       placeholderStyle={tw`text-gray-500`}
                       selectedTextStyle={tw`text-black`}
-                      data={numbers}
+                      data={repsVals}
                       labelField="label"
                       valueField="value"
                       placeholder="Select number"
@@ -498,7 +504,7 @@ export default function Exercise() {
                       style={tw`border border-gray-300 rounded-lg p-3 mt-1`}
                       placeholderStyle={tw`text-gray-500`}
                       selectedTextStyle={tw`text-black`}
-                      data={numbers}
+                      data={setsVals}
                       labelField="label"
                       valueField="value"
                       placeholder="Select number"
