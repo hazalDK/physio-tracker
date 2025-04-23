@@ -1,5 +1,5 @@
 import { Link } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 import { View, Text, Pressable, TouchableOpacity, Alert } from "react-native";
@@ -8,7 +8,7 @@ import { TextInput } from "react-native-gesture-handler";
 import tw from "tailwind-react-native-classnames";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
-import { injuryTypesData } from "@/types/Injury";
+import { useInjuryData } from "@/hooks/useInjuryData";
 
 export default function Signup() {
   const [firstName, setFirstName] = useState("");
@@ -20,7 +20,7 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState(new Date());
   const [open, setOpen] = useState(false);
-  const [injuryTypes, setInjuryTypes] = useState([] as injuryTypesData[]);
+  const { injuryTypes, loading: injuryLoading } = useInjuryData();
   const [injuryType, setInjuryType] = useState();
   const [passwordError, setPasswordError] = useState("");
   const [securePassword, setSecurePassword] = useState(false);
@@ -117,21 +117,6 @@ export default function Signup() {
       Alert.alert("Registration Failed", errorMessage);
     }
   }
-
-  useEffect(() => {
-    const fetchInjuryTypes = async () => {
-      try {
-        const apiUrl = process.env.API_URL || "http://192.168.68.111:8000";
-        const response = await axios.get<injuryTypesData[]>(
-          `${apiUrl}/injury-types/`
-        );
-        setInjuryTypes(response.data);
-      } catch (error) {
-        console.error("Error fetching injury types:", error);
-      }
-    };
-    fetchInjuryTypes();
-  }, []);
 
   const validatePassword = (password: string) => {
     const regex =

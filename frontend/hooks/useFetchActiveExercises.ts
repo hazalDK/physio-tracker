@@ -38,11 +38,8 @@ export function useFetchActiveExercises() {
           const newToken = await refreshToken();
           if (!newToken) return;
 
-          const api = axios.create({
-            baseURL: process.env.API_URL || "http://192.168.68.111:8000",
-            timeout: 10000,
-            headers: { Authorization: `Bearer ${newToken}` },
-          });
+          const api = await createApiInstance();
+          if (!api) return;
 
           const [retryUserExercises, retryExercises] = await Promise.all([
             api.get("/user-exercises/"),

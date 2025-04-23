@@ -42,14 +42,8 @@ export function useExerciseData(
             const newToken = await refreshToken();
             if (!newToken) return;
 
-            const api = axios.create({
-              baseURL: process.env.API_URL || "http://192.168.68.111:8000",
-              timeout: 10000,
-              headers: {
-                Authorization: `Bearer ${newToken}`,
-                "Content-Type": "application/json",
-              },
-            });
+            const api = await createApiInstance();
+            if (!api) return;
 
             const [retryUserExercises, retryExercises] = await Promise.all([
               api.get(`/user-exercises/${userExerciseId}/`),

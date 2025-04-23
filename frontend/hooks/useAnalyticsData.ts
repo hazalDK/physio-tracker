@@ -1,14 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
-import { Alert } from "react-native";
-import * as SecureStore from "expo-secure-store";
 import axios from "axios";
-import { RootStackParamsList } from "@/types/navigation";
 import { useAuth } from "./useAuth";
-
-// API URL from config
-const API_URL = "http://192.168.68.111:8000";
 
 // Helper function to format date
 const formatDate = (date: Date) => {
@@ -40,9 +32,6 @@ export function useAnalyticsData<T>(
   // Add week navigation state
   const [currentEndDate, setCurrentEndDate] = useState(new Date());
   const [weekTitle, setWeekTitle] = useState("Current Week");
-
-  const navigation =
-    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
   const { createApiInstance, refreshToken } = useAuth();
 
   // Function to go to previous week
@@ -105,67 +94,37 @@ export function useAnalyticsData<T>(
   const fetchData = async (endDate: Date) => {
     setLoading(true);
     try {
-      const token = await SecureStore.getItemAsync("access_token");
+      const api = await createApiInstance();
+      if (!api) return;
 
-      if (!token) {
-        Alert.alert("Login Required", "Please sign in to continue", [
-          { text: "OK", onPress: () => navigation.navigate("login") },
-        ]);
-        return;
-      }
+      try {
+        // Fetch stats from the API with date parameter
+        const response = await api.get(
+          `${endpoint}?end_date=${formatDate(endDate)}`
+        );
+        if (response.data) {
+          setChartData(response.data.chart_data);
 
-      // Fetch stats from the API with date parameter
-      const response = await axios.get(
-        `${API_URL}${endpoint}?end_date=${formatDate(endDate)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          if (dataType === "adherence") {
+            setAverage(response.data.average_adherence);
+          } else {
+            setAverage(response.data.average_pain);
+          }
+
+          setHistory(response.data.history);
         }
-      );
-
-      if (response.data) {
-        setChartData(response.data.chart_data);
-
-        if (dataType === "adherence") {
-          setAverage(response.data.average_adherence);
-        } else {
-          setAverage(response.data.average_pain);
-        }
-
-        setHistory(response.data.history);
-      }
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        try {
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
           // Attempt token refresh
-          const refreshToken = await SecureStore.getItemAsync("refresh_token");
-          if (!refreshToken) throw new Error("No refresh token available");
+          const newToken = await refreshToken();
+          if (!newToken) return;
 
-          const refreshResponse = await axios.post(
-            `${API_URL}/api/token/refresh/`,
-            { refresh: refreshToken }
-          );
-
-          // Store new tokens
-          const newToken = refreshResponse.data.access;
-          const newRefreshToken = refreshResponse.data.refresh;
-
-          await Promise.all([
-            SecureStore.setItemAsync("access_token", newToken),
-            SecureStore.setItemAsync("refresh_token", newRefreshToken),
-          ]);
+          const api = await createApiInstance();
+          if (!api) return;
 
           // Retry with new token
-          const response = await axios.get(
-            `${API_URL}${endpoint}?end_date=${formatDate(endDate)}`,
-            {
-              headers: {
-                Authorization: `Bearer ${newToken}`,
-                "Content-Type": "application/json",
-              },
-            }
+          const response = await api.get(
+            `${endpoint}?end_date=${formatDate(endDate)}`
           );
 
           if (response.data) {
@@ -179,28 +138,22 @@ export function useAnalyticsData<T>(
 
             setHistory(response.data.history);
           }
-        } catch (refreshError) {
-          console.error("Token refresh failed:", refreshError);
-
-          // Clear tokens and redirect
-          await Promise.all([
-            SecureStore.deleteItemAsync("access_token"),
-            SecureStore.deleteItemAsync("refresh_token"),
-          ]);
-
-          Alert.alert("Session Expired", "Please login again", [
-            { text: "OK", onPress: () => navigation.navigate("login") },
-          ]);
+        } else {
+          // Handle other errors
+          console.error("API request failed:", error);
+          setError(
+            `Failed to load your ${
+              dataType === "adherence" ? "exercises" : "pain data"
+            }. Please check your connection and try again.`
+          );
         }
-      } else {
-        // Handle other errors
-        console.error("API request failed:", error);
-        setError(
-          `Failed to load your ${
-            dataType === "adherence" ? "exercises" : "pain data"
-          }. Please check your connection and try again.`
-        );
       }
+    } catch (error) {
+      console.error(
+        `Failed to load your ${
+          dataType === "adherence" ? "exercises" : "pain data"
+        }.`
+      );
     } finally {
       setLoading(false);
     }
