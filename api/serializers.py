@@ -89,8 +89,6 @@ class ReportExerciseSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ReportSerializer(serializers.ModelSerializer):
-    # exercises = ReportExerciseSerializer(many=True, read_only=True, source='report_exercises')
-    # exercises_completed = UserExerciseSerializer(many=True, read_only=False)
     exercises_completed = serializers.PrimaryKeyRelatedField(
         queryset=UserExercise.objects.all(), many=True, required=False
     )

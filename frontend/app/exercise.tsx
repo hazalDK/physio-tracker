@@ -5,7 +5,6 @@ import {
   Alert,
   Modal,
   TouchableWithoutFeedback,
-  TextInput,
 } from "react-native";
 import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
 import * as SecureStore from "expo-secure-store";
@@ -62,9 +61,6 @@ export default function Exercise() {
   // Use optional chaining to safely access route params
   const exerciseId = route?.params?.exerciseId;
   const userExerciseId = route?.params?.userExerciseId;
-
-  console.log("Exercise data:", exerciseId);
-  console.log("User exercise data:", userExerciseId);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -217,8 +213,13 @@ export default function Exercise() {
   }));
 
   const handleSave = async () => {
-    // Save logic here
     let token = await SecureStore.getItemAsync("access_token");
+
+    if (!reps || !sets || !painLevel) {
+      Alert.alert("Error", "Please fill all required fields");
+      return;
+    }
+
     const api = axios.create({
       baseURL: process.env.API_URL || "http://192.168.68.111:8000",
       timeout: 10000,
@@ -228,23 +229,133 @@ export default function Exercise() {
       },
     });
 
-    // 3. Use Promise.all for parallel requests
     try {
-      await api.put(`/user-exercises/${userExerciseId}/`, {
+      const response = await api.put(`/user-exercises/${userExerciseId}/`, {
         reps: reps,
         sets: sets,
         pain_level: painLevel,
         completed: true,
       });
-      Alert.alert("Success", "Exercise completed successfully", [
-        {
-          text: "OK",
-          onPress: () => {
-            setShowCompletionForm(false);
-            navigation.goBack();
+
+      // Close the completion form
+      setShowCompletionForm(false);
+
+      // Check the pain level to determine if we should show increase or decrease dialog
+      if (painLevel <= 3) {
+        try {
+          // First check if we can increase difficulty
+          const canIncreaseResponse = await api.get(
+            `/user-exercises/${userExerciseId}/can_increase/`
+          );
+
+          if (canIncreaseResponse.data.can_increase) {
+            // Show confirmation dialog for increasing difficulty (low pain)
+            Alert.alert(
+              "Exercise Progress",
+              "Your pain level is low and you've had consistent low pain for 3 days. Would you like to increase the difficulty for next time?",
+              [
+                {
+                  text: "No",
+                  onPress: () => navigation.goBack(),
+                  style: "cancel",
+                },
+                {
+                  text: "Yes",
+                  onPress: async () => {
+                    try {
+                      // Call API to increase difficulty
+                      await api.post(
+                        `/user-exercises/${userExerciseId}/confirm_increase/`,
+                        {
+                          confirm: "yes",
+                        }
+                      );
+                      Alert.alert(
+                        "Success",
+                        "Exercise difficulty increased for next time!"
+                      );
+                      navigation.goBack();
+                    } catch (error) {
+                      console.error("Error increasing difficulty:", error);
+                      Alert.alert(
+                        "Error",
+                        "Failed to increase difficulty. Please try again."
+                      );
+                      navigation.goBack();
+                    }
+                  },
+                },
+              ]
+            );
+          } else {
+            Alert.alert(
+              "Exercise Progress",
+              "Your pain level is low. Keep it up for 3 days to unlock higher difficulty!",
+              [
+                {
+                  text: "OK",
+                  onPress: () => navigation.goBack(),
+                },
+              ]
+            );
+          }
+        } catch (error) {
+          console.error("Error checking increase eligibility:", error);
+          Alert.alert("Success", "Exercise completed successfully", [
+            {
+              text: "OK",
+              onPress: () => navigation.goBack(),
+            },
+          ]);
+        }
+      } else if (painLevel > 5) {
+        // Show confirmation dialog for decreasing difficulty (high pain)
+        Alert.alert(
+          "Exercise Difficulty",
+          "Your pain level is high. Would you like to decrease the difficulty for next time?",
+          [
+            {
+              text: "No",
+              onPress: () => navigation.goBack(),
+              style: "cancel",
+            },
+            {
+              text: "Yes",
+              onPress: async () => {
+                try {
+                  // Call API to decrease difficulty
+                  await api.post(
+                    `/user-exercises/${userExerciseId}/confirm_decrease/`,
+                    {
+                      confirm: "yes",
+                    }
+                  );
+                  Alert.alert(
+                    "Success",
+                    "Exercise difficulty decreased for next time!"
+                  );
+                  navigation.goBack();
+                } catch (error) {
+                  console.error("Error decreasing difficulty:", error);
+                  Alert.alert(
+                    "Error",
+                    "Failed to decrease difficulty. Please try again."
+                  );
+                  navigation.goBack();
+                }
+              },
+            },
+          ]
+        );
+      } else {
+        // Regular success message for moderate pain level
+        Alert.alert("Success", "Exercise completed successfully", [
+          {
+            text: "OK",
+            onPress: () => navigation.goBack(),
           },
-        },
-      ]);
+        ]);
+      }
     } catch (error) {
       console.error("Error saving exercise:", error);
       Alert.alert(

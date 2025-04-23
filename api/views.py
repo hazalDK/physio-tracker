@@ -62,17 +62,15 @@ def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
                             print("Pain level is high - beginner")
                             # If pain level is high, stay at beginner
                             message = "You are already at the Beginner level."
-                            response_data = {
-                                'exercise': current_exercise,
-                                'message': message,
-                            }
-                            return JsonResponse(response_data)
+                            return None  # Return None instead of JsonResponse
+
             except Exercise.DoesNotExist as e:
                 print(e)
+                return None
 
             # Create a new UserExercise instance with the updated exercise
             if new_exercise:
-                user_exercises = UserExercise.objects.filter(user=user, exercise = new_exercise)
+                user_exercises = UserExercise.objects.filter(user=user, exercise=new_exercise)
                 if user_exercises.exists():
                     new_user_exercise = user_exercises.first()
                     new_user_exercise.pain_level = 0
@@ -89,7 +87,6 @@ def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
                         is_active=True,  # Mark the new instance as active
                     )
                 print(f"User {user} reassigned to {new_exercise.name} ({new_exercise.difficulty_level}).")
-
                 return new_user_exercise
             return None
     
@@ -97,25 +94,14 @@ def has_consistent_low_pain(user_exercise, num_reports=3, max_pain_level=4):
     """
     Check if the user has consistent low pain levels in their recent reports.
     """
-    # # Debug: Print filter criteria
-    # print("Report ID:", report.id)
-    # print("UserExercise ID:", user_exercise.id)
 
     # Retrieve all ReportExercise entries for the given report and user_exercise
     all_reports = ReportExercise.objects.filter(
         user_exercise=user_exercise,  
     ).order_by('-id') 
 
-    # Debug: Print total number of reports
-    # print("Total Reports Found:", all_reports.count())
-
     # Retrieve the most recent `num_reports`
     recent_reports = all_reports[:num_reports]
-
-    # Debug: Print recent reports
-    # print("Recent Reports:")
-    # for re in recent_reports:
-    #     print(re.id, re.report.date, re.user_exercise.exercise.name, re.pain_level)
 
     # Ensure there are enough reports
     if len(recent_reports) < num_reports:
@@ -302,7 +288,7 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """
-        Override update method to update UserExercise and preserve historical data.
+        Override update method to update UserExercise and create/update Report
         """
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
@@ -312,68 +298,146 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         completed = serializer.validated_data.get('completed', instance.completed)
         completed_sets = serializer.validated_data.get('sets', instance.sets)
         completed_reps = serializer.validated_data.get('reps', instance.reps)
-        instance.exercise = serializer.validated_data.get('exercise', instance.exercise)
+        updated_pain_level = serializer.validated_data.get('pain_level', instance.pain_level)
+        
+        # Update the UserExercise instance
+        instance.completed = completed
+        instance.pain_level = updated_pain_level
         instance.save()
 
-        if not completed:
-            return Response(serializer.data)
-        
-        updated_pain_level = serializer.validated_data.get('pain_level', instance.pain_level)
-
-        # Create a new UserExercise instance with the updated data
-        new_user_exercise = update_exercise_level_based_on_pain(request.user, updated_pain_level, instance.exercise.name)
-
-        # Get today's date
-        today = timezone.now().date()
-
-        # Get the latest report for the user for today
-        latest_report = Report.objects.filter(user=request.user, date=today).first()
-        if not latest_report:
-            latest_report = Report.objects.create(user=request.user, date=today)
-        
-        if has_consistent_low_pain(instance):
-            new_user_exercise = increase_difficulty(request.user, instance.exercise.name)
-
-        # Retrieve the latest ReportExercise for today
-        latest_report_exercise = ReportExercise.objects.filter(
-            user_exercise=instance,
-            report__date=today  # Filter by today's date
-        ).order_by('-id').first()
-
-        # If no report exists, create one
-        if not latest_report_exercise:
-            ReportExercise.objects.create(
-                report=latest_report,
-                user_exercise=instance,
-                completed_sets=completed_sets,
-                completed_reps=completed_reps,
-                pain_level=instance.pain_level,
-            )
-        else:
-            # Update the latest report exercise with the completed sets and reps
-            latest_report_exercise.completed_sets = completed_sets
-            latest_report_exercise.completed_reps = completed_reps
-            latest_report_exercise.pain_level = instance.pain_level
-            latest_report_exercise.save()
-        
-
-        # Add the new UserExercise to the Report's exercises_completed
+        # If the exercise is marked as completed, create/update the Report
         if completed:
-            instance.pain_level = updated_pain_level
-            instance.completed = completed
-            instance.is_active = True
-            instance.save()
-            latest_report.exercises_completed.add(instance)
-        if new_user_exercise:
-            if new_user_exercise.completed:
-                latest_report.exercises_completed.add(new_user_exercise)
-            # Mark the old UserExercise as inactive
-            instance.is_active = False
-            instance.save()
-
+            # Get today's date
+            today = timezone.now().date()
+            
+            # Get or create Report for today
+            report, created = Report.objects.get_or_create(
+                user=request.user,
+                date=today,
+                defaults={
+                    'pain_level': updated_pain_level,
+                    'notes': ''
+                }
+            )
+            
+            # Create or update the ReportExercise entry
+            report_exercise, re_created = ReportExercise.objects.update_or_create(
+                report=report,
+                user_exercise=instance,
+                defaults={
+                    'completed_sets': completed_sets,
+                    'completed_reps': completed_reps,
+                    'pain_level': updated_pain_level
+                }
+            )
+            
+            # Update the exercise difficulty level based on pain
+            new_user_exercise = update_exercise_level_based_on_pain(
+                request.user, 
+                updated_pain_level, 
+                instance.exercise.name
+            )
+            
+            # Check for consistent low pain to increase difficulty
+            if has_consistent_low_pain(instance):
+                new_user_exercise = increase_difficulty(
+                    request.user, 
+                    instance.exercise.name
+                ) or new_user_exercise
+            
+            # If difficulty changed, handle the relationship updates
+            if new_user_exercise and new_user_exercise.id != instance.id:
+                # Mark the old exercise as inactive
+                instance.is_active = False
+                instance.save()
+                
+                # Add the new exercise to the report
+                report.exercises_completed.add(new_user_exercise)
+                
+                # Update the response to include the new exercise
+                serializer = self.get_serializer(new_user_exercise)
+            
+            # Recalculate the report's overall pain level (average across all exercises)
+            report_exercises = report.report_exercises.all()
+            if report_exercises.exists():
+                avg_pain = sum(re.pain_level for re in report_exercises) / report_exercises.count()
+                report.pain_level = avg_pain
+                report.save()
 
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['POST'])
+    def confirm_increase(self, request, pk=None):
+        user_exercise = self.get_object()
+        
+        # Check if user confirmed
+        if request.data.get('confirm') == 'yes':
+            # Get the current exercise and increase difficulty
+            increased_exercise = increase_difficulty(
+                request.user,
+                user_exercise.exercise.name
+            )
+            
+            if increased_exercise:
+                # Mark the old exercise as inactive
+                user_exercise.is_active = False
+                user_exercise.save()
+                
+                serializer = self.get_serializer(increased_exercise)
+                return Response({
+                    'message': "Exercise difficulty increased successfully",
+                    'user_exercise': serializer.data
+                })
+            else:
+                return Response({
+                    'message': "Already at maximum difficulty level",
+                    'user_exercise': self.get_serializer(user_exercise).data
+                })
+        else:
+            return Response({
+                'message': "Increase cancelled",
+                'user_exercise': self.get_serializer(user_exercise).data
+            })
 
+    @action(detail=True, methods=['POST'])
+    def confirm_decrease(self, request, pk=None):
+        user_exercise = self.get_object()
+        
+        # Check if user confirmed
+        if request.data.get('confirm') == 'yes':
+            # Get the current exercise and decrease difficulty
+            decreased_exercise = update_exercise_level_based_on_pain(
+                request.user,
+                4,  # Using pain level 4 to trigger decrease
+                user_exercise.exercise.name
+            )
+            
+            if decreased_exercise:
+                # Mark the old exercise as inactive
+                user_exercise.is_active = False
+                user_exercise.save()
+                
+                serializer = self.get_serializer(decreased_exercise)
+                return Response({
+                    'message': "Exercise difficulty decreased successfully",
+                    'user_exercise': serializer.data
+                })
+            else:
+                return Response({
+                    'message': "Already at minimum difficulty level",
+                    'user_exercise': self.get_serializer(user_exercise).data
+                })
+        else:
+            return Response({
+                'message': "Decrease cancelled",
+                'user_exercise': self.get_serializer(user_exercise).data
+            
+            })
+    @action(detail=True, methods=['GET'])
+    def can_increase(self, request, pk=None):
+        user_exercise = self.get_object()
+        can_increase = has_consistent_low_pain(user_exercise)
+        return Response({'can_increase': can_increase})
 class ReportViewSet(viewsets.ModelViewSet):
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
@@ -385,10 +449,9 @@ class ReportViewSet(viewsets.ModelViewSet):
         """
         Override create method to handle pain level logic and track completed reps/sets.
         """
-        instance = self.get_object()
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
 
         # Create the report
         report = Report.objects.create(
@@ -401,53 +464,75 @@ class ReportViewSet(viewsets.ModelViewSet):
         # Add exercises with completed reps/sets
         exercises_completed_data = request.data.get('exercises_completed', [])
         total_pain_level = 0
-        num_exercises = instance.exercises_completed.count()
+        num_exercises = 0
 
         for exercise_data in exercises_completed_data:
             user_exercise_id = exercise_data.get('user_exercise_id')
 
-            user_exercise = UserExercise.objects.get(id=user_exercise_id)
-            latest_report_exercise = ReportExercise.objects.filter(user_exercise = user_exercise).order_by('-id').first()
-            exercise_pain_level = latest_report_exercise.pain_level
+            try:
+                user_exercise = UserExercise.objects.get(id=user_exercise_id)
+                
+                latest_report_exercise = ReportExercise.objects.filter(
+                    user_exercise=user_exercise
+                ).order_by('-id').first()
+                
+                # Default exercise pain level
+                exercise_pain_level = user_exercise.pain_level
+                
+                # If report exercise exists, get its pain level
+                if latest_report_exercise:
+                    exercise_pain_level = latest_report_exercise.pain_level
+                    
+                    # Update the latest report exercise
+                    latest_report_exercise.pain_level = user_exercise.pain_level
+                    latest_report_exercise.save()
+                else:
+                    # Create a new report exercise
+                    ReportExercise.objects.create(
+                        report=report,  # ISSUE 4: Was using 'instance' instead of 'report'
+                        user_exercise=user_exercise,
+                        pain_level=user_exercise.pain_level,
+                        completed_sets=user_exercise.sets,  # ISSUE 5: Missing these fields
+                        completed_reps=user_exercise.reps
+                    )
 
+                # Add the UserExercise to the Report's exercises_completed
+                report.exercises_completed.add(user_exercise)  # ISSUE 6: Was using 'instance' in some places
 
-            # If no report exists, create one
-            if not latest_report_exercise:
-                ReportExercise.objects.create(
-                    report=instance,
-                    user_exercise=user_exercise,
-                    pain_level=user_exercise.pain_level,
+                # Accumulate pain level for average calculation
+                total_pain_level += exercise_pain_level
+                num_exercises += 1  # ISSUE 7: Increment the counter
+
+                # Update exercise level based on pain level
+                updated_exercise = update_exercise_level_based_on_pain(
+                    request.user, 
+                    exercise_pain_level, 
+                    user_exercise.exercise.name
                 )
-            else:
-                # Update the latest report exercise with the completed sets and reps
-                latest_report_exercise.pain_level = user_exercise.pain_level
-                latest_report_exercise.save()
+                
+                if updated_exercise:
+                    user_exercise = updated_exercise
 
-            # Add the UserExercise to the Report's exercises_completed
-            report.exercises_completed.add(user_exercise)
-
-            # Accumulate pain level for average calculation
-            total_pain_level += exercise_pain_level
-
-            # Update exercise level based on pain level
-            if update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name) is not None:
-                user_exercise = update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name)
-
-            if has_consistent_low_pain(user_exercise):
-                if increase_difficulty(request.user, user_exercise.exercise.name) is not None:
-                    user_exercise = increase_difficulty(request.user, user_exercise.exercise.name)
-            
-            # Add the UserExercise to the Report's exercises_completed
-            instance.exercises_completed.add(user_exercise)
-            user_exercise.is_active = True
-            user_exercise.save()
-            
+                if has_consistent_low_pain(user_exercise):
+                    increased_exercise = increase_difficulty(
+                        request.user, 
+                        user_exercise.exercise.name
+                    )
+                    if increased_exercise:
+                        user_exercise = increased_exercise
+                
+                # Update the user exercise
+                user_exercise.is_active = True
+                user_exercise.save()
+                
+            except UserExercise.DoesNotExist:
+                continue  # Skip if exercise not found
+        
         # Calculate average pain level for the report
         if num_exercises > 0:
             average_pain_level = total_pain_level / num_exercises
-            report.pain_level = average_pain_level  # Update report's pain level with the average
+            report.pain_level = average_pain_level
             report.save()
-        report.pain_level = average_pain_level
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -465,55 +550,364 @@ class ReportViewSet(viewsets.ModelViewSet):
         instance.notes = serializer.validated_data.get('notes', instance.notes)
         instance.save()
 
-        # Add new exercises_completed without clearing existing ones
-        exercises_completed_data = request.data.get('exercises_completed', [])
-        total_pain_level = instance.pain_level * instance.exercises_completed.count()  # Start with existing pain levels
+        # Print the raw request data to see what's happening
+        print(f"Raw request data: {request.data}")
+        print(f"Type of exercises_completed: {type(request.data.get('exercises_completed'))}")
+        
+        # Get exercises_completed data with proper handling
+        exercises_data = request.data.get('exercises_completed', [])
+        
+        # Handle both string and list formats
+        if isinstance(exercises_data, str):
+            print(f"Converting string to list: {exercises_data}")
+            try:
+                # Try to parse as JSON if it's a string
+                import json
+                exercises_ids = json.loads(exercises_data)
+            except json.JSONDecodeError:
+                # If not valid JSON, try to evaluate it as a Python literal (list)
+                print("JSON decode failed, trying literal evaluation")
+                try:
+                    import ast
+                    exercises_ids = ast.literal_eval(exercises_data)
+                except (ValueError, SyntaxError):
+                    # If that fails too, try to split it if it's a comma-separated string
+                    print("Literal eval failed, trying split")
+                    exercises_ids = [id.strip() for id in exercises_data.split(',')]
+        else:
+            exercises_ids = exercises_data
+        
+        print(f"Processed exercise IDs: {exercises_ids}")
+        
+        # Ensure we have a list of integers
+        if isinstance(exercises_ids, list):
+            processed_ids = []
+            for id_item in exercises_ids:
+                if isinstance(id_item, (int, str)):
+                    try:
+                        processed_ids.append(int(id_item))  # Convert to integer
+                    except ValueError:
+                        print(f"Could not convert {id_item} to integer")
+                elif isinstance(id_item, dict) and 'id' in id_item:
+                    try:
+                        processed_ids.append(int(id_item['id']))
+                    except ValueError:
+                        print(f"Could not convert {id_item['id']} to integer")
+        else:
+            # Handle single integer case
+            try:
+                processed_ids = [int(exercises_ids)]
+            except (ValueError, TypeError):
+                print(f"Could not process exercises_ids: {exercises_ids}")
+                processed_ids = []
+
+        print(f"Final processed IDs: {processed_ids}")
+        
+        # Initialize pain calculation
+        total_pain_level = instance.pain_level * instance.exercises_completed.count()
         num_exercises = instance.exercises_completed.count()
-        for exercise_data in exercises_completed_data:
-
-            
-            user_exercise = UserExercise.objects.get(id=exercise_data)
-            user_exercise.is_active = False
-            user_exercise.save()
-            instance.exercises_completed.remove(user_exercise)
-            exercise_pain_level = user_exercise.pain_level
-
-            if not instance.exercises_completed.filter(id=user_exercise.id).exists():
-                latest_report_exercise = ReportExercise.objects.filter(user_exercise = user_exercise).order_by('-id').first()
-
-                # If no report exists, create one
-                if not latest_report_exercise:
-                    ReportExercise.objects.create(
-                        report=instance,
-                        user_exercise=user_exercise,
-                        pain_level=user_exercise.pain_level,
+        
+        # Now process each exercise with the properly processed IDs
+        for exercise_id in processed_ids:
+            try:
+                print(f"Looking up UserExercise with ID: {exercise_id}")
+                user_exercise = UserExercise.objects.get(
+                    id=exercise_id,
+                    user=request.user  # Ensure exercise belongs to current user
+                )
+                
+                print(f"Successfully found exercise: {user_exercise}")
+                
+                # Remove from report if present
+                if instance.exercises_completed.filter(id=user_exercise.id).exists():
+                    instance.exercises_completed.remove(user_exercise)
+                
+                # Get pain level from exercise
+                exercise_pain_level = user_exercise.pain_level
+                print(f"Processing exercise {user_exercise.id} with pain level {exercise_pain_level}")
+                
+                # Handle report exercise record
+                report_exercise, created = ReportExercise.objects.update_or_create(
+                    report=instance,
+                    user_exercise=user_exercise,
+                    defaults={
+                        'pain_level': user_exercise.pain_level,
+                        'completed_sets': user_exercise.sets,
+                        'completed_reps': user_exercise.reps
+                    }
+                )
+                
+                # Accumulate pain level
+                total_pain_level += exercise_pain_level
+                
+                # Update exercise level based on pain
+                updated_exercise = update_exercise_level_based_on_pain(
+                    request.user,
+                    exercise_pain_level,
+                    user_exercise.exercise.name
+                )
+                
+                # Check for difficulty increase
+                if has_consistent_low_pain(user_exercise):
+                    increased_exercise = increase_difficulty(
+                        request.user,
+                        user_exercise.exercise.name
                     )
-                else:
-                    # Update the latest report exercise with the completed sets and reps
-                    latest_report_exercise.pain_level = user_exercise.pain_level
-                    latest_report_exercise.save()
-
-            # Accumulate pain level for average calculation
-            total_pain_level += exercise_pain_level
-
-            # Update exercise level based on pain level
-            if update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name) is not None:
-                user_exercise = update_exercise_level_based_on_pain(request.user, exercise_pain_level, user_exercise.exercise.name)
-
-            if has_consistent_low_pain(user_exercise): 
-                if increase_difficulty(request.user, user_exercise.exercise.name) is not None:
-                    user_exercise = increase_difficulty(request.user, user_exercise.exercise.name)
-            
-            # Add the UserExercise to the Report's exercises_completed
-            instance.exercises_completed.add(user_exercise)
-            user_exercise.is_active = True
-            user_exercise.save()
-            
-        # Calculate average pain level for the report
+                    updated_exercise = increased_exercise or updated_exercise
+                
+                # Add the (possibly updated) exercise to report
+                if updated_exercise:
+                    instance.exercises_completed.add(updated_exercise)
+                    updated_exercise.is_active = True
+                    updated_exercise.save()
+                    
+            except UserExercise.DoesNotExist:
+                print(f"UserExercise {exercise_id} not found or doesn't belong to user")
+                continue
+        
+        # Calculate average pain if we have exercises
         if num_exercises > 0:
-            average_pain_level = total_pain_level / num_exercises
-            instance.pain_level = average_pain_level  # Update report's pain level with the average
+            instance.pain_level = total_pain_level / num_exercises
             instance.save()
 
-
         return Response(serializer.data)
+
+    @action(detail=False, methods=['GET'])
+    def adherence_stats(self, request):
+        """
+        Get adherence statistics for the authenticated user
+        Returns:
+        - daily: Daily adherence percentage for the last 7 days
+        - average: Overall average adherence percentage 
+        - history: Recent exercise history with completion details
+        """
+        try:
+            user = request.user
+            today = timezone.now().date()
+            
+            # Get last 7 days
+            start_date = today - timedelta(days=6)
+            date_range = [(start_date + timedelta(days=i)) for i in range(7)]
+            
+            # Initialize data structure
+            daily_adherence = {date: {'completed': 0, 'total': 0} for date in date_range}
+            
+            # Get all user exercises
+            user_exercises = UserExercise.objects.filter(user=user)
+            total_exercises = user_exercises.count()
+
+            # Get all reports in date range
+            reports = Report.objects.filter(
+                user=user,
+                date__gte=start_date,
+                date__lte=today
+            ).prefetch_related('exercises_completed')
+
+            # Calculate daily adherence
+            for report in reports:
+                report_date = report.date
+                if report_date in daily_adherence:
+                    report_exercises = report.exercises_completed.count()
+                    daily_adherence[report_date]['completed'] = report_exercises
+                    daily_adherence[report_date]['total'] = total_exercises
+            
+            # Calculate percentages and format for chart
+            labels = []
+            data = []
+            
+            for date in date_range:
+                day_name = date.strftime('%a')
+                labels.append(day_name)
+                
+                if daily_adherence[date]['total'] > 0:
+                    percentage = (daily_adherence[date]['completed'] / daily_adherence[date]['total']) * 100
+                else:
+                    percentage = 0
+                    
+                data.append(round(percentage))
+            
+            # Calculate overall average
+            completed_sum = sum(day['completed'] for day in daily_adherence.values())
+            total_sum = sum(day['total'] for day in daily_adherence.values() if day['total'] > 0)
+            
+            if total_sum > 0:
+                average_adherence = (completed_sum / total_sum) * 100
+            else:
+                average_adherence = 0
+            
+            # Get exercise history (last 5 reports)
+            history = []
+            recent_reports = Report.objects.filter(
+                user=user
+            ).order_by('-date')[:5]
+            
+            for report in recent_reports:
+                completed = report.exercises_completed.count()
+                if total_exercises > 0:
+                    adherence = (completed / total_exercises) * 100
+                else:
+                    adherence = 0
+                    
+                history.append({
+                    'date': report.date.strftime('%A, %B %d'),
+                    'completed': f"{completed}/{total_exercises}",
+                    'adherence': round(adherence)
+                })
+            
+            # Format response for chart
+            response_data = {
+                'chart_data': {
+                    'labels': labels,
+                    'datasets': [{'data': data}]
+                },
+                'average_adherence': round(average_adherence, 1),
+                'history': history
+            }
+            
+            return Response(response_data)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['GET'])
+    def pain_stats(self, request):
+        """
+        Get pain level statistics for the authenticated user
+        Returns:
+        - daily: Daily pain levels for the last 7 days
+        - average: Overall average pain level
+        - history: Recent exercise history with pain levels
+        """
+        try:
+            user = request.user
+            today = timezone.now().date()
+            
+            # Get last 7 days
+            start_date = today - timedelta(days=6)
+            date_range = [(start_date + timedelta(days=i)) for i in range(7)]
+            
+            # Initialize data structure
+            daily_pain = {date: {'total_pain': 0, 'count': 0} for date in date_range}
+            
+            # Get all reports in date range
+            reports = Report.objects.filter(
+                user=user,
+                date__gte=start_date,
+                date__lte=today
+            ).prefetch_related('report_exercises')
+            
+            # Calculate daily pain levels
+            for report in reports:
+                report_date = report.date
+                if report_date in daily_pain:
+                    # Get all report exercises for this report
+                    report_exercises = ReportExercise.objects.filter(report=report)
+                    pain_sum = sum(re.pain_level for re in report_exercises)
+                    count = report_exercises.count()
+                    
+                    if count > 0:
+                        daily_pain[report_date]['total_pain'] = pain_sum
+                        daily_pain[report_date]['count'] = count
+            
+            # Calculate averages and format for chart
+            labels = []
+            data = []
+            
+            for date in date_range:
+                day_name = date.strftime('%a')
+                labels.append(day_name)
+                
+                if daily_pain[date]['count'] > 0:
+                    avg_pain = daily_pain[date]['total_pain'] / daily_pain[date]['count']
+                else:
+                    avg_pain = 0
+                    
+                data.append(round(avg_pain, 1))
+            
+            # Calculate overall average pain
+            total_pain_sum = sum(day['total_pain'] for day in daily_pain.values())
+            total_count = sum(day['count'] for day in daily_pain.values())
+            
+            if total_count > 0:
+                average_pain = total_pain_sum / total_count
+            else:
+                average_pain = 0
+            
+            # Get pain history (last 5 reports)
+            history = []
+            recent_reports = Report.objects.filter(
+                user=user
+            ).order_by('-date')[:5]
+            
+            for report in recent_reports:
+                report_exercises = ReportExercise.objects.filter(report=report)
+                completed = report_exercises.count()
+                total = UserExercise.objects.filter(user=user).count()
+                
+                avg_pain = report.pain_level if report.pain_level is not None else 0
+                    
+                history.append({
+                    'date': report.date.strftime('%A, %B %d'),
+                    'exercises': f"{completed}/{total}",
+                    'painLevel': round(avg_pain, 1)
+                })
+            
+            # Format response for chart
+            response_data = {
+                'chart_data': {
+                    'labels': labels,
+                    'datasets': [{'data': data}]
+                },
+                'average_pain': round(average_pain, 1),
+                'history': history
+            }
+            
+            return Response(response_data)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['GET'])
+    def exercise_history(self, request):
+        """
+        Get detailed exercise history for the authenticated user
+        """
+        try:
+            user = request.user
+            
+            # Get all user exercises
+            user_exercises = UserExercise.objects.filter(user=user)
+            
+            # Get all reports for this user
+            reports = Report.objects.filter(user=user).order_by('-date')[:10]
+            
+            history = []
+            for report in reports:
+                report_date = report.date
+                report_exercises = ReportExercise.objects.filter(report=report)
+                
+                exercises_data = []
+                for re in report_exercises:
+                    exercise_name = re.user_exercise.exercise.name
+                    completed_sets = re.completed_sets
+                    completed_reps = re.completed_reps
+                    pain_level = re.pain_level
+                    
+                    exercises_data.append({
+                        'name': exercise_name,
+                        'sets': completed_sets,
+                        'reps': completed_reps,
+                        'pain': pain_level
+                    })
+                
+                history.append({
+                    'date': report_date.strftime('%Y-%m-%d'),
+                    'formatted_date': report_date.strftime('%A, %B %d'),
+                    'exercises': exercises_data,
+                    'pain_level': report.pain_level
+                })
+            
+            return Response({'history': history})
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

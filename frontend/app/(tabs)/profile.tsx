@@ -205,21 +205,46 @@ export default function Profile() {
 
   return (
     <View style={tw`flex flex-1 items-center justify-center bg-white`}>
-      <Text style={tw`text-lg`}>{userProfile?.username}</Text>
-      <Text style={tw`text-lg`}>
-        {userProfile?.first_name} {userProfile?.last_name}
-      </Text>
-      <Text style={tw`text-lg`}>
-        Injury type:{" "}
-        {injuryTypes.find((type) => type.id === userProfile?.injury_type)
-          ?.name || "Unknown"}
-      </Text>
-      <Text style={tw`text-lg`}>
-        Date of birth:{" "}
-        {userProfile?.date_of_birth
-          ? new Date(userProfile.date_of_birth).toLocaleDateString()
-          : "N/A"}
-      </Text>
+      <View style={tw`bg-gray-50 rounded-xl p-6 w-11/12 mb-6 shadow-sm`}>
+        <View style={tw`mb-4`}>
+          <Text style={tw`text-gray-500 text-sm`}>Username</Text>
+          <Text style={tw`text-gray-800`}>
+            {userProfile?.username || "Not provided"}
+          </Text>
+        </View>
+
+        <View style={tw`mb-4`}>
+          <Text style={tw`text-gray-500 text-sm`}>Full Name</Text>
+          <Text style={tw`text-gray-800`}>
+            {`${userProfile?.first_name} ${userProfile?.last_name}` ||
+              "Not provided"}
+          </Text>
+        </View>
+
+        <View style={tw`mb-4`}>
+          <Text style={tw`text-gray-500 text-sm`}>Email</Text>
+          <Text style={tw`text-gray-800`}>
+            {userProfile?.email || "Not provided"}
+          </Text>
+        </View>
+
+        <View style={tw`mb-4`}>
+          <Text style={tw`text-gray-500 text-sm`}>Date of Birth</Text>
+          <Text style={tw`text-gray-800`}>
+            {userProfile?.date_of_birth
+              ? new Date(userProfile.date_of_birth).toLocaleDateString()
+              : "Not provided"}
+          </Text>
+        </View>
+
+        <View>
+          <Text style={tw`text-gray-500 text-sm`}>Injury Type</Text>
+          <Text style={tw`text-gray-800`}>
+            {injuryTypes.find((type) => type.id === userProfile?.injury_type)
+              ?.name || "Unknown"}
+          </Text>
+        </View>
+      </View>
       <Pressable
         style={({ pressed, hovered }) => [
           tw`absolute bottom-4 items-center p-4 rounded-2xl w-80`,
@@ -273,7 +298,7 @@ export default function Profile() {
             <View style={tw`flex-row items-center mb-4`}>
               <TouchableOpacity
                 style={[
-                  tw`flex-1 text-center bg-gray-200 h-8 border rounded justify-center`,
+                  tw`flex-1 text-center bg-gray-200 h-8 border border-gray-300 rounded justify-center`,
                 ]}
                 onPress={() => setOpen(true)}
               >
