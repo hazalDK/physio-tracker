@@ -676,17 +676,29 @@ class ReportViewSet(viewsets.ModelViewSet):
     def adherence_stats(self, request):
         """
         Get adherence statistics for the authenticated user
+        Optional parameters:
+        - end_date: The end date for the 7-day period (format: YYYY-MM-DD)
         Returns:
-        - daily: Daily adherence percentage for the last 7 days
+        - daily: Daily adherence percentage for the 7-day period
         - average: Overall average adherence percentage 
         - history: Recent exercise history with completion details
         """
         try:
             user = request.user
-            today = timezone.now().date()
             
-            # Get last 7 days
-            start_date = today - timedelta(days=6)
+            # Get end date from params or use today
+            end_date_str = request.query_params.get('end_date')
+            if end_date_str:
+                try:
+                    end_date = timezone.datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    # If date format is invalid, default to today
+                    end_date = timezone.now().date()
+            else:
+                end_date = timezone.now().date()
+            
+            # Get last 7 days from the end date
+            start_date = end_date - timedelta(days=6)
             date_range = [(start_date + timedelta(days=i)) for i in range(7)]
             
             # Initialize data structure
@@ -700,7 +712,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             reports = Report.objects.filter(
                 user=user,
                 date__gte=start_date,
-                date__lte=today
+                date__lte=end_date
             ).prefetch_related('exercises_completed')
 
             # Calculate daily adherence
@@ -735,13 +747,15 @@ class ReportViewSet(viewsets.ModelViewSet):
             else:
                 average_adherence = 0
             
-            # Get exercise history (last 5 reports)
+            # Get exercise history (reports from the selected week)
             history = []
-            recent_reports = Report.objects.filter(
-                user=user
-            ).order_by('-date')[:5]
+            week_reports = Report.objects.filter(
+                user=user,
+                date__gte=start_date,
+                date__lte=end_date
+            ).order_by('-date')
             
-            for report in recent_reports:
+            for report in week_reports:
                 completed = report.exercises_completed.count()
                 if total_exercises > 0:
                     adherence = (completed / total_exercises) * 100
@@ -768,22 +782,34 @@ class ReportViewSet(viewsets.ModelViewSet):
             
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     @action(detail=False, methods=['GET'])
     def pain_stats(self, request):
         """
         Get pain level statistics for the authenticated user
+        Optional parameters:
+        - end_date: The end date for the 7-day period (format: YYYY-MM-DD)
         Returns:
-        - daily: Daily pain levels for the last 7 days
+        - daily: Daily pain levels for the 7-day period
         - average: Overall average pain level
         - history: Recent exercise history with pain levels
         """
         try:
             user = request.user
-            today = timezone.now().date()
             
-            # Get last 7 days
-            start_date = today - timedelta(days=6)
+            # Get end date from params or use today
+            end_date_str = request.query_params.get('end_date')
+            if end_date_str:
+                try:
+                    end_date = timezone.datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    # If date format is invalid, default to today
+                    end_date = timezone.now().date()
+            else:
+                end_date = timezone.now().date()
+            
+            # Get last 7 days from the end date
+            start_date = end_date - timedelta(days=6)
             date_range = [(start_date + timedelta(days=i)) for i in range(7)]
             
             # Initialize data structure
@@ -793,7 +819,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             reports = Report.objects.filter(
                 user=user,
                 date__gte=start_date,
-                date__lte=today
+                date__lte=end_date
             ).prefetch_related('report_exercises')
             
             # Calculate daily pain levels
@@ -833,13 +859,15 @@ class ReportViewSet(viewsets.ModelViewSet):
             else:
                 average_pain = 0
             
-            # Get pain history (last 5 reports)
+            # Get pain history (reports from the selected week)
             history = []
-            recent_reports = Report.objects.filter(
-                user=user
-            ).order_by('-date')[:5]
-            
-            for report in recent_reports:
+            week_reports = Report.objects.filter(
+                user=user,
+                date__gte=start_date,
+                date__lte=end_date
+            ).order_by('-date')
+
+            for report in week_reports:
                 report_exercises = ReportExercise.objects.filter(report=report)
                 completed = report_exercises.count()
                 total = UserExercise.objects.filter(user=user).count()
@@ -849,7 +877,7 @@ class ReportViewSet(viewsets.ModelViewSet):
                 history.append({
                     'date': report.date.strftime('%A, %B %d'),
                     'exercises': f"{completed}/{total}",
-                    'painLevel': round(avg_pain, 1)
+                    'pain_level': round(avg_pain, 1)
                 })
             
             # Format response for chart
@@ -866,6 +894,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
     
     @action(detail=False, methods=['GET'])
     def exercise_history(self, request):
