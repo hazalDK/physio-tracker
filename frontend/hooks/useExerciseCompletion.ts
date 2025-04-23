@@ -3,6 +3,7 @@ import { Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "./useAuth";
 
+// Custom hook to manage user profile data and related operations.
 export function useExerciseCompletion(userExerciseId: number | null) {
   const [showCompletionForm, setShowCompletionForm] = useState(false);
   const [reps, setReps] = useState(0);
@@ -11,16 +12,21 @@ export function useExerciseCompletion(userExerciseId: number | null) {
   const navigation = useNavigation();
   const { createApiInstance } = useAuth();
 
+  // Function to handle saving exercise completion data
+  // This function is called when the user submits the completion form.
   const handleSave = async () => {
+    // Validate input fields
     if (!reps || !sets || !painLevel) {
       Alert.alert("Error", "Please fill all required fields");
       return;
     }
 
+    // Api instance creation
     const api = await createApiInstance();
     if (!api) return;
 
     try {
+      // Update user exercise data
       await api.put(`/user-exercises/${userExerciseId}/`, {
         reps: reps,
         sets: sets,
@@ -28,9 +34,11 @@ export function useExerciseCompletion(userExerciseId: number | null) {
         completed: true,
       });
 
+      // Closes the modal
       setShowCompletionForm(false);
 
       // Handle pain level logic
+      // If pain level is low (1-3), check if they can increase difficulty
       if (painLevel <= 3) {
         try {
           const canIncreaseResponse = await api.get(
@@ -80,12 +88,14 @@ export function useExerciseCompletion(userExerciseId: number | null) {
             );
           }
         } catch (error) {
+          // Handle error when checking increase eligibility
           console.error("Error checking increase eligibility:", error);
           Alert.alert("Success", "Exercise completed successfully", [
             { text: "OK", onPress: () => navigation.goBack() },
           ]);
         }
-      } else if (painLevel > 5) {
+      } else if (painLevel > 3) {
+        // If pain level is high, ask if they want to decrease difficulty
         Alert.alert(
           "Exercise Difficulty",
           "Your pain level is high. Would you like to decrease the difficulty for next time?",
@@ -126,6 +136,7 @@ export function useExerciseCompletion(userExerciseId: number | null) {
         ]);
       }
     } catch (error) {
+      // Handle error when saving exercise completion
       console.error("Error saving exercise:", error);
       Alert.alert(
         "Error",
@@ -142,6 +153,7 @@ export function useExerciseCompletion(userExerciseId: number | null) {
     }));
   };
 
+  // Generate pain level dropdown data
   const getPainLevelData = () => {
     return Array.from({ length: 11 }, (_, i) => ({
       label: `${i}`,

@@ -1,12 +1,19 @@
-// hooks/useInjuryData.ts
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { injuryTypesData } from "@/types/Injury";
 
-export function useInjuryData() {
+/**
+ * Custom hook to fetch and manage injury types data.
+ * @returns {Object} - An object containing injury types data and loading state.
+ */
+export function useInjuryData(): {
+  injuryTypes: injuryTypesData[];
+  loading: boolean;
+} {
   const [injuryTypes, setInjuryTypes] = useState<injuryTypesData[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Function to fetch injury types data from the API and handle the loading state
   useEffect(() => {
     const fetchInjuryTypes = async () => {
       try {

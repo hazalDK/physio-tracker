@@ -7,6 +7,9 @@ import tw from "tailwind-react-native-classnames";
 import axios from "axios";
 import { router } from "expo-router";
 
+// React native component for the login screen
+// This component allows users to enter their username and password to log in to the app
+// and handles the login process, including storing tokens securely and navigating to the home screen.
 export default function Login() {
   const [securePassword, setSecurePassword] = useState(true);
   const [username, setUsername] = useState("");
@@ -23,6 +26,8 @@ export default function Login() {
   };
 
   async function handleLogin(): Promise<void> {
+    if (isLoading) return;
+    // Validate input fields
     if (!username || !password) {
       Alert.alert("Error", "Please enter both username and password");
       return;
@@ -31,6 +36,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
+      // Make API call to login endpoint
       const response = await axios.post(
         "http://192.168.68.111:8000/api/token/",
         {
@@ -41,7 +47,7 @@ export default function Login() {
           timeout: 30000,
           headers: {
             "Content-Type": "application/json",
-            adapter: require("axios/lib/adapters/http"), // Force HTTP adapter
+            adapter: require("axios/lib/adapters/http"),
           },
         }
       );
@@ -52,13 +58,13 @@ export default function Login() {
       await storeToken("access_token", response.data.access);
       await storeToken("refresh_token", response.data.refresh);
 
-      // Navigate to main app screen
+      // Navigate to home screen after successful login
       router.replace("/(tabs)");
     } catch (error) {
       console.error("Login error:", error);
+      // Handle error response from API
       Alert.alert(
         "Login Failed",
-
         (axios.isAxiosError(error) && error.response?.data?.detail) ||
           "Invalid credentials"
       );

@@ -1,18 +1,29 @@
 import * as SecureStore from "expo-secure-store";
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamsList } from "@/types/navigation";
 import { Alert } from "react-native";
 
-export function useAuth() {
+/**
+ * Custom hook to manage authentication and API instance creation.
+ * @returns {Object} - An object containing functions to get token, refresh token, and create API instance.
+ * */
+export function useAuth(): {
+  getToken: () => Promise<string | null>;
+  refreshToken: () => Promise<string | null>;
+  createApiInstance: () => Promise<AxiosInstance | null>;
+} {
   const navigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
 
+  // Function to get the access token from secure storage
   const getToken = async () => {
     return await SecureStore.getItemAsync("access_token");
   };
 
+  // Function to refresh the access token using the refresh token
+  // If the refresh token is invalid or expired, delete both tokens and navigate to login screen
   const refreshToken = async () => {
     try {
       const refreshToken = await SecureStore.getItemAsync("refresh_token");
@@ -49,6 +60,8 @@ export function useAuth() {
     }
   };
 
+  // Function to create an Axios instance with the access token in the headers
+  // If the token is not available, it shows an alert and navigates to the login screen
   const createApiInstance = async () => {
     let token = await getToken();
 

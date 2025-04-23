@@ -10,6 +10,9 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import { useInjuryData } from "@/hooks/useInjuryData";
 
+// Signup component for user registration.
+// This component allows users to enter their personal information, including name, email, password, and injury type.
+// It handles the registration process, including validation and API calls to create a new user account.
 export default function Signup() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -69,6 +72,7 @@ export default function Signup() {
       // Format the date properly
       const formattedDate = dateOfBirth.toISOString().split("T")[0];
 
+      // Make the API call to register the user
       const response = await axios.post(
         `${apiUrl}/users/register/`,
         {
@@ -78,7 +82,7 @@ export default function Signup() {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           date_of_birth: formattedDate,
-          injury_type: injuryType || null, // Handle case where injuryType is undefined
+          injury_type: injuryType || null,
         },
         {
           headers: {
@@ -100,6 +104,8 @@ export default function Signup() {
         error.response?.data || error.message
       );
 
+      // Handle error messages from the server
+      // Check if the error response contains specific fields
       let errorMessage = "Please check your information and try again";
       if (error.response?.data) {
         // Handle different types of error responses
@@ -118,12 +124,14 @@ export default function Signup() {
     }
   }
 
+  // Regex validation for password
   const validatePassword = (password: string) => {
     const regex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return regex.test(password);
   };
 
+  // Regex validation for email
   const validateEmail = (email: string) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email regex
     return regex.test(email);

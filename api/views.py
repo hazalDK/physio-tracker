@@ -1,7 +1,6 @@
 import json
 import os
 import openai
-from dotenv import load_dotenv
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.hashers import check_password
@@ -16,11 +15,20 @@ from .serializers import (
     UserExerciseSerializer, ReportSerializer, InjuryTypeSerializer
 )
 
+# Set up OpenAI API key
 openai.api_key = os.environ.get('OPENAI_API_KEY') 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def chatbot(request):
+    """
+    Chatbot endpoint to interact with OpenAI's GPT-4 model.
+    It processes user messages, retrieves exercise and report data, and generates a response.
+    The response is based on the user's injury type, exercise history, and recent reports.
+    """
+    # Check if the OpenAI API key is set
+    if openai.api_key is None:
+        return Response({'message': 'OpenAI API key is not set.', 'status': 'error'}, status=500)
     try:
         user_message = request.data.get('message', '')
         exercise_context_json = request.data.get('exerciseContext', '{}')
@@ -109,10 +117,16 @@ def chatbot(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def reset_chat_history(request):
+    """
+    Reset the chat history for the user, clearing the session data.
+    """
     request.session['chat_history'] = []
     return Response({'message': 'Chat history reset.'})
 
 def reset_user_exercises(user):
+    """
+    Reset the UserExercise instances for the user if they haven't been reset in the last 24 hours.
+    """
     now = timezone.now()
     if user.last_reset is None or (now - user.last_reset) > timedelta(days=1):
         # Reset completed and pain_level for the user's active exercises
@@ -189,7 +203,6 @@ def has_consistent_low_pain(user_exercise, num_reports=3, max_pain_level=4):
     """
     Check if the user has consistent low pain levels in their recent reports.
     """
-
     # Retrieve all ReportExercise entries for the given report and user_exercise
     all_reports = ReportExercise.objects.filter(
         user_exercise=user_exercise,  
@@ -207,6 +220,9 @@ def has_consistent_low_pain(user_exercise, num_reports=3, max_pain_level=4):
     return all(report.pain_level < max_pain_level for report in recent_reports)
 
 def increase_difficulty(user, exercise_name):
+    """
+    Increase the difficulty level of the exercise for the user.
+    """
     user_exercises = UserExercise.objects.filter(user=user, is_active=True)
     for user_exercise in user_exercises:
         if user_exercise.exercise.name == exercise_name:
@@ -260,6 +276,10 @@ def increase_difficulty(user, exercise_name):
             return new_user_exercise
     
 class UserViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for User model.
+    Provides endpoints for user registration, profile retrieval, password update and active exercises.
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -273,6 +293,9 @@ class UserViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['POST'], permission_classes=[AllowAny])
     def register(self, request, *args, **kwargs):
+        """
+        Register a new user and return JWT tokens with the user data.
+        """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -285,6 +308,9 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['PUT'])
     def update_profile(self, request):
+        """
+        Update the profile of the authenticated user.
+        """
         user = request.user
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -294,7 +320,12 @@ class UserViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['PUT'])
     def update_password(self, request):
-        user = request.user  # Get the currently authenticated user
+        """
+        Update the password for the authenticated user.
+        Requires current password and new password.
+        """
+        # Get the currently authenticated user
+        user = request.user 
         current_password = request.data.get('current_password')
         new_password = request.data.get('new_password')
 
@@ -338,23 +369,43 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class InjuryTypeViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for InjuryType model.
+    Provides endpoints for listing and retrieving injury types.
+    """
     permission_classes =[AllowAny]
     queryset = InjuryType.objects.all()
     serializer_class = InjuryTypeSerializer
 
 class ReportExerciseViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for ReportExercise model.
+    Provides endpoints for listing and retrieving report exercises.
+    """
     queryset = ReportExercise.objects.all()
     serializer_class = ReportExerciseSerializer
 
 class ExerciseViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Exercise model.
+    Provides endpoints for listing and retrieving exercises.
+    """
     queryset = Exercise.objects.all()
     serializer_class = ExerciseSerializer
 
 class ExerciseCategoryViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for ExerciseCategory model.
+    Provides endpoints for listing and retrieving exercise categories.
+    """
     queryset = ExerciseCategory.objects.all()
     serializer_class = ExerciseCategorySerializer
 
 class UserExerciseViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for UserExercise model.
+    Provides endpoints for listing, creating, and updating user exercises.
+    """
     queryset = UserExercise.objects.all()
     serializer_class = UserExerciseSerializer
 
@@ -503,7 +554,7 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
             # Get the current exercise and decrease difficulty
             decreased_exercise = update_exercise_level_based_on_pain(
                 request.user,
-                4,  # Using pain level 4 to trigger decrease
+                user_exercise.pain_level,
                 user_exercise.exercise.name
             )
             
@@ -534,6 +585,10 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         can_increase = has_consistent_low_pain(user_exercise)
         return Response({'can_increase': can_increase})
 class ReportViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Report model.
+    Provides endpoints for listing, creating, and updating reports.
+    """
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
 
@@ -561,12 +616,15 @@ class ReportViewSet(viewsets.ModelViewSet):
         total_pain_level = 0
         num_exercises = 0
 
+        # Handle both string and list formats
         for exercise_data in exercises_completed_data:
             user_exercise_id = exercise_data.get('user_exercise_id')
 
             try:
+                # Get the UserExercise instance
                 user_exercise = UserExercise.objects.get(id=user_exercise_id)
                 
+                # Check if the exercise belongs to the current user
                 latest_report_exercise = ReportExercise.objects.filter(
                     user_exercise=user_exercise
                 ).order_by('-id').first()
@@ -605,9 +663,11 @@ class ReportViewSet(viewsets.ModelViewSet):
                     user_exercise.exercise.name
                 )
                 
+                # Check for difficulty increase
                 if updated_exercise:
                     user_exercise = updated_exercise
 
+                # Check for consistent low pain to increase difficulty
                 if has_consistent_low_pain(user_exercise):
                     increased_exercise = increase_difficulty(
                         request.user, 

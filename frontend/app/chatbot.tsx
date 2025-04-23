@@ -27,6 +27,10 @@ import {
   LoadingMessage,
 } from "../components/ChatMessages";
 
+// The chatbot screen component which allows users to interact with a physiotherapy assistant
+// and get personalized feedback based on their exercise history and pain levels.
+// This component handles the chat interface, message sending, and API interactions.
+// It also includes a disclaimer message and a reset button to clear the chat history.
 export default function Chatbot() {
   const navigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
@@ -58,23 +62,30 @@ export default function Chatbot() {
     fetchUserData();
   }, []);
 
+  // Function to fetch user data including exercises and reports
+  // This function handles API requests and token refresh logic
   const fetchUserData = async () => {
     try {
+      // Set loading state
+      setLoading(true);
+      // Create API instance
       const api = await createApiInstance();
       if (!api) return;
       try {
-        // 3. Use Promise.all for parallel requests
+        // Use Promise.all for parallel requests
         const [reportsResponse, exercisesResponse] = await Promise.all([
           api.get("/user-exercises/"),
           api.get("/reports/"),
         ]);
 
+        // Set user exercises and recent pain level
         setUserExercises(exercisesResponse.data);
 
         if (reportsResponse.data.length > 0) {
           setRecentPain(reportsResponse.data[0].pain_level);
         }
       } catch (error) {
+        // Handle API errors
         if (axios.isAxiosError(error) && error.response?.status === 401) {
           // Attempt token refresh
           const newToken = await refreshToken();
@@ -83,11 +94,13 @@ export default function Chatbot() {
           const api = await createApiInstance();
           if (!api) return;
 
+          // Retry both requests with new token
           const [retryUserExercises, retryReports] = await Promise.all([
             api.get("/user-exercises/"),
-            api.get("/users/active_exercises/"),
+            api.get("/reports/"),
           ]);
 
+          // Set user exercises and recent pain level
           setRecentPain(retryReports.data[0]?.pain_level || 0);
           setUserExercises(retryUserExercises.data);
         } else {
@@ -108,6 +121,8 @@ export default function Chatbot() {
     }
   };
 
+  // Function to send a message to the chatbot and receive a response
+  // This function handles user input, API requests, and message updates in the chat
   const sendMessage = async () => {
     if (!inputText.trim()) return;
 
@@ -130,7 +145,6 @@ export default function Chatbot() {
         const exerciseContext = {
           exercises: userExercises,
           recentPain: recentPain,
-          // Add any other relevant context from your models
         };
 
         // Call your API endpoint that will communicate with OpenAI
@@ -150,8 +164,7 @@ export default function Chatbot() {
         ]);
       } catch (error) {
         console.error("Error sending message:", error);
-        // Add error message
-        // 5. Handle token refresh
+        // Handle token refresh
         if (axios.isAxiosError(error) && error.response?.status === 401) {
           // Attempt token refresh
           const newToken = await refreshToken();
@@ -161,7 +174,6 @@ export default function Chatbot() {
           const exerciseContext = {
             exercises: userExercises,
             recentPain: recentPain,
-            // Add any other relevant context from your models
           };
 
           // Retry both requests with new token
@@ -174,6 +186,7 @@ export default function Chatbot() {
             exerciseContext: JSON.stringify(exerciseContext),
           });
 
+          // Add bot response to chat
           setMessages((prevMessages) => [
             ...prevMessages,
             {
@@ -200,12 +213,16 @@ export default function Chatbot() {
     }
   };
 
+  // Function to reset the chat and user data
+  // This function clears the chat history and fetches fresh user data
   const handleReset = async () => {
     try {
+      // Create API instance
       const api = await createApiInstance();
       if (!api) return;
 
       try {
+        // Reset chat history in the backend
         await api.post("/api/reset-chat/", {});
 
         // Reset messages
@@ -222,9 +239,10 @@ export default function Chatbot() {
           },
         ]);
 
+        // Clear input text
         fetchUserData();
 
-        // 🎉 Show toast
+        // Show success message
         Toast.show("Chat reset!", {
           duration: Toast.durations.SHORT,
           position: Toast.positions.BOTTOM,
@@ -241,6 +259,8 @@ export default function Chatbot() {
     }
   };
 
+  // Render loading indicator if data is being fetched
+  // This is shown while the app is loading or fetching data
   if (loading) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white`}>

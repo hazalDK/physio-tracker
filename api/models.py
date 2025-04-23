@@ -5,6 +5,11 @@ from django.urls import reverse
 from django.utils.text import slugify
 
 
+# ExerciseCategory model
+# GET: get a list of all exercise categories
+# POST: add a new exercise category
+# PUT: edit or update an exercise category
+# DELETE: delete an exercise category
 class ExerciseCategory(models.Model):
     name = models.CharField(default="Exercise", max_length=100, unique=True)
     description = models.TextField(default="Description", max_length=500)
@@ -32,6 +37,11 @@ class ExerciseCategory(models.Model):
         ordering = ['name']
 
 
+# Exercise model
+# GET: get a list of all exercises
+# POST: add a new exercise
+# PUT: edit or update an exercise
+# DELETE: delete an exercise
 class Exercise(models.Model):
     category = models.ForeignKey(ExerciseCategory, on_delete=models.CASCADE, related_name='exercises')
     name = models.CharField(default="", max_length=100)
@@ -119,6 +129,12 @@ class UserExercise(models.Model):
         if self.sets < 0 or self.reps < 0:
             raise ValidationError("Sets and reps must be non-negative.")
     
+
+# InjuryType model
+# GET: get a list of all injury types
+# POST: add a new injury type
+# PUT: edit or update an injury type
+# DELETE: delete an injury type
 class InjuryType(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(default="", max_length=500)
@@ -139,7 +155,7 @@ class InjuryType(models.Model):
 # GET: two variants: get physiotherapist user's details (viewing their profile etc)
 #                    get patient user's details (viewing their profile etc)
 # POST: signup - no access via views should be available
-# PUT: edit or update details about the user - name, dob, exercise list
+# PUT: edit or update details about the user - name, dob, exercise list, username, password
 # DELETE: delete user in profile (only for current user)
 class User(AbstractUser):
     full_name = models.CharField(max_length=100)
@@ -184,6 +200,12 @@ class User(AbstractUser):
 
         super().save(*args, **kwargs)
 
+
+# ReportExercise model for tracking exercises in reports
+# GET: get a list of all exercises in a report
+# POST: add a new exercise to a report
+# PUT: edit or update an exercise in a report
+# DELETE: delete an exercise from a report
 class ReportExercise(models.Model):
     report = models.ForeignKey('Report', on_delete=models.CASCADE, related_name='report_exercises')
     user_exercise = models.ForeignKey('UserExercise', on_delete=models.CASCADE)
@@ -205,6 +227,10 @@ class ReportExercise(models.Model):
         }
 
 # Report model for tracking user progress over time
+# GET: get a list of all reports for a user
+# POST: add a new report for a user
+# PUT: edit or update a report for a user
+# DELETE: delete a report for a user
 class Report(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reports")
     date = models.DateField(auto_now_add=True)

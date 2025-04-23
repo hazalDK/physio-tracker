@@ -16,8 +16,14 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamsList } from "@/types/navigation";
 
+// Prevent the splash screen from auto-hiding until the app is ready
 SplashScreen.preventAutoHideAsync();
 
+/**
+ * Root layout component for the app.
+ * This component sets up the navigation stack and handles authentication state.
+ * It also loads custom fonts and manages the app's theme based on the user's color scheme preference.
+ */
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
@@ -25,11 +31,11 @@ export default function RootLayout() {
   });
   const navigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
-
   const [authState, setAuthState] = useState<
     "checking" | "authenticated" | "unauthenticated"
   >("checking");
 
+  // Check if the app is loaded and the authentication state is set
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
@@ -43,6 +49,8 @@ export default function RootLayout() {
     checkAuthStatus();
   }, []);
 
+  // Hide the splash screen once the app is loaded and the authentication state is determined
+  // If the user is unauthenticated, navigate to the login screen
   useEffect(() => {
     if (loaded && authState !== "checking") {
       SplashScreen.hideAsync();
@@ -56,6 +64,7 @@ export default function RootLayout() {
     return null;
   }
 
+  // If the app is loaded and the authentication state is set, render the app's navigation stack
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={colorScheme === "light" ? DarkTheme : DefaultTheme}>

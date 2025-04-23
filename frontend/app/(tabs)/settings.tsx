@@ -7,7 +7,11 @@ import * as SecureStore from "expo-secure-store";
 import ReminderComponent from "../../components/reminderComponent";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamsList } from "@/types/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
+// Settings screen component
+// This component allows the user to update their password, reminder time, and sign out of the app.
+// It includes a modal for updating the password and handles the logic for signing out and updating the password.
 export default function Settings() {
   const navigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
@@ -17,14 +21,18 @@ export default function Settings() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [secureEntry, setSecureEntry] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const { createApiInstance } = useAuth();
 
-  // Password requirements validation
+  // Regex to validate password complexity
+  // Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character
   const validatePassword = (password: string) => {
     const regex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return regex.test(password);
   };
 
+  // Function to handle sign out
+  // This function deletes the access and refresh tokens from SecureStore and navigates to the login screen
   const signOut = async () => {
     try {
       await SecureStore.deleteItemAsync("access_token");
@@ -36,6 +44,8 @@ export default function Settings() {
     }
   };
 
+  // Function to handle password update
+  // This function validates the input fields, makes an API call to update the password, and handles success or error responses
   const handleUpdatePassword = async () => {
     // Validate inputs
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -43,11 +53,14 @@ export default function Settings() {
       return;
     }
 
+    // Check if new password and confirm password match
     if (newPassword !== confirmPassword) {
       Alert.alert("Error", "New passwords do not match.");
       return;
     }
 
+    // Check if new password is the same as current password
+    // This is to prevent the user from accidentally setting the same password
     if (currentPassword === newPassword) {
       Alert.alert(
         "Error",
@@ -56,6 +69,8 @@ export default function Settings() {
       return;
     }
 
+    // Validate password complexity
+    // This is to ensure the new password meets the security requirements
     if (!validatePassword(newPassword)) {
       Alert.alert(
         "Error",
@@ -67,28 +82,31 @@ export default function Settings() {
     setIsUpdating(true);
 
     try {
-      const token = await SecureStore.getItemAsync("access_token");
+      const api = await createApiInstance();
+      if (!api) return;
 
-      const response = await axios.put(
+      const response = await api.put(
         "http://192.168.68.111:8000/users/update_password/",
         {
           current_password: currentPassword,
           new_password: newPassword,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
-      Alert.alert("Success", "Password updated successfully!");
-      setIsModalVisible(false);
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
+      // Handle success response from the API
+      if (response.status === 200 || response.status === 201) {
+        Alert.alert("Success", "Password updated successfully!");
+        // Reset the input fields
+        setIsModalVisible(false);
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        Alert.alert("Error", "Failed to update password. Please try again.");
+      }
     } catch (error) {
+      // Handle error responses from the API
+      // This includes network errors and API errors set from the backend
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
         const message = error.response?.data?.error;

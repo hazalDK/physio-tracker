@@ -16,14 +16,17 @@ import { RootStackParamsList } from "@/types/navigation";
 import { ExerciseItem } from "@/types/exercise";
 import { useFetchActiveExercises } from "@/hooks/useFetchActiveExercises";
 
+// Main screen component
+// This component displays a list of exercises and allows the user to navigate to the exercise details screen
+// It also includes a progress bar to show the completion percentage of exercises
+// and a button to navigate to the chatbot screen for assistance.
+// It uses the useFetchActiveExercises hook to fetch the exercise data and manage the loading state.
 export default function Index() {
   const { loading, userExercises, exercises, fetchData, refreshData } =
     useFetchActiveExercises();
   const [progress, setProgress] = useState(0);
   const exerciseNavigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "exercise">>();
-  const loginNavigation =
-    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
   const chatbotNavigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
 
@@ -50,6 +53,8 @@ export default function Index() {
     }
   }, [userExercises]);
 
+  // Redirect to exercise details screen when the user presses on an exercise ite
+  // It navigates to the exercise screen and passes the exercise ID and user exercise ID as parameters
   function redirectToExercise(exercise: ExerciseItem) {
     const userExercise = userExercises.find(
       (userExercise) => userExercise.exercise === exercise.id
@@ -65,10 +70,12 @@ export default function Index() {
     });
   }
 
+  // Navigates to the chatbot screen when the user presses on the chatbot button
   function handlePress() {
     chatbotNavigation.navigate("chatbot");
   }
 
+  // Shows a loading indicator while data is being fetched
   if (loading) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white`}>

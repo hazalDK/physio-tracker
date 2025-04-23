@@ -2,11 +2,19 @@ from rest_framework import serializers
 from .models import ReportExercise, User, Exercise, ExerciseCategory, UserExercise, Report, InjuryType
 
 class ExerciseCategorySerializer(serializers.ModelSerializer):
+    """
+    Serializer for ExerciseCategory model.
+    This serializer handles the serialization and deserialization of ExerciseCategory instances.
+    """
     class Meta:
         model = ExerciseCategory
         fields = '__all__'
 
 class ExerciseSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Exercise model.
+    This serializer handles the serialization and deserialization of Exercise instances.
+    """
     class Meta:
         model = Exercise
         fields = '__all__'
@@ -22,6 +30,10 @@ class ExerciseSerializer(serializers.ModelSerializer):
         return fields
 
 class UserExerciseSerializer(serializers.ModelSerializer):
+    """
+    Serializer for UserExercise model.
+    This serializer handles the serialization and deserialization of UserExercise instances.
+    """
     class Meta:
         model = UserExercise
         fields = ['id', 'user', 'exercise', 'sets', 'reps','hold', 'pain_level', 'completed']
@@ -37,11 +49,19 @@ class UserExerciseSerializer(serializers.ModelSerializer):
         return fields
 
 class InjuryTypeSerializer(serializers.ModelSerializer):
+    """
+    Serializer for InjuryType model.
+    This serializer handles the serialization and deserialization of InjuryType instances.
+    """
     class Meta:
         model = InjuryType
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for User model.
+    This serializer handles the serialization and deserialization of User instances.
+    """
     password = serializers.CharField(write_only=True)
     # injury_type = InjuryTypeSerializer(many=True, required=False)  # Allow multiple injury types
     
@@ -82,6 +102,10 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class ReportExerciseSerializer(serializers.ModelSerializer):
+    """
+    Serializer for ReportExercise model.
+    This serializer handles the serialization and deserialization of ReportExercise instances.
+    """
     user_exercise = UserExerciseSerializer(read_only=True)
 
     class Meta:
@@ -89,6 +113,10 @@ class ReportExerciseSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ReportSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Report model.
+    This serializer handles the serialization and deserialization of Report instances.
+    """
     exercises_completed = serializers.PrimaryKeyRelatedField(
         queryset=UserExercise.objects.all(), many=True, required=False
     )

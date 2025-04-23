@@ -12,6 +12,9 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import tw from "tailwind-react-native-classnames";
 import { useProfileData } from "@/hooks/useProfileData";
 
+// Profile screen component
+// This component displays the user's profile information and allows them to edit it.
+// It includes a modal for updating the profile details and handles the logic for saving changes.
 export default function Profile() {
   const {
     userProfile,
@@ -33,6 +36,8 @@ export default function Profile() {
     toggleModal,
   } = useProfileData();
 
+  // Check if the user profile is loading
+  // If loading, show a loading indicator
   if (loading) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white`}>

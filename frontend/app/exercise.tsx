@@ -13,8 +13,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Dropdown } from "react-native-element-dropdown";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamsList } from "@/types/navigation";
-
-// Import custom hooks
 import { useExerciseData } from "@/hooks/useExerciseData";
 import { useVideoPlayer } from "../hooks/useVideoPlayer";
 import { useExerciseCompletion } from "@/hooks/useExerciseCompletion";
@@ -25,17 +23,19 @@ type ExerciseRouteParams = {
   userExerciseId: number | null;
 };
 
+// Exercise screen component
+// This component displays the details of an exercise and allows the user to complete it.
 export default function Exercise() {
   const route =
     useRoute<RouteProp<Record<string, ExerciseRouteParams>, string>>();
   const navigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
 
-  // Use optional chaining to safely access route params
+  // Optionally extract exerciseId and userExerciseId from the route params when they are not undefined
   const exerciseId = route?.params?.exerciseId;
   const userExerciseId = route?.params?.userExerciseId;
 
-  // Use custom hooks to manage different aspects of the component
+  // Check if exerciseId and userExerciseId are defined
   const { loading, exercise, userExercise } = useExerciseData(
     exerciseId,
     userExerciseId
@@ -60,6 +60,7 @@ export default function Exercise() {
   const setsVals = getDropdownData(userExercise?.sets ?? 10);
   const painLevels = getPainLevelData();
 
+  // Exercise not found error handling
   if (!exercise) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -68,6 +69,8 @@ export default function Exercise() {
     );
   }
 
+  // Loading state
+  // If loading is true, show a loading indicator
   if (loading) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white`}>
