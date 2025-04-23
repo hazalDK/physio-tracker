@@ -2,22 +2,22 @@ import {
   View,
   Text,
   Pressable,
-  Alert,
   Modal,
   TouchableWithoutFeedback,
   ActivityIndicator,
 } from "react-native";
 import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
-import * as SecureStore from "expo-secure-store";
 import tw from "tailwind-react-native-classnames";
 import YoutubePlayer from "react-native-youtube-iframe";
-import { useCallback, useEffect, useState } from "react";
-import axios from "axios";
 import { Ionicons } from "@expo/vector-icons";
 import { Dropdown } from "react-native-element-dropdown";
-import { RootStackParamsList } from "@/types/navigation";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { ExerciseItem, UserExerciseItem } from "@/types/exercise";
+import { RootStackParamsList } from "@/types/navigation";
+
+// Import custom hooks
+import { useExerciseData } from "@/hooks/useExerciseData";
+import { useVideoPlayer } from "../hooks/useVideoPlayer";
+import { useExerciseCompletion } from "@/hooks/useExerciseCompletion";
 
 // Define the interface for the route params
 type ExerciseRouteParams = {
@@ -26,16 +26,8 @@ type ExerciseRouteParams = {
 };
 
 export default function Exercise() {
-  const [loading, setLoading] = useState(true);
-  const [userExercise, setUserExercise] = useState<UserExerciseItem>();
-  const [exercise, setExercise] = useState<ExerciseItem>();
   const route =
     useRoute<RouteProp<Record<string, ExerciseRouteParams>, string>>();
-  const [showCompletionForm, setShowCompletionForm] = useState(false);
-  const [reps, setReps] = useState(0);
-  const [sets, setSets] = useState(0);
-  const [painLevel, setPainLevel] = useState(0);
-  const [playing, setPlaying] = useState(false);
   const navigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
 
@@ -43,316 +35,30 @@ export default function Exercise() {
   const exerciseId = route?.params?.exerciseId;
   const userExerciseId = route?.params?.userExerciseId;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+  // Use custom hooks to manage different aspects of the component
+  const { loading, exercise, userExercise } = useExerciseData(
+    exerciseId,
+    userExerciseId
+  );
+  const { playing, onStateChange } = useVideoPlayer();
+  const {
+    showCompletionForm,
+    setShowCompletionForm,
+    reps,
+    setReps,
+    sets,
+    setSets,
+    painLevel,
+    setPainLevel,
+    handleSave,
+    getDropdownData,
+    getPainLevelData,
+  } = useExerciseCompletion(userExerciseId);
 
-      try {
-        // 1. Get token or redirect to login
-        let token = await SecureStore.getItemAsync("access_token");
-        console.log("Token:", token);
-        if (!token) {
-          Alert.alert("Login Required", "Please sign in to continue", [
-            { text: "OK", onPress: () => navigation.navigate("login") },
-          ]);
-          return;
-        }
-
-        // 2. Create an axios instance with proper defaults
-        const api = axios.create({
-          baseURL: process.env.API_URL || "http://192.168.68.111:8000",
-          timeout: 10000,
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        // 3. Use Promise.all for parallel requests
-        const [userExercisesResponse, exercisesResponse] = await Promise.all([
-          api.get(`/user-exercises/${userExerciseId}/`),
-          api.get(`/exercises/${exerciseId}/`),
-        ]);
-
-        // 4. Process successful responses
-        if (!Array.isArray(userExercisesResponse.data)) {
-          setUserExercise(userExercisesResponse.data);
-        } else {
-          console.warn("Invalid user exercises data format");
-          setUserExercise({} as UserExerciseItem);
-        }
-
-        if (!Array.isArray(exercisesResponse.data)) {
-          setExercise(exercisesResponse.data);
-        } else {
-          console.warn("Invalid exercises data format");
-          setExercise({} as ExerciseItem);
-        }
-      } catch (error) {
-        // 5. Handle token refresh
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          try {
-            // Attempt token refresh
-            const refreshToken = await SecureStore.getItemAsync(
-              "refresh_token"
-            );
-            if (!refreshToken) {
-              throw new Error("No refresh token available");
-            }
-
-            const refreshUrl =
-              process.env.API_URL || "http://192.168.68.111:8000";
-
-            const refreshResponse = await axios.post(
-              `${refreshUrl}/api/token/refresh/`,
-              { refresh: refreshToken }
-            );
-
-            // Store new tokens
-            const newToken = refreshResponse.data.access;
-            const newRefreshToken = refreshResponse.data.refresh;
-
-            await Promise.all([
-              SecureStore.setItemAsync("access_token", newToken),
-              SecureStore.setItemAsync("refresh_token", newRefreshToken),
-            ]);
-
-            // Retry both requests with new token
-            const api = axios.create({
-              baseURL: refreshUrl,
-              timeout: 10000,
-              headers: {
-                Authorization: `Bearer ${newToken}`,
-                "Content-Type": "application/json",
-              },
-            });
-
-            const [retryUserExercises, retryExercises] = await Promise.all([
-              api.get(`/user-exercises/${userExerciseId}/`),
-              api.get(`/exercises/${exerciseId}/`),
-            ]);
-
-            setUserExercise(
-              !Array.isArray(retryUserExercises.data)
-                ? retryUserExercises.data
-                : ({} as UserExerciseItem)
-            );
-            setExercise(
-              !Array.isArray(retryExercises.data)
-                ? retryExercises.data
-                : ({} as ExerciseItem)
-            );
-          } catch (refreshError: any) {
-            console.error("Token refresh failed:", {
-              error: refreshError,
-              message: refreshError.message,
-              response: refreshError.response?.data,
-              status: refreshError.response?.status,
-            });
-
-            await Promise.all([
-              SecureStore.deleteItemAsync("access_token"),
-              SecureStore.deleteItemAsync("refresh_token"),
-            ]);
-
-            Alert.alert("Session Expired", "Please login again", [
-              {
-                text: "OK",
-                onPress: () => navigation.navigate("login"),
-              },
-            ]);
-          }
-        } else {
-          // Handle other errors
-          console.error("API request failed:", error);
-          Alert.alert(
-            "Error",
-            "Failed to load your exercises. Please check your connection and try again."
-          );
-          setExercise({} as ExerciseItem);
-          setUserExercise({} as UserExerciseItem);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [navigation]);
-
-  const onStateChange = useCallback((state: string) => {
-    if (state === "ended") {
-      setPlaying(false);
-    }
-  }, []);
-
-  const repsVals = Array.from({ length: userExercise?.reps ?? 20 }, (_, i) => ({
-    label: `${i + 1}`,
-    value: i + 1,
-  }));
-
-  const setsVals = Array.from({ length: userExercise?.sets ?? 10 }, (_, i) => ({
-    label: `${i + 1}`,
-    value: i + 1,
-  }));
-
-  const painLevels = Array.from({ length: 11 }, (_, i) => ({
-    label: `${i}`,
-    value: i,
-  }));
-
-  const handleSave = async () => {
-    let token = await SecureStore.getItemAsync("access_token");
-
-    if (!reps || !sets || !painLevel) {
-      Alert.alert("Error", "Please fill all required fields");
-      return;
-    }
-
-    const api = axios.create({
-      baseURL: process.env.API_URL || "http://192.168.68.111:8000",
-      timeout: 10000,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    try {
-      const response = await api.put(`/user-exercises/${userExerciseId}/`, {
-        reps: reps,
-        sets: sets,
-        pain_level: painLevel,
-        completed: true,
-      });
-
-      // Close the completion form
-      setShowCompletionForm(false);
-
-      // Check the pain level to determine if we should show increase or decrease dialog
-      if (painLevel <= 3) {
-        try {
-          // First check if we can increase difficulty
-          const canIncreaseResponse = await api.get(
-            `/user-exercises/${userExerciseId}/can_increase/`
-          );
-
-          if (canIncreaseResponse.data.can_increase) {
-            // Show confirmation dialog for increasing difficulty (low pain)
-            Alert.alert(
-              "Exercise Progress",
-              "Your pain level is low and you've had consistent low pain for 3 days. Would you like to increase the difficulty for next time?",
-              [
-                {
-                  text: "No",
-                  onPress: () => navigation.goBack(),
-                  style: "cancel",
-                },
-                {
-                  text: "Yes",
-                  onPress: async () => {
-                    try {
-                      // Call API to increase difficulty
-                      await api.post(
-                        `/user-exercises/${userExerciseId}/confirm_increase/`,
-                        {
-                          confirm: "yes",
-                        }
-                      );
-                      Alert.alert(
-                        "Success",
-                        "Exercise difficulty increased for next time!"
-                      );
-                      navigation.goBack();
-                    } catch (error) {
-                      console.error("Error increasing difficulty:", error);
-                      Alert.alert(
-                        "Error",
-                        "Failed to increase difficulty. Please try again."
-                      );
-                      navigation.goBack();
-                    }
-                  },
-                },
-              ]
-            );
-          } else {
-            Alert.alert(
-              "Exercise Progress",
-              "Your pain level is low. Keep it up for 3 days to unlock higher difficulty!",
-              [
-                {
-                  text: "OK",
-                  onPress: () => navigation.goBack(),
-                },
-              ]
-            );
-          }
-        } catch (error) {
-          console.error("Error checking increase eligibility:", error);
-          Alert.alert("Success", "Exercise completed successfully", [
-            {
-              text: "OK",
-              onPress: () => navigation.goBack(),
-            },
-          ]);
-        }
-      } else if (painLevel > 5) {
-        // Show confirmation dialog for decreasing difficulty (high pain)
-        Alert.alert(
-          "Exercise Difficulty",
-          "Your pain level is high. Would you like to decrease the difficulty for next time?",
-          [
-            {
-              text: "No",
-              onPress: () => navigation.goBack(),
-              style: "cancel",
-            },
-            {
-              text: "Yes",
-              onPress: async () => {
-                try {
-                  // Call API to decrease difficulty
-                  await api.post(
-                    `/user-exercises/${userExerciseId}/confirm_decrease/`,
-                    {
-                      confirm: "yes",
-                    }
-                  );
-                  Alert.alert(
-                    "Success",
-                    "Exercise difficulty decreased for next time!"
-                  );
-                  navigation.goBack();
-                } catch (error) {
-                  console.error("Error decreasing difficulty:", error);
-                  Alert.alert(
-                    "Error",
-                    "Failed to decrease difficulty. Please try again."
-                  );
-                  navigation.goBack();
-                }
-              },
-            },
-          ]
-        );
-      } else {
-        // Regular success message for moderate pain level
-        Alert.alert("Success", "Exercise completed successfully", [
-          {
-            text: "OK",
-            onPress: () => navigation.goBack(),
-          },
-        ]);
-      }
-    } catch (error) {
-      console.error("Error saving exercise:", error);
-      Alert.alert(
-        "Error",
-        "Failed to save exercise completion. Please try again."
-      );
-    }
-  };
+  // Generate dropdown data
+  const repsVals = getDropdownData(userExercise?.reps ?? 20);
+  const setsVals = getDropdownData(userExercise?.sets ?? 10);
+  const painLevels = getPainLevelData();
 
   if (!exercise) {
     return (
@@ -396,7 +102,12 @@ export default function Exercise() {
         <View style={tw`w-8`} />
       </View>
 
-      <View style={[tw`w-full relative`, { aspectRatio: 16 / 9 }]}>
+      <View
+        style={[
+          tw`w-full relative rounded-xl overflow-hidden`,
+          { aspectRatio: 16 / 9 },
+        ]}
+      >
         <YoutubePlayer
           height={240}
           play={playing}
@@ -405,7 +116,6 @@ export default function Exercise() {
         />
       </View>
 
-      * Exercise details - now closer to video */}
       <View style={tw`mt-4 px-4`}>
         <Text style={tw`text-lg text-center font-semibold`}>
           Reps: {userExercise?.reps}
@@ -425,11 +135,12 @@ export default function Exercise() {
         </Text>
 
         {exercise.additional_notes && (
-          <Text style={tw`text-lg text-center mt-2`}>
+          <Text style={tw`text-center text-left mt-2`}>
             {exercise.additional_notes}
           </Text>
         )}
       </View>
+
       <View style={tw`absolute bottom-10 w-full items-center`}>
         <Pressable
           style={({ pressed, hovered }) => [
@@ -439,12 +150,11 @@ export default function Exercise() {
               opacity: pressed ? 0.8 : 1,
             },
           ]}
-          onPress={() => {
-            setShowCompletionForm(true);
-          }}
+          onPress={() => setShowCompletionForm(true)}
         >
           <Text style={tw`text-white font-semibold`}>Complete</Text>
         </Pressable>
+
         <Modal
           visible={showCompletionForm}
           transparent={true}
@@ -462,6 +172,7 @@ export default function Exercise() {
                   <Text style={tw`text-xl font-bold text-center mb-4`}>
                     Complete Exercise
                   </Text>
+
                   <View style={tw`mb-4`}>
                     <Text style={tw`text-gray-700 mb-1`}>Reps Completed</Text>
                     <Dropdown
@@ -476,6 +187,7 @@ export default function Exercise() {
                       onChange={(item) => setReps(item.value)}
                     />
                   </View>
+
                   <View style={tw`mb-4`}>
                     <Text style={tw`text-gray-700 mb-1`}>Sets Completed</Text>
                     <Dropdown
@@ -490,6 +202,7 @@ export default function Exercise() {
                       onChange={(item) => setSets(item.value)}
                     />
                   </View>
+
                   <View style={tw`mb-6`}>
                     <Text style={tw`text-gray-700 mb-1`}>
                       Pain Level (0-10)
@@ -506,6 +219,7 @@ export default function Exercise() {
                       onChange={(item) => setPainLevel(item.value)}
                     />
                   </View>
+
                   <Pressable
                     onPress={handleSave}
                     style={({ pressed }) => [

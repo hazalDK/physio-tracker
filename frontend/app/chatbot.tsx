@@ -425,7 +425,7 @@ export default function Chatbot() {
           style={tw`flex-row items-center border-t border-gray-200 px-4 py-2`}
         >
           <TextInput
-            style={tw`flex-1 bg-gray-100 rounded-full px-4 py-2 mr-2`}
+            style={tw`flex-1 bg-gray-100 text-black rounded-full px-4 py-2 mr-2`}
             placeholder="Type your message..."
             value={inputText}
             onChangeText={setInputText}

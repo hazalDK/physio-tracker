@@ -9,177 +9,29 @@ import {
   ActivityIndicator,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import * as SecureStore from "expo-secure-store";
 import tw from "tailwind-react-native-classnames";
-import axios from "axios";
-import { useState, useEffect } from "react";
-import { useNavigation } from "@react-navigation/native";
-import { RootStackParamsList } from "@/types/navigation";
-import { StackNavigationProp } from "@react-navigation/stack";
-import { injuryTypesData } from "@/types/Injury";
-import { Profile } from "@/types/user";
+import { useProfileData } from "@/hooks/useProfileData";
 
 export default function Profile() {
-  const [userProfile, setUserProfile] = useState<Profile | null>(null);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [newUsername, setNewUsername] = useState("");
-  const [newFirstName, setNewFirstName] = useState("");
-  const [newLastName, setNewLastName] = useState("");
-  const [newDateOfBirth, setNewDateOfBirth] = useState<Date | undefined>(
-    undefined
-  );
-  const [injuryTypes, setInjuryTypes] = useState([] as injuryTypesData[]);
-  const [open, setOpen] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const navigation =
-    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
-
-  const fetchUserProfile = async () => {
-    try {
-      const token = await SecureStore.getItemAsync("access_token");
-
-      if (!token) {
-        Alert.alert("Login Required", "Please sign in to continue", [
-          { text: "OK", onPress: () => navigation.navigate("login") },
-        ]);
-        return;
-      }
-
-      const response = await axios.get("http://192.168.68.111:8000/users/me/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      setUserProfile(response.data);
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        try {
-          // Attempt token refresh
-          const refreshToken = await SecureStore.getItemAsync("refresh_token");
-          if (!refreshToken) throw new Error("No refresh token available");
-
-          const refreshUrl =
-            process.env.API_URL || "http://192.168.68.111:8000";
-          const refreshResponse = await axios.post(
-            `${refreshUrl}/api/token/refresh/`,
-            { refresh: refreshToken }
-          );
-
-          // Store new tokens
-          const newToken = refreshResponse.data.access;
-          const newRefreshToken = refreshResponse.data.refresh;
-
-          await Promise.all([
-            SecureStore.setItemAsync("access_token", newToken),
-            SecureStore.setItemAsync("refresh_token", newRefreshToken),
-          ]);
-
-          // Retry both requests with new token
-          const api = axios.create({
-            baseURL: process.env.API_URL || "http://192.168.68.111:8000",
-            timeout: 10000,
-            headers: { Authorization: `Bearer ${newToken}` },
-          });
-
-          const response = await axios.get(`${api}/users/me/`, {});
-
-          setUserProfile(response.data);
-        } catch (refreshError) {
-          console.error("Token refresh failed:", refreshError);
-
-          // Clear tokens and redirect
-          await Promise.all([
-            SecureStore.deleteItemAsync("access_token"),
-            SecureStore.deleteItemAsync("refresh_token"),
-          ]);
-
-          Alert.alert("Session Expired", "Please login again", [
-            {
-              text: "OK",
-              onPress: () => navigation.navigate("login"),
-            },
-          ]);
-        }
-      } else {
-        // Handle other errors
-        console.error("API request failed:", error);
-        Alert.alert(
-          "Error",
-          "Failed to load your exercises. Please check your connection and try again."
-        );
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const fetchInjuryTypes = async () => {
-      try {
-        const apiUrl = process.env.API_URL || "http://192.168.68.111:8000";
-        const response = await axios.get<injuryTypesData[]>(
-          `${apiUrl}/injury-types/`
-        );
-        setInjuryTypes(response.data);
-      } catch (error) {
-        console.error("Error fetching injury types:", error);
-      }
-    };
-    fetchInjuryTypes();
-    fetchUserProfile();
-  }, []);
-
-  const handleEditProfile = async () => {
-    setIsUpdating(true);
-
-    if (!newUsername && !newFirstName && !newLastName && !newDateOfBirth) {
-      Alert.alert("Error", "Please fill in at least one field");
-      setIsUpdating(false);
-      return;
-    }
-
-    try {
-      const token = await SecureStore.getItemAsync("access_token");
-
-      // Build the updated data object
-      const updatedData = {
-        ...(newUsername && { username: newUsername }),
-        ...(newFirstName && { first_name: newFirstName }),
-        ...(newLastName && { last_name: newLastName }),
-        ...(newDateOfBirth && {
-          date_of_birth: newDateOfBirth.toISOString().split("T")[0],
-        }),
-      };
-
-      const response = await axios.put(
-        "http://192.168.68.111:8000/users/update_profile/",
-        updatedData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        Alert.alert("Success", "Profile updated successfully!");
-        setIsModalVisible(false);
-        setNewUsername("");
-        setNewFirstName("");
-        setNewLastName("");
-        setNewDateOfBirth(undefined);
-        fetchUserProfile();
-      }
-    } catch (error) {
-      // ... error handling ...
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+  const {
+    userProfile,
+    injuryTypes,
+    loading,
+    isModalVisible,
+    newUsername,
+    newFirstName,
+    newLastName,
+    newDateOfBirth,
+    open,
+    isUpdating,
+    setNewUsername,
+    setNewFirstName,
+    setNewLastName,
+    setNewDateOfBirth,
+    setOpen,
+    handleEditProfile,
+    toggleModal,
+  } = useProfileData();
 
   if (loading) {
     return (
@@ -240,7 +92,7 @@ export default function Profile() {
           },
         ]}
         onPress={() => {
-          setIsModalVisible(true);
+          toggleModal();
         }}
       >
         <Text style={tw`text-lg text-white font-semibold`}>Edit Profile</Text>
@@ -249,7 +101,7 @@ export default function Profile() {
         visible={isModalVisible}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => !isUpdating && setIsModalVisible(false)}
+        onRequestClose={() => !isUpdating && toggleModal()}
       >
         <View
           style={tw`flex-1 justify-center items-center bg-black bg-opacity-50`}
@@ -328,7 +180,7 @@ export default function Profile() {
             <View style={tw`flex-row justify-between`}>
               <Pressable
                 style={[tw`px-4 py-2 rounded`, { backgroundColor: "#e5e7eb" }]}
-                onPress={() => setIsModalVisible(false)}
+                onPress={() => toggleModal()}
                 disabled={isUpdating}
               >
                 <Text style={isUpdating ? tw`text-gray-500` : tw``}>

@@ -1,5 +1,5 @@
 // User Profile Interface
-export interface Profile {
+export interface userProfileType {
   username: string;
   email: string;
   first_name: string;

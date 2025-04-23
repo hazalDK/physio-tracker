@@ -6,22 +6,19 @@ import {
   Image,
   FlatList,
   Pressable,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import axios from "axios";
 import tw from "tailwind-react-native-classnames";
-import * as SecureStore from "expo-secure-store";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamsList } from "@/types/navigation";
-import { ExerciseItem, UserExerciseItem } from "@/types/exercise";
+import { ExerciseItem } from "@/types/exercise";
+import { useFetchActiveExercises } from "@/hooks/useFetchActiveExercises";
 
 export default function Index() {
-  const [loading, setLoading] = useState(true);
-  const [userExercises, setUserExercises] = useState<UserExerciseItem[]>([]);
-  const [exercises, setExercises] = useState<ExerciseItem[]>([]);
+  const { loading, userExercises, exercises, fetchData, refreshData } =
+    useFetchActiveExercises();
   const [progress, setProgress] = useState(0);
   const exerciseNavigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "exercise">>();
@@ -29,134 +26,20 @@ export default function Index() {
     useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
   const chatbotNavigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
-  const [refreshKey, setRefreshKey] = useState(0);
 
-  const fetchData = async () => {
-    setLoading(true);
-
-    try {
-      // 1. Get token or redirect to login
-      let token = await SecureStore.getItemAsync("access_token");
-      if (!token) {
-        Alert.alert("Login Required", "Please sign in to continue", [
-          { text: "OK", onPress: () => loginNavigation.navigate("login") },
-        ]);
-        return;
-      }
-
-      // 2. Create an axios instance with proper defaults
-      const api = axios.create({
-        baseURL: process.env.API_URL || "http://192.168.68.111:8000",
-        timeout: 10000,
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      // 3. Use Promise.all for parallel requests
-      const [userExercisesResponse, exercisesResponse] = await Promise.all([
-        api.get("/user-exercises/"),
-        api.get("/users/active_exercises/"),
-      ]);
-
-      // 4. Process successful responses
-      if (Array.isArray(userExercisesResponse.data)) {
-        setUserExercises(userExercisesResponse.data);
-      } else {
-        console.warn("Invalid user exercises data format");
-        setUserExercises([]);
-      }
-
-      if (Array.isArray(exercisesResponse.data)) {
-        setExercises(exercisesResponse.data);
-      } else {
-        console.warn("Invalid exercises data format");
-        setExercises([]);
-      }
-    } catch (error) {
-      // 5. Handle token refresh
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        try {
-          // Attempt token refresh
-          const refreshToken = await SecureStore.getItemAsync("refresh_token");
-          if (!refreshToken) throw new Error("No refresh token available");
-
-          const refreshUrl =
-            process.env.API_URL || "http://192.168.68.111:8000";
-          const refreshResponse = await axios.post(
-            `${refreshUrl}/api/token/refresh/`,
-            { refresh: refreshToken }
-          );
-
-          // Store new tokens
-          const newToken = refreshResponse.data.access;
-          const newRefreshToken = refreshResponse.data.refresh;
-
-          await Promise.all([
-            SecureStore.setItemAsync("access_token", newToken),
-            SecureStore.setItemAsync("refresh_token", newRefreshToken),
-          ]);
-
-          // Retry both requests with new token
-          const api = axios.create({
-            baseURL: process.env.API_URL || "http://192.168.68.111:8000",
-            timeout: 10000,
-            headers: { Authorization: `Bearer ${newToken}` },
-          });
-
-          const [retryUserExercises, retryExercises] = await Promise.all([
-            api.get("/user-exercises/"),
-            api.get("/users/active_exercises/"),
-          ]);
-
-          setUserExercises(
-            Array.isArray(retryUserExercises.data)
-              ? retryUserExercises.data
-              : []
-          );
-          setExercises(
-            Array.isArray(retryExercises.data) ? retryExercises.data : []
-          );
-        } catch (refreshError) {
-          console.error("Token refresh failed:", refreshError);
-
-          // Clear tokens and redirect
-          await Promise.all([
-            SecureStore.deleteItemAsync("access_token"),
-            SecureStore.deleteItemAsync("refresh_token"),
-          ]);
-
-          Alert.alert("Session Expired", "Please login again", [
-            { text: "OK", onPress: () => loginNavigation.navigate("login") },
-          ]);
-        }
-      } else {
-        // Handle other errors
-        console.error("API request failed:", error);
-        Alert.alert(
-          "Error",
-          "Failed to load your exercises. Please check your connection and try again."
-        );
-        setExercises([]);
-        setUserExercises([]);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Fetch data on initial load
   useEffect(() => {
     fetchData();
-  }, [loginNavigation]);
+  }, []);
 
+  // Refresh data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      // This will run every time the screen comes into focus
-      fetchData(); // Your data fetching function
-      setRefreshKey((prev) => prev + 1); // Force re-render if needed
-    }, [])
+      refreshData();
+    }, [refreshData])
   );
 
   // Construct thumbnail URL
-
   useEffect(() => {
     const completedExercises = userExercises.filter(
       (exercise) => exercise.completed
@@ -230,7 +113,7 @@ export default function Index() {
                   }}
                   style={tw`w-28 h-28 rounded-lg mx-auto mb-2`}
                 />
-                <Text style={tw`text-center`}>{item.name}</Text>
+                <Text style={tw`text-center font-semibold`}>{item.name}</Text>
                 <Text style={tw`text-center`}>
                   Difficulty level: {item.difficulty_level}
                 </Text>
