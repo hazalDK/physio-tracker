@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/stable/ref/settings/
 from . import database
 import os
 
+from dotenv import load_dotenv
+
 from pathlib import Path
 import datetime
 
@@ -33,6 +35,11 @@ SECRET_KEY = os.getenv(
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+load_dotenv() 
+
+# Now you can access env vars:
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 ALLOWED_HOSTS = [    
     '127.0.0.1',

@@ -1,6 +1,7 @@
 import json
 import os
 import openai
+from dotenv import load_dotenv
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.hashers import check_password
@@ -15,9 +16,7 @@ from .serializers import (
     UserExerciseSerializer, ReportSerializer, InjuryTypeSerializer
 )
 
-
-# Set up OpenAI client
-openai.api_key = os.environ.get('OPENAI_API_KEY')  # Set in your Django settings
+openai.api_key = os.environ.get('OPENAI_API_KEY') 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -55,15 +54,15 @@ def chatbot(request):
         ]
 
         system_prompt = f"""
-        You are a physiotherapy assistant AI for a rehabilitation app. 
+        You are a physiotherapy assistant AI for a rehabilitation app. Keep all responses brief and focused.
 
         GUIDELINES:
-        1. Start with a disclaimer.
-        2. Be encouraging.
-        3. Emphasize form and safety.
-        4. Tailor suggestions to the user's pain and exercise history.
-        5. Do not diagnose.
-        6. Recommend seeking professional help when needed.
+        1. Keep responses under 100 words
+        2. Be encouraging but concise
+        3. Focus on the most important safety points only
+        4. Tailor brief suggestions to the user's pain level and exercise history
+        5. Never diagnose
+        6. If needed, briefly recommend seeking professional help
 
         USER PROFILE:
         - Injury: {user.injury_type.name if user.injury_type else "Not specified"}
@@ -86,8 +85,8 @@ def chatbot(request):
         response = openai.chat.completions.create(
             model="gpt-4",
             messages=messages,
-            max_tokens=500,
-            temperature=0.7
+            max_tokens=150,
+            temperature=0.5
         )
 
         ai_message = response.choices[0].message.content
@@ -100,6 +99,11 @@ def chatbot(request):
         return Response({'message': ai_message, 'status': 'success'})
 
     except Exception as e:
+        import traceback
+        print("🚨 Chatbot error:", str(e))
+        traceback.print_exc()  # <--- Add this for full traceback in console
+
+
         return Response({'message': f"Sorry, error: {str(e)}", 'status': 'error'}, status=500)
 
 @api_view(['POST'])

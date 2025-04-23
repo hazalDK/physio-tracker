@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   Alert,
 } from "react-native";
+import Toast from "react-native-root-toast";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import tw from "tailwind-react-native-classnames";
@@ -26,7 +27,10 @@ interface messageType {
 // Define message bubble components
 const UserMessage = ({ message }: { message: string }) => (
   <View
-    style={tw`bg-teal-500 rounded-2xl rounded-br-none py-3 px-4 self-end max-w-3/4 mb-2`}
+    style={[
+      tw`rounded-2xl rounded-br-none py-3 px-4 self-end max-w-3/4 mb-2`,
+      { backgroundColor: "#14b8a6" },
+    ]}
   >
     <Text style={tw`text-white`}>{message}</Text>
   </View>
@@ -262,7 +266,6 @@ export default function Chatbot() {
           // Retry both requests with new token
           const api = axios.create({
             baseURL: process.env.API_URL || "http://192.168.68.111:8000",
-            timeout: 10000,
             headers: { Authorization: `Bearer ${newToken}` },
           });
 
@@ -311,6 +314,48 @@ export default function Chatbot() {
     }
   };
 
+  const handleReset = async () => {
+    try {
+      let token = await SecureStore.getItemAsync("access_token");
+      if (!token) throw new Error("No access token");
+
+      await axios.post(
+        (process.env.API_URL || "http://192.168.68.111:8000") +
+          "/api/reset-chat/",
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Reset messages
+      setMessages([
+        {
+          id: "welcome",
+          text: "Welcome to your physiotherapy assistant! How can I help you today?",
+          sender: "bot",
+        },
+        {
+          id: "disclaimer",
+          text: "DISCLAIMER",
+          sender: "disclaimer",
+        },
+      ]);
+
+      fetchUserData();
+
+      // 🎉 Show toast
+      Toast.show("Chat reset!", {
+        duration: Toast.durations.SHORT,
+        position: Toast.positions.BOTTOM,
+        backgroundColor: "#14b8a6",
+        textColor: "white",
+        shadow: true,
+      });
+    } catch (err) {
+      console.error("Failed to reset chat:", err);
+      Alert.alert("Error", "Could not reset chat.");
+    }
+  };
+
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
       <KeyboardAvoidingView
@@ -336,7 +381,7 @@ export default function Chatbot() {
           </Text>
 
           <Pressable
-            onPress={fetchUserData}
+            onPress={handleReset}
             style={({ pressed }) => [
               tw`p-2 rounded-full`,
               { opacity: pressed ? 0.8 : 1 },
@@ -346,7 +391,6 @@ export default function Chatbot() {
           </Pressable>
         </View>
 
-        {/* Messages area */}
         <ScrollView
           ref={scrollViewRef}
           style={tw`flex-1 px-4 pt-4`}
