@@ -14,37 +14,21 @@ import axios from "axios";
 import tw from "tailwind-react-native-classnames";
 import * as SecureStore from "expo-secure-store";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-
-// Define the interface for the exercise item
-interface ExerciseItem {
-  id: number;
-  name: string;
-  slug: string;
-  image: string;
-  video_link: string;
-  video_id: string;
-  difficulty_level: string;
-  additional_notes: string;
-  category: number;
-}
-
-// Define the interface for the userExercise item
-interface UserExerciseItem {
-  id: number;
-  user: number;
-  exercise: number;
-  sets: number;
-  reps: number;
-  pain_level: number;
-  completed: boolean;
-}
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamsList } from "@/types/navigation";
+import { ExerciseItem, UserExerciseItem } from "@/types/exercise";
 
 export default function Index() {
   const [loading, setLoading] = useState(true);
   const [userExercises, setUserExercises] = useState<UserExerciseItem[]>([]);
   const [exercises, setExercises] = useState<ExerciseItem[]>([]);
   const [progress, setProgress] = useState(0);
-  const navigation = useNavigation();
+  const exerciseNavigation =
+    useNavigation<StackNavigationProp<RootStackParamsList, "exercise">>();
+  const loginNavigation =
+    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
+  const chatbotNavigation =
+    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
   const [refreshKey, setRefreshKey] = useState(0);
 
   const fetchData = async () => {
@@ -55,7 +39,7 @@ export default function Index() {
       let token = await SecureStore.getItemAsync("access_token");
       if (!token) {
         Alert.alert("Login Required", "Please sign in to continue", [
-          { text: "OK", onPress: () => navigation.navigate("login") },
+          { text: "OK", onPress: () => loginNavigation.navigate("login") },
         ]);
         return;
       }
@@ -141,7 +125,7 @@ export default function Index() {
           ]);
 
           Alert.alert("Session Expired", "Please login again", [
-            { text: "OK", onPress: () => navigation.navigate("login") },
+            { text: "OK", onPress: () => loginNavigation.navigate("login") },
           ]);
         }
       } else {
@@ -161,7 +145,7 @@ export default function Index() {
 
   useEffect(() => {
     fetchData();
-  }, [navigation]);
+  }, [loginNavigation]);
 
   useFocusEffect(
     useCallback(() => {
@@ -192,14 +176,14 @@ export default function Index() {
       console.warn(`No user exercise found for exercise ID ${exercise.id}`);
     }
 
-    navigation.navigate("exercise", {
+    exerciseNavigation.navigate("exercise", {
       exerciseId: exercise.id,
       userExerciseId: userExercise?.id || null,
     });
   }
 
   function handlePress() {
-    navigation.navigate("chatbot" as never);
+    chatbotNavigation.navigate("chatbot");
   }
 
   if (loading) {

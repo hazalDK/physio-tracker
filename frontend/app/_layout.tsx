@@ -4,6 +4,7 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -13,6 +14,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useNavigation } from "@react-navigation/native";
+import { RootStackParamsList } from "@/types/navigation";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -21,7 +23,8 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
 
   const [authState, setAuthState] = useState<
     "checking" | "authenticated" | "unauthenticated"
@@ -44,7 +47,7 @@ export default function RootLayout() {
     if (loaded && authState !== "checking") {
       SplashScreen.hideAsync();
       if (authState === "unauthenticated") {
-        navigation.navigate("login" as never);
+        navigation.navigate("login");
       }
     }
   }, [loaded, authState]);

@@ -16,18 +16,12 @@ import { Ionicons } from "@expo/vector-icons";
 import Entypo from "@expo/vector-icons/Entypo";
 import { LineChart, BarChart } from "react-native-chart-kit";
 import axios from "axios";
-
-interface adherenceExerciseHistory {
-  date: string;
-  completed: string;
-  adherence: number;
-}
-
-interface painLevelExerciseHistory {
-  date: string;
-  exercises: string;
-  pain_level: number;
-}
+import { RootStackParamsList } from "@/types/navigation";
+import { StackNavigationProp } from "@react-navigation/stack";
+import {
+  adherenceExerciseHistory,
+  painLevelExerciseHistory,
+} from "@/types/report";
 
 // Import your API_URL from a config file
 const API_URL = "http://192.168.68.111:8000"; // Replace with your actual API URL
@@ -56,7 +50,8 @@ function AdherenceGraph() {
     [] as adherenceExerciseHistory[]
   );
   const [error, setError] = useState<string | null>(null);
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
 
   // Add week navigation state
   const [currentEndDate, setCurrentEndDate] = useState(new Date());
@@ -128,7 +123,7 @@ function AdherenceGraph() {
         Alert.alert("Login Required", "Please sign in to continue", [
           {
             text: "OK",
-            onPress: () => navigation.navigate("login" as never),
+            onPress: () => navigation.navigate("login"),
           },
         ]);
         return;
@@ -201,7 +196,7 @@ function AdherenceGraph() {
           Alert.alert("Session Expired", "Please login again", [
             {
               text: "OK",
-              onPress: () => navigation.navigate("login" as never),
+              onPress: () => navigation.navigate("login"),
             },
           ]);
         }
@@ -326,7 +321,8 @@ function PainLevelGraph() {
     [] as painLevelExerciseHistory[]
   );
   const [error, setError] = useState<string | null>(null);
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
 
   // Add week navigation state
   const [currentEndDate, setCurrentEndDate] = useState(new Date());
@@ -398,7 +394,7 @@ function PainLevelGraph() {
         Alert.alert("Login Required", "Please sign in to continue", [
           {
             text: "OK",
-            onPress: () => navigation.navigate("login" as never),
+            onPress: () => navigation.navigate("login"),
           },
         ]);
         return;
@@ -471,7 +467,7 @@ function PainLevelGraph() {
           Alert.alert("Session Expired", "Please login again", [
             {
               text: "OK",
-              onPress: () => navigation.navigate("login" as never),
+              onPress: () => navigation.navigate("login"),
             },
           ]);
         }

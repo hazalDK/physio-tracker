@@ -5,9 +5,12 @@ import tw from "tailwind-react-native-classnames";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import ReminderComponent from "../reminderComponent";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamsList } from "@/types/navigation";
 
 export default function Settings() {
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -26,7 +29,7 @@ export default function Settings() {
     try {
       await SecureStore.deleteItemAsync("access_token");
       await SecureStore.deleteItemAsync("refresh_token");
-      navigation.navigate("login" as never);
+      navigation.navigate("login");
       Alert.alert("Signed out", "You have been successfully signed out.");
     } catch (error) {
       Alert.alert("Error", "Failed to sign out. Please try again.");

@@ -1,4 +1,4 @@
-import { Link, useNavigation } from "@react-navigation/native";
+import { Link } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
@@ -7,14 +7,8 @@ import { Dropdown } from "react-native-element-dropdown";
 import { TextInput } from "react-native-gesture-handler";
 import tw from "tailwind-react-native-classnames";
 import DateTimePicker from "@react-native-community/datetimepicker";
-
-// Interface for the injury types data
-interface injuryTypesData {
-  id: number;
-  name: string;
-  description: string;
-  treatment: [number];
-}
+import { router } from "expo-router";
+import { injuryTypesData } from "@/types/Injury";
 
 export default function Signup() {
   const [firstName, setFirstName] = useState("");
@@ -31,7 +25,6 @@ export default function Signup() {
   const [passwordError, setPasswordError] = useState("");
   const [securePassword, setSecurePassword] = useState(false);
   const [secureConfirmPassword, setSecureConfirmPassword] = useState(false);
-  const navigation = useNavigation();
 
   // Register the user
   async function handleRegister() {
@@ -100,7 +93,7 @@ export default function Signup() {
       await SecureStore.setItemAsync("refresh_token", response.data.refresh);
 
       // Navigate to the home screen
-      navigation.navigate("(tabs)" as never);
+      router.replace("/(tabs)");
     } catch (error: any) {
       console.error(
         "Registration failed:",

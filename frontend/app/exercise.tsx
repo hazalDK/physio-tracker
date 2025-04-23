@@ -15,30 +15,9 @@ import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { Ionicons } from "@expo/vector-icons";
 import { Dropdown } from "react-native-element-dropdown";
-
-// Define the interface for the exercise item
-interface ExerciseItem {
-  id: number;
-  name: string;
-  slug: string;
-  image: string;
-  video_link: string;
-  difficulty_level: string;
-  additional_notes: string;
-  category: number;
-}
-
-// Define the interface for the userExercise item
-interface UserExerciseItem {
-  id: number;
-  user: number;
-  exercise: number;
-  sets: number;
-  reps: number;
-  hold: number;
-  pain_level: number;
-  completed: boolean;
-}
+import { RootStackParamsList } from "@/types/navigation";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { ExerciseItem, UserExerciseItem } from "@/types/exercise";
 
 // Define the interface for the route params
 type ExerciseRouteParams = {
@@ -57,7 +36,8 @@ export default function Exercise() {
   const [sets, setSets] = useState(0);
   const [painLevel, setPainLevel] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
 
   // Use optional chaining to safely access route params
   const exerciseId = route?.params?.exerciseId;
@@ -176,7 +156,10 @@ export default function Exercise() {
             ]);
 
             Alert.alert("Session Expired", "Please login again", [
-              { text: "OK", onPress: () => navigation.navigate("login") },
+              {
+                text: "OK",
+                onPress: () => navigation.navigate("login"),
+              },
             ]);
           }
         } else {
@@ -389,7 +372,6 @@ export default function Exercise() {
 
   return (
     <View style={tw`flex-1 bg-white px-4`}>
-      {/* Header with back button and title */}
       <View style={tw`flex-row items-center pt-10 pb-4`}>
         <Pressable
           onPress={() => navigation.goBack()}
@@ -423,7 +405,7 @@ export default function Exercise() {
         />
       </View>
 
-      {/* Exercise details - now closer to video */}
+      * Exercise details - now closer to video */}
       <View style={tw`mt-4 px-4`}>
         <Text style={tw`text-lg text-center font-semibold`}>
           Reps: {userExercise?.reps}
@@ -480,8 +462,6 @@ export default function Exercise() {
                   <Text style={tw`text-xl font-bold text-center mb-4`}>
                     Complete Exercise
                   </Text>
-
-                  {/* Reps Input */}
                   <View style={tw`mb-4`}>
                     <Text style={tw`text-gray-700 mb-1`}>Reps Completed</Text>
                     <Dropdown
@@ -496,8 +476,6 @@ export default function Exercise() {
                       onChange={(item) => setReps(item.value)}
                     />
                   </View>
-
-                  {/* Sets Input */}
                   <View style={tw`mb-4`}>
                     <Text style={tw`text-gray-700 mb-1`}>Sets Completed</Text>
                     <Dropdown
@@ -512,8 +490,6 @@ export default function Exercise() {
                       onChange={(item) => setSets(item.value)}
                     />
                   </View>
-
-                  {/* Pain Level */}
                   <View style={tw`mb-6`}>
                     <Text style={tw`text-gray-700 mb-1`}>
                       Pain Level (0-10)
@@ -530,8 +506,6 @@ export default function Exercise() {
                       onChange={(item) => setPainLevel(item.value)}
                     />
                   </View>
-
-                  {/* Save Button */}
                   <Pressable
                     onPress={handleSave}
                     style={({ pressed }) => [

@@ -14,26 +14,10 @@ import tw from "tailwind-react-native-classnames";
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
-
-// User Profile Interface
-interface Profile {
-  username: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  date_of_birth: Date;
-  injury_type: number;
-  last_reset: string;
-  exercises: string;
-}
-
-// Interface for the injury types data
-interface injuryTypesData {
-  id: number;
-  name: string;
-  description: string;
-  treatment: [number];
-}
+import { RootStackParamsList } from "@/types/navigation";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { injuryTypesData } from "@/types/Injury";
+import { Profile } from "@/types/user";
 
 export default function Profile() {
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
@@ -48,7 +32,8 @@ export default function Profile() {
   const [open, setOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [loading, setLoading] = useState(false);
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
 
   const fetchUserProfile = async () => {
     try {
@@ -56,7 +41,7 @@ export default function Profile() {
 
       if (!token) {
         Alert.alert("Login Required", "Please sign in to continue", [
-          { text: "OK", onPress: () => navigation.navigate("login" as never) },
+          { text: "OK", onPress: () => navigation.navigate("login") },
         ]);
         return;
       }
@@ -114,7 +99,7 @@ export default function Profile() {
           Alert.alert("Session Expired", "Please login again", [
             {
               text: "OK",
-              onPress: () => navigation.navigate("login" as never),
+              onPress: () => navigation.navigate("login"),
             },
           ]);
         }
@@ -312,7 +297,6 @@ export default function Profile() {
                 </Text>
               </TouchableOpacity>
 
-              {/* Add a clear button */}
               {(newDateOfBirth || userProfile?.date_of_birth) && (
                 <TouchableOpacity
                   style={tw`ml-2 p-2`}

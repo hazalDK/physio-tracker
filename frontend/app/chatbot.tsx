@@ -11,18 +11,15 @@ import {
   SafeAreaView,
   Alert,
 } from "react-native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import Toast from "react-native-root-toast";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import tw from "tailwind-react-native-classnames";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
-
-interface messageType {
-  id: string;
-  text: string;
-  sender: string;
-}
+import { RootStackParamsList } from "@/types/navigation";
+import { messageType } from "@/types/chatbot";
 
 // Define message bubble components
 const UserMessage = ({ message }: { message: string }) => (
@@ -63,7 +60,8 @@ const DisclaimerMessage = () => (
 );
 
 export default function Chatbot() {
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
   const [messages, setMessages] = useState([] as messageType[]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -95,7 +93,7 @@ export default function Chatbot() {
       let token = await SecureStore.getItemAsync("access_token");
       if (!token) {
         Alert.alert("Login Required", "Please sign in to continue", [
-          { text: "OK", onPress: () => navigation.navigate("login" as never) },
+          { text: "OK", onPress: () => navigation.navigate("login") },
         ]);
         return;
       }
@@ -169,7 +167,7 @@ export default function Chatbot() {
           Alert.alert("Session Expired", "Please login again", [
             {
               text: "OK",
-              onPress: () => navigation.navigate("login" as never),
+              onPress: () => navigation.navigate("login"),
             },
           ]);
         }
@@ -204,7 +202,7 @@ export default function Chatbot() {
       let token = await SecureStore.getItemAsync("access_token");
       if (!token) {
         Alert.alert("Login Required", "Please sign in to continue", [
-          { text: "OK", onPress: () => navigation.navigate("login" as never) },
+          { text: "OK", onPress: () => navigation.navigate("login") },
         ]);
         return;
       }
@@ -301,7 +299,7 @@ export default function Chatbot() {
           Alert.alert("Session Expired", "Please login again", [
             {
               text: "OK",
-              onPress: () => navigation.navigate("login" as never),
+              onPress: () => navigation.navigate("login"),
             },
           ]);
         }
@@ -368,7 +366,6 @@ export default function Chatbot() {
         style={tw`flex-1`}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* Header */}
         <View
           style={tw`flex-row items-center justify-between px-4 py-3 border-b border-gray-200`}
         >
