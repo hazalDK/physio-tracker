@@ -139,6 +139,7 @@ def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
     """
     Update exercise level based on pain level.
     Creates a new UserExercise instance with the updated exercise difficulty.
+    Returns special flag 'consider_removal' if a beginner exercise causes high pain.
     """
     user_exercises = UserExercise.objects.filter(user=user, is_active=True)
     for user_exercise in user_exercises:
@@ -169,9 +170,8 @@ def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
                     case "Beginner":
                         if pain_level >= 4:
                             print("Pain level is high - beginner")
-                            # If pain level is high, stay at beginner
-                            message = "You are already at the Beginner level."
-                            return None  # Return None instead of JsonResponse
+                            # If pain level is high on beginner exercise, consider removal
+                            return "consider_removal"
 
             except Exercise.DoesNotExist as e:
                 print(e)
@@ -223,11 +223,15 @@ def increase_difficulty(user, exercise_name):
     """
     Increase the difficulty level of the exercise for the user.
     """
+    # Initialize new_user_exercise to None
+    new_user_exercise = None
+    
     user_exercises = UserExercise.objects.filter(user=user, is_active=True)
     for user_exercise in user_exercises:
         if user_exercise.exercise.name == exercise_name:
             current_exercise = user_exercise.exercise
             current_category = current_exercise.category
+            new_exercise = None  # Initialize new_exercise to None
 
             try:
                 # Use match case to handle different difficulty levels
@@ -255,7 +259,7 @@ def increase_difficulty(user, exercise_name):
 
             # Create a new UserExercise instance with the updated exercise
             if new_exercise:
-                user_exercises = UserExercise.objects.filter(user=user, exercise = new_exercise)
+                user_exercises = UserExercise.objects.filter(user=user, exercise=new_exercise)
                 if user_exercises.exists():
                     new_user_exercise = user_exercises.first()
                     new_user_exercise.pain_level = 0
@@ -272,8 +276,14 @@ def increase_difficulty(user, exercise_name):
                         is_active=True,  # Mark the new instance as active
                     )
                 print(f"User {user} reassigned to {new_exercise.name} ({new_exercise.difficulty_level}).")
+            else:
+                # If no new exercise (already at max difficulty), return the current one
+                new_user_exercise = user_exercise
 
             return new_user_exercise
+    
+    # Return None if the exercise was not found
+    return None
     
 class UserViewSet(viewsets.ModelViewSet):
     """
@@ -451,6 +461,11 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         instance.pain_level = updated_pain_level
         instance.save()
 
+        # Initialize flags for potential actions
+        should_decrease = False
+        should_increase = False
+        should_remove = False
+
         # If the exercise is marked as completed, create/update the Report
         if completed:
             # Get today's date
@@ -477,31 +492,15 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
                 }
             )
             
-            # Update the exercise difficulty level based on pain
-            new_user_exercise = update_exercise_level_based_on_pain(
-                request.user, 
-                updated_pain_level, 
-                instance.exercise.name
-            )
-            
-            # Check for consistent low pain to increase difficulty
-            if has_consistent_low_pain(instance):
-                new_user_exercise = increase_difficulty(
-                    request.user, 
-                    instance.exercise.name
-                ) or new_user_exercise
-            
-            # If difficulty changed, handle the relationship updates
-            if new_user_exercise and new_user_exercise.id != instance.id:
-                # Mark the old exercise as inactive
-                instance.is_active = False
-                instance.save()
-                
-                # Add the new exercise to the report
-                report.exercises_completed.add(new_user_exercise)
-                
-                # Update the response to include the new exercise
-                serializer = self.get_serializer(new_user_exercise)
+            # Check pain level and difficulty conditions but only set flags
+            if updated_pain_level >= 4:
+                if instance.exercise.difficulty_level == "Beginner":
+                    should_remove = True
+                else:
+                    should_decrease = True
+            elif has_consistent_low_pain(instance):
+                if instance.exercise.difficulty_level != "Advanced":
+                    should_increase = True
             
             # Recalculate the report's overall pain level (average across all exercises)
             report_exercises = report.report_exercises.all()
@@ -510,8 +509,14 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
                 report.pain_level = avg_pain
                 report.save()
 
-        return Response(serializer.data)
-    
+        # Return the serialized data with flags for potential actions
+        return Response({
+            **serializer.data,
+            'should_decrease': should_decrease,
+            'should_increase': should_increase,
+            'should_remove': should_remove
+        })
+        
     @action(detail=True, methods=['POST'])
     def confirm_increase(self, request, pk=None):
         user_exercise = self.get_object()
@@ -579,6 +584,34 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
                 'user_exercise': self.get_serializer(user_exercise).data
             
             })
+
+    @action(detail=True, methods=['POST'])
+    def confirm_removal(self, request, pk=None):
+        """
+        Endpoint to handle removal of exercises that cause pain even at beginner level.
+        """
+        user_exercise = self.get_object()
+        
+        # Check if user confirmed
+        if request.data.get('confirm') == 'yes':
+            # Mark the exercise as inactive
+            user_exercise.is_active = False
+            user_exercise.save()
+            
+            # Log this action
+            print(f"Exercise {user_exercise.exercise.name} removed for user {request.user} due to high pain level")
+            
+            return Response({
+                'message': "Exercise removed from your routine due to high pain level. Please consult your healthcare provider.",
+                'removed': True
+            })
+        else:
+            # User opted to keep the exercise
+            return Response({
+                'message': "Exercise kept in your routine. Consider modifying how you perform it or consulting your healthcare provider.",
+                'removed': False
+            })    
+    
     @action(detail=True, methods=['GET'])
     def can_increase(self, request, pk=None):
         user_exercise = self.get_object()
@@ -654,31 +687,7 @@ class ReportViewSet(viewsets.ModelViewSet):
 
                 # Accumulate pain level for average calculation
                 total_pain_level += exercise_pain_level
-                num_exercises += 1  # ISSUE 7: Increment the counter
-
-                # Update exercise level based on pain level
-                updated_exercise = update_exercise_level_based_on_pain(
-                    request.user, 
-                    exercise_pain_level, 
-                    user_exercise.exercise.name
-                )
-                
-                # Check for difficulty increase
-                if updated_exercise:
-                    user_exercise = updated_exercise
-
-                # Check for consistent low pain to increase difficulty
-                if has_consistent_low_pain(user_exercise):
-                    increased_exercise = increase_difficulty(
-                        request.user, 
-                        user_exercise.exercise.name
-                    )
-                    if increased_exercise:
-                        user_exercise = increased_exercise
-                
-                # Update the user exercise
-                user_exercise.is_active = True
-                user_exercise.save()
+                num_exercises += 1 
                 
             except UserExercise.DoesNotExist:
                 continue  # Skip if exercise not found
@@ -810,7 +819,7 @@ class ReportViewSet(viewsets.ModelViewSet):
                     )
                     updated_exercise = increased_exercise or updated_exercise
                 
-                # Add the (possibly updated) exercise to report
+                # Add the updated exercise to report if its updated
                 if updated_exercise:
                     instance.exercises_completed.add(updated_exercise)
                     updated_exercise.is_active = True

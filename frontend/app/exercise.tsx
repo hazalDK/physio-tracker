@@ -44,6 +44,8 @@ export default function Exercise() {
   const {
     showCompletionForm,
     setShowCompletionForm,
+    showRemovalConfirmation,
+    setShowRemovalConfirmation,
     reps,
     setReps,
     sets,
@@ -51,6 +53,7 @@ export default function Exercise() {
     painLevel,
     setPainLevel,
     handleSave,
+    handleRemovalConfirmation,
     getDropdownData,
     getPainLevelData,
   } = useExerciseCompletion(userExerciseId);
@@ -76,6 +79,62 @@ export default function Exercise() {
       <View style={tw`flex-1 items-center justify-center bg-white`}>
         <ActivityIndicator size="large" color="#14b8a6" />
       </View>
+    );
+  }
+
+  // if setShowRemovalConfirmation is true, show a confirmation modal
+  if (showRemovalConfirmation) {
+    return (
+      <Modal
+        visible={showRemovalConfirmation}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowRemovalConfirmation(false)}
+      >
+        <TouchableWithoutFeedback
+          onPress={() => setShowRemovalConfirmation(false)}
+        >
+          <View
+            style={tw`flex-1 bg-black bg-opacity-50 justify-center items-center`}
+          >
+            <TouchableWithoutFeedback>
+              <View style={tw`bg-white rounded-lg p-6 w-11/12 max-w-md`}>
+                <Text style={tw`text-xl font-bold text-center mb-4`}>
+                  Confirm Removal
+                </Text>
+                <Text style={tw`text-gray-700 mb-4`}>
+                  You've reported a pain level of {painLevel} for this exercise.
+                  {"\n"}Do you want to remove it from your routine?
+                </Text>
+                <Pressable
+                  onPress={() => handleRemovalConfirmation(true)}
+                  style={({ pressed }) => [
+                    tw`p-4 rounded-lg items-center mb-2`,
+                    {
+                      opacity: pressed ? 0.8 : 1,
+                      backgroundColor: "#14b8a6",
+                    },
+                  ]}
+                >
+                  <Text style={tw`text-white font-bold text-lg`}>Yes</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => handleRemovalConfirmation(false)}
+                  style={({ pressed }) => [
+                    tw`p-4 rounded-lg items-center`,
+                    {
+                      opacity: pressed ? 0.8 : 1,
+                      backgroundColor: "#f87171",
+                    },
+                  ]}
+                >
+                  <Text style={tw`text-white font-bold text-lg`}>No</Text>
+                </Pressable>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     );
   }
 
