@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useAuth } from "./useAuth";
 
@@ -172,6 +172,10 @@ export function useAnalyticsData<T>(
     updateWeekTitle(currentEndDate);
   }, []);
 
+  const refreshData = useCallback(() => {
+    fetchData(currentEndDate);
+  }, [currentEndDate]);
+
   return {
     loading,
     chartData,
@@ -181,5 +185,6 @@ export function useAnalyticsData<T>(
     weekTitle,
     goToPreviousWeek,
     goToNextWeek,
+    refreshData,
   };
 }

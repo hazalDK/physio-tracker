@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -17,6 +18,7 @@ import {
   painLevelExerciseHistory,
 } from "@/types/report";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
+import ExerciseHistoryDetail from "@/components/ExerciseHistoryDetail";
 
 // Get screen width for responsive charts
 const screenWidth = Dimensions.get("window").width - 40;
@@ -32,9 +34,16 @@ function AdherenceGraph() {
     weekTitle,
     goToPreviousWeek,
     goToNextWeek,
+    refreshData,
   } = useAnalyticsData<adherenceExerciseHistory>(
     "/reports/adherence_stats/",
     "adherence"
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshData();
+    }, [refreshData])
   );
 
   if (loading) {
@@ -135,9 +144,16 @@ function PainLevelGraph() {
     weekTitle,
     goToPreviousWeek,
     goToNextWeek,
+    refreshData,
   } = useAnalyticsData<painLevelExerciseHistory>(
     "/reports/pain_stats/",
     "pain"
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshData();
+    }, [refreshData])
   );
 
   if (loading) {
@@ -276,6 +292,16 @@ export default function Analytics() {
             title: "Pain Level",
             tabBarIcon: ({ color }) => (
               <Ionicons name="heart" size={24} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="History"
+          component={ExerciseHistoryDetail}
+          options={{
+            title: "Exercise Log",
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="list" size={24} color={color} />
             ),
           }}
         />

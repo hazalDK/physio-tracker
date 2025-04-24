@@ -1,7 +1,7 @@
+from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
-from django.urls import reverse
 from django.utils.text import slugify
 
 
@@ -99,10 +99,12 @@ class UserExercise(models.Model):
     exercise = models.ForeignKey('Exercise', on_delete=models.CASCADE)
     sets = models.IntegerField(default=0)
     reps = models.IntegerField(default=0)
-    hold = models.IntegerField(default=0)  # Hold time in seconds
+    hold = models.IntegerField(default=0)  
     pain_level = models.IntegerField(default=0)
     completed = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)  # Track active/inactive exercises
+    is_active = models.BooleanField(default=True)  
+    date_activated = models.DateField(auto_now_add=True)
+    date_deactivated = models.DateField(null=True, blank=True)  
 
 
     class Meta:
@@ -128,6 +130,14 @@ class UserExercise(models.Model):
     def clean(self):
         if self.sets < 0 or self.reps < 0:
             raise ValidationError("Sets and reps must be non-negative.")
+        
+    def save(self, *args, **kwargs):
+        # If is_active is changing from True to False, set date_deactivated
+        if self.pk:  # Only for existing instances
+            old_instance = UserExercise.objects.get(pk=self.pk)
+            if old_instance.is_active and not self.is_active:
+                self.date_deactivated = timezone.now().date()
+        super().save(*args, **kwargs)
     
 
 # InjuryType model

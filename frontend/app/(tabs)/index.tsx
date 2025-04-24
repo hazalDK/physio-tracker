@@ -49,7 +49,7 @@ export default function Index() {
     );
     const totalExercises = userExercises.length;
     if (totalExercises > 0) {
-      setProgress(completedExercises.length / totalExercises);
+      setProgress(Math.round(completedExercises.length / totalExercises));
     }
   }, [userExercises]);
 

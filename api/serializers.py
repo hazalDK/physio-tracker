@@ -36,7 +36,7 @@ class UserExerciseSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = UserExercise
-        fields = ['id', 'user', 'exercise', 'sets', 'reps','hold', 'pain_level', 'completed']
+        fields = ['id', 'user', 'exercise', 'sets', 'reps', 'hold', 'pain_level', 'completed', 'date_activated', 'date_deactivated']
     
     def get_fields(self):
         fields = super().get_fields()

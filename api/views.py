@@ -2,6 +2,7 @@ import json
 import os
 import openai
 from django.utils import timezone
+from django.db.models import Q
 from datetime import timedelta
 from django.contrib.auth.hashers import check_password
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -14,6 +15,7 @@ from .serializers import (
     ReportExerciseSerializer, UserSerializer, ExerciseSerializer, ExerciseCategorySerializer,
     UserExerciseSerializer, ReportSerializer, InjuryTypeSerializer
 )
+
 
 # Set up OpenAI API key
 openai.api_key = os.environ.get('OPENAI_API_KEY') 
@@ -93,8 +95,8 @@ def chatbot(request):
         response = openai.chat.completions.create(
             model="gpt-4",
             messages=messages,
-            max_tokens=150,
-            temperature=0.5
+            max_tokens=500,
+            temperature=0.7
         )
 
         ai_message = response.choices[0].message.content
@@ -108,8 +110,8 @@ def chatbot(request):
 
     except Exception as e:
         import traceback
-        print("🚨 Chatbot error:", str(e))
-        traceback.print_exc()  # <--- Add this for full traceback in console
+        print("Chatbot error:", str(e))
+        traceback.print_exc()  
 
 
         return Response({'message': f"Sorry, error: {str(e)}", 'status': 'error'}, status=500)
@@ -133,7 +135,6 @@ def reset_user_exercises(user):
         UserExercise.objects.filter(user=user, is_active=True).update(completed=False, pain_level=0)
         user.last_reset = now
         user.save()
-        print(f"Reset UserExercise for {user.username}.")
 
 def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
     """
@@ -185,6 +186,7 @@ def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
                     new_user_exercise.pain_level = 0
                     new_user_exercise.completed = False
                     new_user_exercise.is_active = True
+                    new_user_exercise.deactived_date = None
                     new_user_exercise.save()
                 else:
                     new_user_exercise = UserExercise.objects.create(
@@ -195,7 +197,6 @@ def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
                         pain_level=0,
                         is_active=True,  # Mark the new instance as active
                     )
-                print(f"User {user} reassigned to {new_exercise.name} ({new_exercise.difficulty_level}).")
                 return new_user_exercise
             return None
     
@@ -265,6 +266,7 @@ def increase_difficulty(user, exercise_name):
                     new_user_exercise.pain_level = 0
                     new_user_exercise.completed = False
                     new_user_exercise.is_active = True
+                    new_user_exercise.deactived_date = None
                     new_user_exercise.save()
                 else:
                     new_user_exercise = UserExercise.objects.create(
@@ -275,7 +277,6 @@ def increase_difficulty(user, exercise_name):
                         pain_level=0,
                         is_active=True,  # Mark the new instance as active
                     )
-                print(f"User {user} reassigned to {new_exercise.name} ({new_exercise.difficulty_level}).")
             else:
                 # If no new exercise (already at max difficulty), return the current one
                 new_user_exercise = user_exercise
@@ -590,23 +591,21 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         """
         Endpoint to handle removal of exercises that cause pain even at beginner level.
         """
+        # Gets the UserExercise instance
         user_exercise = self.get_object()
         
-        # Check if user confirmed
+        # Checks if user confirmed
         if request.data.get('confirm') == 'yes':
-            # Mark the exercise as inactive
+            # Marks the exercise as inactive
             user_exercise.is_active = False
             user_exercise.save()
-            
-            # Log this action
-            print(f"Exercise {user_exercise.exercise.name} removed for user {request.user} due to high pain level")
             
             return Response({
                 'message': "Exercise removed from your routine due to high pain level. Please consult your healthcare provider.",
                 'removed': True
             })
         else:
-            # User opted to keep the exercise
+            # If the user opts to keep the exercise it returns a message
             return Response({
                 'message': "Exercise kept in your routine. Consider modifying how you perform it or consulting your healthcare provider.",
                 'removed': False
@@ -713,35 +712,27 @@ class ReportViewSet(viewsets.ModelViewSet):
         instance.pain_level = serializer.validated_data.get('pain_level', instance.pain_level)
         instance.notes = serializer.validated_data.get('notes', instance.notes)
         instance.save()
-
-        # Print the raw request data to see what's happening
-        print(f"Raw request data: {request.data}")
-        print(f"Type of exercises_completed: {type(request.data.get('exercises_completed'))}")
         
         # Get exercises_completed data with proper handling
         exercises_data = request.data.get('exercises_completed', [])
         
         # Handle both string and list formats
         if isinstance(exercises_data, str):
-            print(f"Converting string to list: {exercises_data}")
             try:
                 # Try to parse as JSON if it's a string
                 import json
                 exercises_ids = json.loads(exercises_data)
             except json.JSONDecodeError:
                 # If not valid JSON, try to evaluate it as a Python literal (list)
-                print("JSON decode failed, trying literal evaluation")
                 try:
                     import ast
                     exercises_ids = ast.literal_eval(exercises_data)
                 except (ValueError, SyntaxError):
                     # If that fails too, try to split it if it's a comma-separated string
-                    print("Literal eval failed, trying split")
                     exercises_ids = [id.strip() for id in exercises_data.split(',')]
         else:
             exercises_ids = exercises_data
         
-        print(f"Processed exercise IDs: {exercises_ids}")
         
         # Ensure we have a list of integers
         if isinstance(exercises_ids, list):
@@ -765,7 +756,6 @@ class ReportViewSet(viewsets.ModelViewSet):
                 print(f"Could not process exercises_ids: {exercises_ids}")
                 processed_ids = []
 
-        print(f"Final processed IDs: {processed_ids}")
         
         # Initialize pain calculation
         total_pain_level = instance.pain_level * instance.exercises_completed.count()
@@ -774,13 +764,11 @@ class ReportViewSet(viewsets.ModelViewSet):
         # Now process each exercise with the properly processed IDs
         for exercise_id in processed_ids:
             try:
-                print(f"Looking up UserExercise with ID: {exercise_id}")
                 user_exercise = UserExercise.objects.get(
                     id=exercise_id,
                     user=request.user  # Ensure exercise belongs to current user
                 )
                 
-                print(f"Successfully found exercise: {user_exercise}")
                 
                 # Remove from report if present
                 if instance.exercises_completed.filter(id=user_exercise.id).exists():
@@ -788,7 +776,6 @@ class ReportViewSet(viewsets.ModelViewSet):
                 
                 # Get pain level from exercise
                 exercise_pain_level = user_exercise.pain_level
-                print(f"Processing exercise {user_exercise.id} with pain level {exercise_pain_level}")
                 
                 # Handle report exercise record
                 report_exercise, created = ReportExercise.objects.update_or_create(
@@ -838,15 +825,6 @@ class ReportViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['GET'])
     def adherence_stats(self, request):
-        """
-        Get adherence statistics for the authenticated user
-        Optional parameters:
-        - end_date: The end date for the 7-day period (format: YYYY-MM-DD)
-        Returns:
-        - daily: Daily adherence percentage for the 7-day period
-        - average: Overall average adherence percentage 
-        - history: Recent exercise history with completion details
-        """
         try:
             user = request.user
             
@@ -856,7 +834,6 @@ class ReportViewSet(viewsets.ModelViewSet):
                 try:
                     end_date = timezone.datetime.strptime(end_date_str, '%Y-%m-%d').date()
                 except ValueError:
-                    # If date format is invalid, default to today
                     end_date = timezone.now().date()
             else:
                 end_date = timezone.now().date()
@@ -868,25 +845,40 @@ class ReportViewSet(viewsets.ModelViewSet):
             # Initialize data structure
             daily_adherence = {date: {'completed': 0, 'total': 0} for date in date_range}
             
-            # Get all user exercises
-            user_exercises = UserExercise.objects.filter(user=user)
-            total_exercises = user_exercises.count()
-
             # Get all reports in date range
             reports = Report.objects.filter(
                 user=user,
                 date__gte=start_date,
                 date__lte=end_date
-            ).prefetch_related('exercises_completed')
+            ).prefetch_related('exercises_completed', 'report_exercises')
 
-            # Calculate daily adherence
-            for report in reports:
-                report_date = report.date
-                if report_date in daily_adherence:
-                    report_exercises = report.exercises_completed.count()
-                    daily_adherence[report_date]['completed'] = report_exercises
-                    daily_adherence[report_date]['total'] = total_exercises
-            
+            # Get all user exercises that were active at any point during the date range
+            all_user_exercises = UserExercise.objects.filter(
+                user=user,
+                date_activated__lte=end_date,
+            ).filter(
+                Q(date_deactivated__isnull=True) | 
+                Q(date_deactivated__gte=start_date)
+            ).select_related('exercise')
+
+            # For each day in date range, determine which exercises were active
+            for date in date_range:
+                # Get exercises active on this date
+                active_exercises = [
+                    ue for ue in all_user_exercises 
+                    if ue.date_activated <= date and 
+                    (ue.date_deactivated is None or ue.date_deactivated > date)
+                ]
+                
+                daily_adherence[date]['total'] = len(active_exercises)
+                
+                # Get report for this date if exists
+                day_report = next((r for r in reports if r.date == date), None)
+                if day_report:
+                    # Count completed exercises from report
+                    report_exercises = ReportExercise.objects.filter(report=day_report)
+                    daily_adherence[date]['completed'] = report_exercises.count()
+
             # Calculate percentages and format for chart
             labels = []
             data = []
@@ -897,21 +889,23 @@ class ReportViewSet(viewsets.ModelViewSet):
                 
                 if daily_adherence[date]['total'] > 0:
                     percentage = (daily_adherence[date]['completed'] / daily_adherence[date]['total']) * 100
+                    percentage = min(percentage, 100)  # Cap at 100%
                 else:
                     percentage = 0
                     
                 data.append(round(percentage))
-            
+
             # Calculate overall average
             completed_sum = sum(day['completed'] for day in daily_adherence.values())
             total_sum = sum(day['total'] for day in daily_adherence.values() if day['total'] > 0)
             
             if total_sum > 0:
                 average_adherence = (completed_sum / total_sum) * 100
+                average_adherence = min(average_adherence, 100)
             else:
                 average_adherence = 0
             
-            # Get exercise history (reports from the selected week)
+            # Get exercise history for the week
             history = []
             week_reports = Report.objects.filter(
                 user=user,
@@ -920,14 +914,27 @@ class ReportViewSet(viewsets.ModelViewSet):
             ).order_by('-date')
             
             for report in week_reports:
-                completed = report.exercises_completed.count()
+                report_date = report.date
+                
+                # Find the completed exercises count for this report
+                completed = ReportExercise.objects.filter(report=report).count()
+                
+                # Get total active exercises for this date
+                active_exercises = [
+                    ue for ue in all_user_exercises 
+                    if ue.date_activated <= report_date and 
+                    (ue.date_deactivated is None or ue.date_deactivated > report_date)
+                ]
+                total_exercises = len(active_exercises)
+                
                 if total_exercises > 0:
                     adherence = (completed / total_exercises) * 100
+                    adherence = min(adherence, 100)
                 else:
                     adherence = 0
                     
                 history.append({
-                    'date': report.date.strftime('%A, %B %d'),
+                    'date': report_date.strftime('%A, %B %d'),
                     'completed': f"{completed}/{total_exercises}",
                     'adherence': round(adherence)
                 })
@@ -945,19 +952,13 @@ class ReportViewSet(viewsets.ModelViewSet):
             return Response(response_data)
             
         except Exception as e:
+            import traceback
+            print(f"Adherence stats error: {str(e)}")
+            traceback.print_exc()
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['GET'])
     def pain_stats(self, request):
-        """
-        Get pain level statistics for the authenticated user
-        Optional parameters:
-        - end_date: The end date for the 7-day period (format: YYYY-MM-DD)
-        Returns:
-        - daily: Daily pain levels for the 7-day period
-        - average: Overall average pain level
-        - history: Recent exercise history with pain levels
-        """
         try:
             user = request.user
             
@@ -967,7 +968,6 @@ class ReportViewSet(viewsets.ModelViewSet):
                 try:
                     end_date = timezone.datetime.strptime(end_date_str, '%Y-%m-%d').date()
                 except ValueError:
-                    # If date format is invalid, default to today
                     end_date = timezone.now().date()
             else:
                 end_date = timezone.now().date()
@@ -977,7 +977,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             date_range = [(start_date + timedelta(days=i)) for i in range(7)]
             
             # Initialize data structure
-            daily_pain = {date: {'total_pain': 0, 'count': 0} for date in date_range}
+            daily_pain = {date: {'total_pain': 0, 'count': 0, 'total_exercises': 0} for date in date_range}
             
             # Get all reports in date range
             reports = Report.objects.filter(
@@ -985,13 +985,35 @@ class ReportViewSet(viewsets.ModelViewSet):
                 date__gte=start_date,
                 date__lte=end_date
             ).prefetch_related('report_exercises')
-            
-            # Calculate daily pain levels
+
+            # Get all user exercises that were active at any point during the date range
+            all_user_exercises = UserExercise.objects.filter(
+                user=user,
+                date_activated__lte=end_date,
+            ).filter(
+                Q(date_deactivated__isnull=True) | 
+                Q(date_deactivated__gte=start_date)
+            ).select_related('exercise')
+
+            # Calculate daily pain levels considering only active exercises
             for report in reports:
                 report_date = report.date
                 if report_date in daily_pain:
-                    # Get all report exercises for this report
-                    report_exercises = ReportExercise.objects.filter(report=report)
+                    # Get all active exercises for this date
+                    active_exercises = [
+                        ue.id for ue in all_user_exercises 
+                        if ue.date_activated <= report_date and 
+                        (ue.date_deactivated is None or ue.date_deactivated > report_date)
+                    ]
+                    
+                    daily_pain[report_date]['total_exercises'] = len(active_exercises)
+                    
+                    # Get all report exercises for this report that were active
+                    report_exercises = ReportExercise.objects.filter(
+                        report=report,
+                        user_exercise__id__in=active_exercises
+                    )
+                    
                     pain_sum = sum(re.pain_level for re in report_exercises)
                     count = report_exercises.count()
                     
@@ -1023,7 +1045,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             else:
                 average_pain = 0
             
-            # Get pain history (reports from the selected week)
+            # Get pain history
             history = []
             week_reports = Report.objects.filter(
                 user=user,
@@ -1032,19 +1054,28 @@ class ReportViewSet(viewsets.ModelViewSet):
             ).order_by('-date')
 
             for report in week_reports:
+                report_date = report.date
+
+                # Get active exercises for report date
+                active_exercises = [
+                    ue.id for ue in all_user_exercises 
+                    if ue.date_activated <= report_date and 
+                    (ue.date_deactivated is None or ue.date_deactivated > report_date)
+                ]
+                
                 report_exercises = ReportExercise.objects.filter(report=report)
                 completed = report_exercises.count()
-                total = UserExercise.objects.filter(user=user).count()
-                
+                total = len(active_exercises)
+
                 avg_pain = report.pain_level if report.pain_level is not None else 0
-                    
+
                 history.append({
-                    'date': report.date.strftime('%A, %B %d'),
+                    'date': report_date.strftime('%A, %B %d'),
                     'exercises': f"{completed}/{total}",
                     'pain_level': round(avg_pain, 1)
                 })
             
-            # Format response for chart
+            # Format response
             response_data = {
                 'chart_data': {
                     'labels': labels,
@@ -1055,11 +1086,14 @@ class ReportViewSet(viewsets.ModelViewSet):
             }
             
             return Response(response_data)
-            
+        
         except Exception as e:
+            import traceback
+            print(f"Pain stats error: {str(e)}")
+            traceback.print_exc()
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                
-    
+
+        
     @action(detail=False, methods=['GET'])
     def exercise_history(self, request):
         """
@@ -1067,10 +1101,7 @@ class ReportViewSet(viewsets.ModelViewSet):
         """
         try:
             user = request.user
-            
-            # Get all user exercises
-            user_exercises = UserExercise.objects.filter(user=user)
-            
+                        
             # Get all reports for this user
             reports = Report.objects.filter(user=user).order_by('-date')[:10]
             

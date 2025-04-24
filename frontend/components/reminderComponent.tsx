@@ -145,7 +145,7 @@ export default function ReminderComponent() {
     );
 
     try {
-      // 1. First create the notification channel (Android only)
+      // Create the notification channel (Android only)
       if (Platform.OS === "android") {
         await Notifications.setNotificationChannelAsync("daily-reminder", {
           name: "Daily Reminder",
@@ -158,7 +158,7 @@ export default function ReminderComponent() {
         });
       }
 
-      // 2. Schedule the notification with platform-specific options
+      // Schedule the notification with platform-specific options
       const identifier = await Notifications.scheduleNotificationAsync({
         content: {
           title: "Physiotherapy Reminder",
@@ -183,7 +183,7 @@ export default function ReminderComponent() {
 
       console.log("Scheduled with ID:", identifier);
 
-      // 3. Verify it was actually scheduled
+      // Verifies it was actually scheduled
       await new Promise((resolve) => setTimeout(resolve, 500));
       const scheduled = await Notifications.getAllScheduledNotificationsAsync();
       console.log("Verified scheduled:", scheduled.length);
@@ -200,7 +200,7 @@ export default function ReminderComponent() {
   };
 
   // Handle toggle of the reminder with proper feedback
-  const toggleReminder = async (enabled) => {
+  const toggleReminder = async (enabled: boolean) => {
     console.log(`Attempting to ${enabled ? "enable" : "disable"} reminder`);
 
     if (enabled) {
@@ -226,16 +226,15 @@ export default function ReminderComponent() {
     }
   };
 
-  // Initialize component
+  // Load settings on component mount and set up listeners
   useEffect(() => {
     const setupComponent = async () => {
       await loadSettings();
 
-      // Add this foreground listener
+      // Foreground listener for when the notification is received
       const foregroundSubscription =
         Notifications.addNotificationReceivedListener((notification) => {
-          console.log("Foreground notification:", notification);
-          // You can choose to display it yourself when in foreground
+          console.log("Notification received:", notification);
           if (Platform.OS === "android") {
             Notifications.setNotificationChannelAsync("daily-reminder", {
               name: "Daily Reminder",
@@ -245,7 +244,7 @@ export default function ReminderComponent() {
           }
         });
 
-      // Also add response listener
+      // Response listener for when the user interacts with the notification
       const responseSubscription =
         Notifications.addNotificationResponseReceivedListener((response) => {
           console.log("Notification response:", response);
@@ -260,10 +259,9 @@ export default function ReminderComponent() {
     setupComponent();
   }, []);
 
-  // Apply settings once they're loaded
+  // Applies settings once they're loaded
   useEffect(() => {
     if (!isLoading && reminderEnabled) {
-      // Apply saved settings after loading
       toggleReminder(reminderEnabled);
     }
   }, [isLoading]);

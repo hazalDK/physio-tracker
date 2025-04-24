@@ -4,7 +4,7 @@ import { View, Text, Pressable, Alert, Modal, TextInput } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
-import ReminderComponent from "../../components/reminderComponent";
+import ReminderComponent from "../../components/ReminderComponent";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamsList } from "@/types/navigation";
 import { useAuth } from "@/hooks/useAuth";
