@@ -78,6 +78,7 @@ def chatbot(request):
         - Injury: {user.injury_type.name if user.injury_type else "Not specified"}
         - Exercises: {json.dumps(exercises_info)}
         - Reports: {json.dumps(reports_info)}
+        - Exercise Context: {json.dumps(exercise_context)}
         """
 
         # -- Chat Memory: Pull from session or init --
@@ -610,12 +611,6 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
                 'message': "Exercise kept in your routine. Consider modifying how you perform it or consulting your healthcare provider.",
                 'removed': False
             })    
-    
-    @action(detail=True, methods=['GET'])
-    def can_increase(self, request, pk=None):
-        user_exercise = self.get_object()
-        can_increase = has_consistent_low_pain(user_exercise)
-        return Response({'can_increase': can_increase})
 class ReportViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Report model.
@@ -649,12 +644,50 @@ class ReportViewSet(viewsets.ModelViewSet):
         num_exercises = 0
 
         # Handle both string and list formats
-        for exercise_data in exercises_completed_data:
-            user_exercise_id = exercise_data.get('user_exercise_id')
+        if isinstance(exercises_completed_data, str):
+            try:
+                # Try to parse as JSON if it's a string
+                import json
+                exercises_ids = json.loads(exercises_data)
+            except json.JSONDecodeError:
+                # If not valid JSON, try to evaluate it as a Python literal (list)
+                try:
+                    import ast
+                    exercises_ids = ast.literal_eval(exercises_completed_data)
+                except (ValueError, SyntaxError):
+                    # If that fails too, try to split it if it's a comma-separated string
+                    exercises_ids = [id.strip() for id in exercises_completed_data.split(',')]
+        else:
+            exercises_ids = exercises_completed_data
+        
+        
+        # Ensure we have a list of integers
+        if isinstance(exercises_ids, list):
+            processed_ids = []
+            for id_item in exercises_ids:
+                if isinstance(id_item, (int, str)):
+                    try:
+                        processed_ids.append(int(id_item))  # Convert to integer
+                    except ValueError:
+                        print(f"Could not convert {id_item} to integer")
+                elif isinstance(id_item, dict) and 'id' in id_item:
+                    try:
+                        processed_ids.append(int(id_item['id']))
+                    except ValueError:
+                        print(f"Could not convert {id_item['id']} to integer")
+        else:
+            # Handle single integer case
+            try:
+                processed_ids = [int(exercises_ids)]
+            except (ValueError, TypeError):
+                print(f"Could not process exercises_ids: {exercises_ids}")
+                processed_ids = []
 
+        # Handle both string and list formats
+        for exercise_id in processed_ids:
             try:
                 # Get the UserExercise instance
-                user_exercise = UserExercise.objects.get(id=user_exercise_id)
+                user_exercise = UserExercise.objects.get(id=exercise_id, user=request.user)  # Ensure exercise belongs to current user
                 
                 # Check if the exercise belongs to the current user
                 latest_report_exercise = ReportExercise.objects.filter(

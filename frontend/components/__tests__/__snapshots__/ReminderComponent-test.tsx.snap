@@ -1,0 +1,791 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly 1`] = `
+<View
+  style={
+    {
+      "alignItems": "center",
+      "borderBottomColor": "rgba(229, 231, 235, 1)",
+      "borderBottomLeftRadius": 12,
+      "borderBottomRightRadius": 12,
+      "borderBottomWidth": 2,
+      "borderLeftColor": "rgba(229, 231, 235, 1)",
+      "borderLeftWidth": 2,
+      "borderRightColor": "rgba(229, 231, 235, 1)",
+      "borderRightWidth": 2,
+      "borderTopColor": "rgba(229, 231, 235, 1)",
+      "borderTopLeftRadius": 12,
+      "borderTopRightRadius": 12,
+      "borderTopWidth": 2,
+      "marginBottom": 16,
+      "marginTop": 8,
+      "paddingBottom": 16,
+      "paddingLeft": 16,
+      "paddingRight": 16,
+      "paddingTop": 16,
+      "width": 320,
+    }
+  }
+>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderBottomLeftRadius": 12,
+          "borderBottomRightRadius": 12,
+          "borderTopLeftRadius": 12,
+          "borderTopRightRadius": 12,
+          "display": "flex",
+          "marginTop": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 16,
+          "width": 240,
+        },
+        {
+          "backgroundColor": "#14b8a6",
+          "opacity": 1,
+        },
+      ]
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "rgba(255, 255, 255, 1)",
+          "fontWeight": "600",
+        }
+      }
+    >
+      Enable Reminder
+    </Text>
+  </View>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderBottomLeftRadius": 12,
+          "borderBottomRightRadius": 12,
+          "borderTopLeftRadius": 12,
+          "borderTopRightRadius": 12,
+          "display": "flex",
+          "marginTop": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 16,
+          "width": 240,
+        },
+        {
+          "backgroundColor": "#14b8a6",
+          "opacity": 1,
+        },
+      ]
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "rgba(255, 255, 255, 1)",
+          "fontWeight": "600",
+        }
+      }
+    >
+      Save Setting
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`renders with no permissions 1`] = `
+<View
+  style={
+    {
+      "alignItems": "center",
+      "borderBottomColor": "rgba(229, 231, 235, 1)",
+      "borderBottomLeftRadius": 12,
+      "borderBottomRightRadius": 12,
+      "borderBottomWidth": 2,
+      "borderLeftColor": "rgba(229, 231, 235, 1)",
+      "borderLeftWidth": 2,
+      "borderRightColor": "rgba(229, 231, 235, 1)",
+      "borderRightWidth": 2,
+      "borderTopColor": "rgba(229, 231, 235, 1)",
+      "borderTopLeftRadius": 12,
+      "borderTopRightRadius": 12,
+      "borderTopWidth": 2,
+      "marginBottom": 16,
+      "marginTop": 8,
+      "paddingBottom": 16,
+      "paddingLeft": 16,
+      "paddingRight": 16,
+      "paddingTop": 16,
+      "width": 320,
+    }
+  }
+>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderBottomLeftRadius": 12,
+          "borderBottomRightRadius": 12,
+          "borderTopLeftRadius": 12,
+          "borderTopRightRadius": 12,
+          "display": "flex",
+          "marginTop": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 16,
+          "width": 240,
+        },
+        {
+          "backgroundColor": "#14b8a6",
+          "opacity": 1,
+        },
+      ]
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "rgba(255, 255, 255, 1)",
+          "fontWeight": "600",
+        }
+      }
+    >
+      Enable Reminder
+    </Text>
+  </View>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderBottomLeftRadius": 12,
+          "borderBottomRightRadius": 12,
+          "borderTopLeftRadius": 12,
+          "borderTopRightRadius": 12,
+          "display": "flex",
+          "marginTop": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 16,
+          "width": 240,
+        },
+        {
+          "backgroundColor": "#14b8a6",
+          "opacity": 1,
+        },
+      ]
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "rgba(255, 255, 255, 1)",
+          "fontWeight": "600",
+        }
+      }
+    >
+      Save Setting
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`renders with permissions granted 1`] = `
+<View
+  style={
+    {
+      "alignItems": "center",
+      "borderBottomColor": "rgba(229, 231, 235, 1)",
+      "borderBottomLeftRadius": 12,
+      "borderBottomRightRadius": 12,
+      "borderBottomWidth": 2,
+      "borderLeftColor": "rgba(229, 231, 235, 1)",
+      "borderLeftWidth": 2,
+      "borderRightColor": "rgba(229, 231, 235, 1)",
+      "borderRightWidth": 2,
+      "borderTopColor": "rgba(229, 231, 235, 1)",
+      "borderTopLeftRadius": 12,
+      "borderTopRightRadius": 12,
+      "borderTopWidth": 2,
+      "marginBottom": 16,
+      "marginTop": 8,
+      "paddingBottom": 16,
+      "paddingLeft": 16,
+      "paddingRight": 16,
+      "paddingTop": 16,
+      "width": 320,
+    }
+  }
+>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderBottomLeftRadius": 12,
+          "borderBottomRightRadius": 12,
+          "borderTopLeftRadius": 12,
+          "borderTopRightRadius": 12,
+          "display": "flex",
+          "marginTop": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 16,
+          "width": 240,
+        },
+        {
+          "backgroundColor": "#14b8a6",
+          "opacity": 1,
+        },
+      ]
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "rgba(255, 255, 255, 1)",
+          "fontWeight": "600",
+        }
+      }
+    >
+      Enable Reminder
+    </Text>
+  </View>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderBottomLeftRadius": 12,
+          "borderBottomRightRadius": 12,
+          "borderTopLeftRadius": 12,
+          "borderTopRightRadius": 12,
+          "display": "flex",
+          "marginTop": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 16,
+          "width": 240,
+        },
+        {
+          "backgroundColor": "#14b8a6",
+          "opacity": 1,
+        },
+      ]
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "rgba(255, 255, 255, 1)",
+          "fontWeight": "600",
+        }
+      }
+    >
+      Save Setting
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`renders with reminder disabled 1`] = `
+<View
+  style={
+    {
+      "alignItems": "center",
+      "borderBottomColor": "rgba(229, 231, 235, 1)",
+      "borderBottomLeftRadius": 12,
+      "borderBottomRightRadius": 12,
+      "borderBottomWidth": 2,
+      "borderLeftColor": "rgba(229, 231, 235, 1)",
+      "borderLeftWidth": 2,
+      "borderRightColor": "rgba(229, 231, 235, 1)",
+      "borderRightWidth": 2,
+      "borderTopColor": "rgba(229, 231, 235, 1)",
+      "borderTopLeftRadius": 12,
+      "borderTopRightRadius": 12,
+      "borderTopWidth": 2,
+      "marginBottom": 16,
+      "marginTop": 8,
+      "paddingBottom": 16,
+      "paddingLeft": 16,
+      "paddingRight": 16,
+      "paddingTop": 16,
+      "width": 320,
+    }
+  }
+>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderBottomLeftRadius": 12,
+          "borderBottomRightRadius": 12,
+          "borderTopLeftRadius": 12,
+          "borderTopRightRadius": 12,
+          "display": "flex",
+          "marginTop": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 16,
+          "width": 240,
+        },
+        {
+          "backgroundColor": "#14b8a6",
+          "opacity": 1,
+        },
+      ]
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "rgba(255, 255, 255, 1)",
+          "fontWeight": "600",
+        }
+      }
+    >
+      Enable Reminder
+    </Text>
+  </View>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderBottomLeftRadius": 12,
+          "borderBottomRightRadius": 12,
+          "borderTopLeftRadius": 12,
+          "borderTopRightRadius": 12,
+          "display": "flex",
+          "marginTop": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 16,
+          "width": 240,
+        },
+        {
+          "backgroundColor": "#14b8a6",
+          "opacity": 1,
+        },
+      ]
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "rgba(255, 255, 255, 1)",
+          "fontWeight": "600",
+        }
+      }
+    >
+      Save Setting
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`renders with reminder enabled 1`] = `
+<View
+  style={
+    {
+      "alignItems": "center",
+      "borderBottomColor": "rgba(229, 231, 235, 1)",
+      "borderBottomLeftRadius": 12,
+      "borderBottomRightRadius": 12,
+      "borderBottomWidth": 2,
+      "borderLeftColor": "rgba(229, 231, 235, 1)",
+      "borderLeftWidth": 2,
+      "borderRightColor": "rgba(229, 231, 235, 1)",
+      "borderRightWidth": 2,
+      "borderTopColor": "rgba(229, 231, 235, 1)",
+      "borderTopLeftRadius": 12,
+      "borderTopRightRadius": 12,
+      "borderTopWidth": 2,
+      "marginBottom": 16,
+      "marginTop": 8,
+      "paddingBottom": 16,
+      "paddingLeft": 16,
+      "paddingRight": 16,
+      "paddingTop": 16,
+      "width": 320,
+    }
+  }
+>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderBottomLeftRadius": 12,
+          "borderBottomRightRadius": 12,
+          "borderTopLeftRadius": 12,
+          "borderTopRightRadius": 12,
+          "display": "flex",
+          "marginTop": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 16,
+          "width": 240,
+        },
+        {
+          "backgroundColor": "#14b8a6",
+          "opacity": 1,
+        },
+      ]
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "rgba(255, 255, 255, 1)",
+          "fontWeight": "600",
+        }
+      }
+    >
+      Enable Reminder
+    </Text>
+  </View>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderBottomLeftRadius": 12,
+          "borderBottomRightRadius": 12,
+          "borderTopLeftRadius": 12,
+          "borderTopRightRadius": 12,
+          "display": "flex",
+          "marginTop": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 16,
+          "width": 240,
+        },
+        {
+          "backgroundColor": "#14b8a6",
+          "opacity": 1,
+        },
+      ]
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "rgba(255, 255, 255, 1)",
+          "fontWeight": "600",
+        }
+      }
+    >
+      Save Setting
+    </Text>
+  </View>
+</View>
+`;

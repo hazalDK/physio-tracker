@@ -96,11 +96,6 @@ export default function ReminderComponent() {
         time = new Date(JSON.parse(timeValue));
       }
 
-      console.log("Loaded settings:", {
-        enabled,
-        time: time.toLocaleTimeString(),
-      });
-
       setReminderEnabled(enabled);
       setReminderTime(time);
     } catch (error) {
@@ -140,9 +135,6 @@ export default function ReminderComponent() {
     await Notifications.cancelAllScheduledNotificationsAsync();
 
     const triggerTime = new Date(reminderTime);
-    console.log(
-      `Scheduling for ${triggerTime.getHours()}:${triggerTime.getMinutes()}`
-    );
 
     try {
       // Create the notification channel (Android only)
@@ -181,12 +173,9 @@ export default function ReminderComponent() {
         },
       });
 
-      console.log("Scheduled with ID:", identifier);
-
       // Verifies it was actually scheduled
       await new Promise((resolve) => setTimeout(resolve, 500));
       const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-      console.log("Verified scheduled:", scheduled.length);
 
       if (scheduled.length === 0) {
         throw new Error("System failed to persist notification");
@@ -201,8 +190,6 @@ export default function ReminderComponent() {
 
   // Handle toggle of the reminder with proper feedback
   const toggleReminder = async (enabled: boolean) => {
-    console.log(`Attempting to ${enabled ? "enable" : "disable"} reminder`);
-
     if (enabled) {
       const hasPermission = await requestPermissions();
       if (!hasPermission) {
@@ -216,7 +203,6 @@ export default function ReminderComponent() {
     } else {
       try {
         await Notifications.cancelAllScheduledNotificationsAsync();
-        console.log("All notifications cancelled");
         setReminderEnabled(false);
         return true;
       } catch (error) {
@@ -234,7 +220,6 @@ export default function ReminderComponent() {
       // Foreground listener for when the notification is received
       const foregroundSubscription =
         Notifications.addNotificationReceivedListener((notification) => {
-          console.log("Notification received:", notification);
           if (Platform.OS === "android") {
             Notifications.setNotificationChannelAsync("daily-reminder", {
               name: "Daily Reminder",
@@ -276,7 +261,6 @@ export default function ReminderComponent() {
         is24Hour={true}
         onChange={(_, selectedTime) => {
           if (selectedTime) {
-            console.log("Selected time:", selectedTime.toLocaleTimeString());
             setReminderTime(selectedTime);
           }
         }}

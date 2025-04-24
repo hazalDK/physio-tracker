@@ -53,8 +53,6 @@ export default function Login() {
       );
 
       // Store tokens using correct SecureStore methods
-      console.log("Access Token:", response.data.access);
-      console.log("Refresh Token:", response.data.refresh);
       await storeToken("access_token", response.data.access);
       await storeToken("refresh_token", response.data.refresh);
 

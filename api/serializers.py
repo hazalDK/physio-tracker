@@ -113,6 +113,8 @@ class ReportExerciseSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ReportSerializer(serializers.ModelSerializer):
+    date = serializers.DateField(format="%Y-%m-%d")
+    
     """
     Serializer for Report model.
     This serializer handles the serialization and deserialization of Report instances.
@@ -120,6 +122,7 @@ class ReportSerializer(serializers.ModelSerializer):
     exercises_completed = serializers.PrimaryKeyRelatedField(
         queryset=UserExercise.objects.all(), many=True, required=False
     )
+    
     class Meta:
         model = Report
         fields = '__all__'
