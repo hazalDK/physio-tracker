@@ -19,13 +19,13 @@ interface ChartData {
  * Custom hook to fetch and manage analytics data (adherence or pain levels).
  * @param {string} endpoint - The API endpoint to fetch data from.
  * @param {"adherence" | "pain"} dataType - The type of data to fetch (either adherence or pain).
- * @returns {Object} - An object containing loading state, chart data, average, history, error, and functions to navigate weeks.
+ * return An object containing loading state, chart data, average, history, error, and functions to navigate weeks.
  * @throws {Error} - Throws an error if the API call fails.
  * */
 export function useAnalyticsData<T>(
   endpoint: string,
   dataType: "adherence" | "pain"
-): object {
+) {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<ChartData>({
     labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
