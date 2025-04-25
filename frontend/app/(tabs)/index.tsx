@@ -34,9 +34,6 @@ export default function Index() {
 
   const [progress, setProgress] = useState(0);
   const [showModal, setShowModal] = useState(false);
-  const [reactivateExerciseId, setReactivateExerciseId] = useState<
-    number | null
-  >(null);
 
   const exerciseNavigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "exercise">>();
@@ -47,13 +44,7 @@ export default function Index() {
     fetchData();
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      refreshData();
-    }, [refreshData])
-  );
-
-  useEffect(() => {
+  const setProgressValue = () => {
     const completedExercises = userExercises.filter(
       (exercise) => exercise.completed
     );
@@ -61,7 +52,18 @@ export default function Index() {
     if (totalExercises > 0) {
       setProgress(Math.round(completedExercises.length / totalExercises));
     }
+  };
+
+  useEffect(() => {
+    setProgressValue();
   }, [userExercises]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshData();
+      setProgressValue();
+    }, [refreshData])
+  );
 
   const redirectToExercise = (exercise: ExerciseItem) => {
     const userExercise = userExercises.find(

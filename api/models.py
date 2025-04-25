@@ -244,10 +244,9 @@ class ReportExercise(models.Model):
 class Report(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reports")
     date = models.DateField(auto_now_add=True)
-    pain_level = models.IntegerField(default=0)  # Pain rating at the time of report
-    exercises_completed = models.ManyToManyField(UserExercise, through=ReportExercise)  # Use through model
-    notes = models.TextField(default="", blank=True)  # Optional notes on progress
-    summary = models.TextField(default="", blank=True)
+    pain_level = models.IntegerField(default=0)
+    exercises_completed = models.ManyToManyField(UserExercise, through=ReportExercise) 
+    notes = models.TextField(default="", blank=True)  
 
     def clean(self):
         if self.pain_level < 0 or self.pain_level > 10:

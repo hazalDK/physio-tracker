@@ -636,7 +636,7 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         """
         user_exercise = self.get_object()
         
-        # Marks the exercise as inactive
+        # Mark the exercise as inactive
         user_exercise.is_active = False
         user_exercise.pain_level = 0 
         user_exercise.completed = False
@@ -649,46 +649,37 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         })
     
     @action(detail=True, methods=['PUT'])
-    def remove_exercise(self, request, pk=None):
+    def reactivate_exercise(self, request, pk=None):
         """
-        Endpoint to remove an exercise from the user's routine and any reports.
+        Endpoint to add a removed exercise back to the user's routine.
+        Ensures only one exercise per category at a given difficulty level.
         """
         user_exercise = self.get_object()
         
-        # First remove this exercise from all reports where it's marked as completed
-        reports_with_exercise = Report.objects.filter(
+        # Check if there's already an active exercise of the same category and difficulty
+        existing_exercise = UserExercise.objects.filter(
             user=request.user,
-            exercises_completed=user_exercise
-        )
+            exercise__category=user_exercise.exercise.category,
+            is_active=True
+        ).first()
         
-        for report in reports_with_exercise:
-            # Remove from the many-to-many relationship
-            report.exercises_completed.remove(user_exercise)
-            
-            # Delete the corresponding ReportExercise entries
-            ReportExercise.objects.filter(
-                report=report,
-                user_exercise=user_exercise
-            ).delete()
-            
-            # Recalculate the report's pain level
-            remaining_report_exercises = report.report_exercises.all()
-            if remaining_report_exercises.exists():
-                avg_pain = sum(re.pain_level for re in remaining_report_exercises) / remaining_report_exercises.count()
-                report.pain_level = avg_pain
-                report.save()
+        if existing_exercise:
+            return Response({
+                'message': f"You already have an active {user_exercise.exercise.difficulty_level} exercise in the {user_exercise.exercise.category.name} category.",
+                'added': False
+            }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Then mark the exercise as inactive
-        user_exercise.is_active = False
+        # Marks the exercise as active again
+        user_exercise.is_active = True
         user_exercise.pain_level = 0 
         user_exercise.completed = False
-        user_exercise.date_deactivated = timezone.now()
+        user_exercise.date_deactivated = None
         user_exercise.save()
         
         return Response({
-            'message': "Exercise removed from your routine and related reports.",
-            'removed': True
-    })
+            'message': "Exercise added back to your routine.",
+            'added': True
+        })
 
 class ReportViewSet(viewsets.ModelViewSet):
     """
