@@ -259,6 +259,25 @@ class APITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(len(response.data) > 0)
     
+    def test_user_inactive_exercises_endpoint(self):
+        """Test the user inactive exercises endpoint"""
+        user_exercise = UserExercise.objects.create(
+            user=self.user,
+            exercise=self.intermediate_exercise,
+            sets=3,
+            reps=10,
+            pain_level=0,
+            is_active=False,
+            completed=False
+        )
+        user_exercise.save()
+
+        url = reverse('user-inactive-exercises')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) > 0)
+    
     def test_user_register_endpoint(self):
         """Test the user registration endpoint"""
         url = reverse('user-register')
@@ -471,6 +490,96 @@ class APITests(APITestCase):
         self.assertEqual(response.data['should_increase'], False) 
         self.assertEqual(response.data['should_remove'], False)  
         self.assertEqual(response.data['should_decrease'], True)
+    
+    def test_remove_user_exercise(self):
+        """Test removing a user exercise"""
+        UserExercise.objects.get(user=self.user, exercise=self.beginner_exercise).delete() 
+        user_exercise = UserExercise.objects.create(
+            user=self.user, 
+            exercise=self.beginner_exercise, 
+            sets=4, 
+            reps=8, 
+            pain_level=0, 
+            completed=False,
+            is_active=True
+        )
+
+        url = reverse('userexercise-remove-exercise', args=[user_exercise.id])
+        
+        
+        response = self.client.put(url, {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify the exercise was removed
+        user_exercise.refresh_from_db()
+        self.assertFalse(user_exercise.is_active)  
+        self.assertEqual(user_exercise.date_deactivated, timezone.now().date())
+    
+    def test_reactivate_exercise(self):
+        """Test adding a removed exercise back"""
+        # Delete any existing beginner exercise for this user
+        UserExercise.objects.filter(user=self.user, exercise=self.beginner_exercise).delete()
+        
+        # Create a new user exercise to simulate the removed one
+        user_exercise = UserExercise.objects.create(
+            user=self.user, 
+            exercise=self.beginner_exercise, 
+            sets=4, 
+            reps=8, 
+            pain_level=0, 
+            completed=False,
+            is_active=False
+        )
+        print(UserExercise.objects.filter(id=user_exercise.id))  # Should return a queryset with one object
+
+        url = reverse('userexercise-reactivate-exercise', args=[user_exercise.id])
+        response = self.client.put(url, {}, format='json')
+
+        print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify the exercise was added back
+        user_exercise.refresh_from_db()
+        self.assertTrue(user_exercise.is_active)  
+        self.assertEqual(user_exercise.date_deactivated, None)
+
+    def test_reactivate_exercise_category_conflict(self):
+        """Test that we cannot reactivate an exercise if same category/difficulty already active"""
+        # First ensure we have an active exercise
+        UserExercise.objects.filter(user=self.user, exercise=self.beginner_exercise).delete()
+        active_exercise = UserExercise.objects.create(
+            user=self.user, 
+            exercise=self.beginner_exercise,  # Same category and difficulty level
+            sets=3, 
+            reps=10, 
+            pain_level=0, 
+            completed=False,
+            is_active=True
+        )
+        
+        # Create another exercise with same category and difficulty but inactive
+        inactive_exercise = UserExercise.objects.create(
+            user=self.user, 
+            exercise=self.intermediate_exercise,  # Using same exercise for simplicity, but could be any with same category/difficulty
+            sets=4, 
+            reps=8, 
+            pain_level=0, 
+            completed=False,
+            is_active=False
+        )
+        
+        url = reverse('userexercise-reactivate-exercise', args=[inactive_exercise.id])
+        response = self.client.put(url, {}, format='json')
+
+        # Should get bad request response
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+        # Verify error message contains category info
+        self.assertIn("already have an active", response.data['message'])
+        
+        # Verify the exercise remained inactive
+        inactive_exercise.refresh_from_db()
+        self.assertFalse(inactive_exercise.is_active)
     
     def test_create_report(self):
         """Test creating a report"""

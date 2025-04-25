@@ -15,7 +15,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamsList } from "@/types/navigation";
 import { useExerciseData } from "@/hooks/useExerciseData";
 import { useVideoPlayer } from "../hooks/useVideoPlayer";
-import { useExerciseCompletion } from "@/hooks/useExerciseCompletion";
+import { useExerciseUpdates } from "@/hooks/useExerciseUpdates";
 
 // Define the interface for the route params
 type ExerciseRouteParams = {
@@ -53,10 +53,11 @@ export default function Exercise() {
     painLevel,
     setPainLevel,
     handleSave,
+    handleRemoval,
     handleRemovalConfirmation,
     getDropdownData,
     getPainLevelData,
-  } = useExerciseCompletion(userExerciseId);
+  } = useExerciseUpdates(userExerciseId);
 
   // Generate dropdown data
   const repsVals = getDropdownData(userExercise?.reps ?? 20);
@@ -202,8 +203,20 @@ export default function Exercise() {
           </Text>
         )}
       </View>
+      <View style={[tw`absolute bottom-10 w-full flex-row justify-between`]}>
+        <Pressable
+          style={({ pressed, hovered }) => [
+            tw`items-center p-4 rounded-2xl w-28 ml-8`,
+            {
+              backgroundColor: "#f87171",
+              opacity: pressed ? 0.8 : 1,
+            },
+          ]}
+          onPress={handleRemoval}
+        >
+          <Text style={tw`text-white font-semibold`}>Remove</Text>
+        </Pressable>
 
-      <View style={tw`absolute bottom-10 w-full items-center`}>
         <Pressable
           style={({ pressed, hovered }) => [
             tw`items-center p-4 rounded-2xl w-28`,
@@ -216,90 +229,85 @@ export default function Exercise() {
         >
           <Text style={tw`text-white font-semibold`}>Complete</Text>
         </Pressable>
-
-        <Modal
-          visible={showCompletionForm}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowCompletionForm(false)}
-        >
-          <TouchableWithoutFeedback
-            onPress={() => setShowCompletionForm(false)}
-          >
-            <View
-              style={tw`flex-1 bg-black bg-opacity-50 justify-center items-center`}
-            >
-              <TouchableWithoutFeedback>
-                <View style={tw`bg-white rounded-lg p-6 w-11/12 max-w-md`}>
-                  <Text style={tw`text-xl font-bold text-center mb-4`}>
-                    Complete Exercise
-                  </Text>
-
-                  <View style={tw`mb-4`}>
-                    <Text style={tw`text-gray-700 mb-1`}>Reps Completed</Text>
-                    <Dropdown
-                      style={tw`border border-gray-300 rounded-lg p-3 mt-1`}
-                      placeholderStyle={tw`text-gray-500`}
-                      selectedTextStyle={tw`text-black`}
-                      data={repsVals}
-                      labelField="label"
-                      valueField="value"
-                      placeholder="Select number"
-                      value={reps}
-                      onChange={(item) => setReps(item.value)}
-                    />
-                  </View>
-
-                  <View style={tw`mb-4`}>
-                    <Text style={tw`text-gray-700 mb-1`}>Sets Completed</Text>
-                    <Dropdown
-                      style={tw`border border-gray-300 rounded-lg p-3 mt-1`}
-                      placeholderStyle={tw`text-gray-500`}
-                      selectedTextStyle={tw`text-black`}
-                      data={setsVals}
-                      labelField="label"
-                      valueField="value"
-                      placeholder="Select number"
-                      value={sets}
-                      onChange={(item) => setSets(item.value)}
-                    />
-                  </View>
-
-                  <View style={tw`mb-6`}>
-                    <Text style={tw`text-gray-700 mb-1`}>
-                      Pain Level (0-10)
-                    </Text>
-                    <Dropdown
-                      style={tw`border border-gray-300 rounded-lg p-3 mt-1`}
-                      placeholderStyle={tw`text-gray-500`}
-                      selectedTextStyle={tw`text-black`}
-                      data={painLevels}
-                      labelField="label"
-                      valueField="value"
-                      placeholder="Select number"
-                      value={painLevel}
-                      onChange={(item) => setPainLevel(item.value)}
-                    />
-                  </View>
-
-                  <Pressable
-                    onPress={handleSave}
-                    style={({ pressed }) => [
-                      tw`p-4 rounded-lg items-center`,
-                      {
-                        opacity: pressed ? 0.8 : 1,
-                        backgroundColor: "#14b8a6",
-                      },
-                    ]}
-                  >
-                    <Text style={tw`text-white font-bold text-lg`}>Save</Text>
-                  </Pressable>
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
       </View>
+      <Modal
+        visible={showCompletionForm}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCompletionForm(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowCompletionForm(false)}>
+          <View
+            style={tw`flex-1 bg-black bg-opacity-50 justify-center items-center`}
+          >
+            <TouchableWithoutFeedback>
+              <View style={tw`bg-white rounded-lg p-6 w-11/12 max-w-md`}>
+                <Text style={tw`text-xl font-bold text-center mb-4`}>
+                  Complete Exercise
+                </Text>
+
+                <View style={tw`mb-4`}>
+                  <Text style={tw`text-gray-700 mb-1`}>Reps Completed</Text>
+                  <Dropdown
+                    style={tw`border border-gray-300 rounded-lg p-3 mt-1`}
+                    placeholderStyle={tw`text-gray-500`}
+                    selectedTextStyle={tw`text-black`}
+                    data={repsVals}
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Select number"
+                    value={reps}
+                    onChange={(item) => setReps(item.value)}
+                  />
+                </View>
+
+                <View style={tw`mb-4`}>
+                  <Text style={tw`text-gray-700 mb-1`}>Sets Completed</Text>
+                  <Dropdown
+                    style={tw`border border-gray-300 rounded-lg p-3 mt-1`}
+                    placeholderStyle={tw`text-gray-500`}
+                    selectedTextStyle={tw`text-black`}
+                    data={setsVals}
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Select number"
+                    value={sets}
+                    onChange={(item) => setSets(item.value)}
+                  />
+                </View>
+
+                <View style={tw`mb-6`}>
+                  <Text style={tw`text-gray-700 mb-1`}>Pain Level (0-10)</Text>
+                  <Dropdown
+                    style={tw`border border-gray-300 rounded-lg p-3 mt-1`}
+                    placeholderStyle={tw`text-gray-500`}
+                    selectedTextStyle={tw`text-black`}
+                    data={painLevels}
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Select number"
+                    value={painLevel}
+                    onChange={(item) => setPainLevel(item.value)}
+                  />
+                </View>
+
+                <Pressable
+                  onPress={handleSave}
+                  style={({ pressed }) => [
+                    tw`p-4 rounded-lg items-center`,
+                    {
+                      opacity: pressed ? 0.8 : 1,
+                      backgroundColor: "#14b8a6",
+                    },
+                  ]}
+                >
+                  <Text style={tw`text-white font-bold text-lg`}>Save</Text>
+                </Pressable>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 }

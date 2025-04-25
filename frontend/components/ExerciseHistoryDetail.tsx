@@ -49,7 +49,11 @@ export default function ExerciseHistoryDetail() {
   if (loading && !refreshing) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white`}>
-        <ActivityIndicator size="large" color="#14b8a6" />
+        <ActivityIndicator
+          testID="loading-indicator"
+          size="large"
+          color="#14b8a6"
+        />
       </View>
     );
   }
@@ -73,6 +77,7 @@ export default function ExerciseHistoryDetail() {
   if (history.length === 0) {
     return (
       <ScrollView
+        testID="scroll-view"
         style={tw`flex-1 bg-white px-4 pt-2`}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -90,6 +95,7 @@ export default function ExerciseHistoryDetail() {
 
   return (
     <ScrollView
+      testID="scroll-view"
       style={tw`flex-1 bg-white px-4 pt-2`}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -112,7 +118,7 @@ export default function ExerciseHistoryDetail() {
                 {item.exercises.length} exercise
                 {item.exercises.length !== 1 ? "s" : ""} reported
               </Text>
-              <Text style={tw`text-red-500`}>
+              <Text testID="pain-level" style={tw`text-red-500`}>
                 Overall Pain: {item.pain_level}/10
               </Text>
             </View>

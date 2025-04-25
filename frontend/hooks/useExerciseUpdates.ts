@@ -4,7 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "./useAuth";
 
 // Custom hook to manage exercise completion data and related operations.
-export function useExerciseCompletion(userExerciseId: number | null) {
+export function useExerciseUpdates(userExerciseId: number | null) {
   const [showCompletionForm, setShowCompletionForm] = useState(false);
   const [showRemovalConfirmation, setShowRemovalConfirmation] = useState(false);
   const [reps, setReps] = useState(0);
@@ -179,6 +179,33 @@ export function useExerciseCompletion(userExerciseId: number | null) {
     }
   };
 
+  const handleRemoval = async () => {
+    try {
+      console.log("Removing exercise with ID:", userExerciseId);
+      // Validate user exercise ID
+      if (!userExerciseId) {
+        Alert.alert("Error", "Invalid exercise ID");
+        return;
+      }
+      // Create API instance
+      const api = await createApiInstance();
+      if (!api) return;
+
+      // Remove exercise
+      await api.put(`/user-exercises/${userExerciseId}/remove_exercise/`);
+
+      setShowRemovalConfirmation(false);
+      Alert.alert(
+        "Exercise Removed",
+        "This exercise has been removed from your routine. You can add it back on the dashboard.",
+        [{ text: "OK", onPress: () => navigation.goBack() }]
+      );
+    } catch (error) {
+      console.error("Error removing exercise:", error);
+      Alert.alert("Error", "Failed to remove exercise. Please try again.");
+    }
+  };
+
   // Generate dropdown data
   const getDropdownData = (maxValue: number) => {
     return Array.from({ length: maxValue }, (_, i) => ({
@@ -207,6 +234,7 @@ export function useExerciseCompletion(userExerciseId: number | null) {
     painLevel,
     setPainLevel,
     handleSave,
+    handleRemoval,
     handleRemovalConfirmation,
     getDropdownData,
     getPainLevelData,

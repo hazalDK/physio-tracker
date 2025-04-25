@@ -7,6 +7,8 @@ import {
   FlatList,
   Pressable,
   ActivityIndicator,
+  Modal,
+  TouchableOpacity,
 } from "react-native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import tw from "tailwind-react-native-classnames";
@@ -14,35 +16,43 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamsList } from "@/types/navigation";
 import { ExerciseItem } from "@/types/exercise";
-import { useFetchActiveExercises } from "@/hooks/useFetchActiveExercises";
+import { useFetchDashboardExercises } from "@/hooks/useFetchDashBoardExercises";
+import { useReactivateExercise } from "@/hooks/useReactivateExercise";
 
 // Main screen component
-// This component displays a list of exercises and allows the user to navigate to the exercise details screen
-// It also includes a progress bar to show the completion percentage of exercises
-// and a button to navigate to the chatbot screen for assistance.
-// It uses the useFetchActiveExercises hook to fetch the exercise data and manage the loading state.
 export default function Index() {
-  const { loading, userExercises, exercises, fetchData, refreshData } =
-    useFetchActiveExercises();
+  const {
+    loading,
+    userExercises,
+    exercises,
+    inActiveExercises,
+    fetchData,
+    refreshData,
+  } = useFetchDashboardExercises();
+
+  const { reactivateExercise } = useReactivateExercise();
+
   const [progress, setProgress] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [reactivateExerciseId, setReactivateExerciseId] = useState<
+    number | null
+  >(null);
+
   const exerciseNavigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "exercise">>();
   const chatbotNavigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
 
-  // Fetch data on initial load
   useEffect(() => {
     fetchData();
   }, []);
 
-  // Refresh data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       refreshData();
     }, [refreshData])
   );
 
-  // Construct thumbnail URL
   useEffect(() => {
     const completedExercises = userExercises.filter(
       (exercise) => exercise.completed
@@ -53,9 +63,7 @@ export default function Index() {
     }
   }, [userExercises]);
 
-  // Redirect to exercise details screen when the user presses on an exercise ite
-  // It navigates to the exercise screen and passes the exercise ID and user exercise ID as parameters
-  function redirectToExercise(exercise: ExerciseItem) {
+  const redirectToExercise = (exercise: ExerciseItem) => {
     const userExercise = userExercises.find(
       (userExercise) => userExercise.exercise === exercise.id
     );
@@ -68,14 +76,12 @@ export default function Index() {
       exerciseId: exercise.id,
       userExerciseId: userExercise?.id || null,
     });
-  }
+  };
 
-  // Navigates to the chatbot screen when the user presses on the chatbot button
-  function handlePress() {
+  const handlePress = () => {
     chatbotNavigation.navigate("chatbot");
-  }
+  };
 
-  // Shows a loading indicator while data is being fetched
   if (loading) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white`}>
@@ -83,6 +89,25 @@ export default function Index() {
       </View>
     );
   }
+
+  const handleReactiveExercise = (exerciseId: number) => {
+    const userExercise = userExercises.find(
+      (userExercise) => userExercise.exercise === exerciseId
+    );
+    if (!userExercise) {
+      console.warn(`No user exercise found for exercise ID ${exerciseId}`);
+      return;
+    }
+    reactivateExercise(userExercise?.id)
+      .then(() => {
+        setShowModal(false);
+        refreshData();
+      })
+      .catch((error) => {
+        console.error("Error reactivating exercise:", error);
+        setShowModal(false);
+      });
+  };
 
   return (
     <View style={tw`flex-1 bg-white justify-center items-center`}>
@@ -97,45 +122,41 @@ export default function Index() {
         style={tw`mx-auto`}
         data={exercises}
         numColumns={2}
-        renderItem={({ item }) => {
-          return (
-            <View>
-              <Pressable
-                onPress={() => redirectToExercise(item)}
-                style={({ pressed, hovered }) => [
-                  tw`border rounded-lg h-52 w-40 m-2 p-2 shadow-md`,
-                  {
-                    borderColor: "#14b8a6",
-                    borderWidth: 1,
-                    // When hovered, change to a darker teal; otherwise use the default teal
-                    backgroundColor: hovered ? "#8f8e8e" : "#ffffff",
-                    // Slightly reduce the opacity when the button is pressed
-                    opacity: pressed ? 0.8 : 1,
-                  },
-                ]}
-              >
-                <Image
-                  source={{
-                    uri: `https://img.youtube.com/vi/${item.video_id}/maxresdefault.jpg`,
-                  }}
-                  style={tw`w-28 h-28 rounded-lg mx-auto mb-2`}
-                />
-                <Text style={tw`text-center font-semibold`}>{item.name}</Text>
-                <Text style={tw`text-center`}>
-                  Difficulty level: {item.difficulty_level}
-                </Text>
-              </Pressable>
-            </View>
-          );
-        }}
+        renderItem={({ item }) => (
+          <View>
+            <Pressable
+              onPress={() => redirectToExercise(item)}
+              style={({ pressed, hovered }) => [
+                tw`border rounded-lg h-52 w-40 m-2 p-2 shadow-md`,
+                {
+                  borderColor: "#14b8a6",
+                  borderWidth: 1,
+                  backgroundColor: hovered ? "#8f8e8e" : "#ffffff",
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            >
+              <Image
+                source={{
+                  uri: `https://img.youtube.com/vi/${item.video_id}/maxresdefault.jpg`,
+                }}
+                style={tw`w-28 h-28 rounded-lg mx-auto mb-2`}
+              />
+              <Text style={tw`text-center font-semibold`}>{item.name}</Text>
+              <Text style={tw`text-center`}>
+                Difficulty level: {item.difficulty_level}
+              </Text>
+            </Pressable>
+          </View>
+        )}
       />
+
+      {/* Chatbot Button */}
       <Pressable
         style={({ pressed, hovered }) => [
           tw`absolute bottom-4 right-4 p-4 rounded-full`,
           {
-            // When hovered, change to a darker teal; otherwise use the default teal
             backgroundColor: hovered ? "#0d9488" : "#14b8a6",
-            // Slightly reduce the opacity when the button is pressed
             opacity: pressed ? 0.8 : 1,
           },
         ]}
@@ -148,6 +169,61 @@ export default function Index() {
           style={tw`mx-auto`}
         />
       </Pressable>
+
+      {/* Add Inactive Exercise Button */}
+      <Pressable
+        style={({ pressed, hovered }) => [
+          tw`absolute bottom-4 left-4 p-4 rounded-full`,
+          {
+            backgroundColor: hovered ? "#0d9488" : "#14b8a6",
+            opacity: pressed ? 0.8 : 1,
+          },
+        ]}
+        onPress={() => setShowModal(true)}
+      >
+        <MaterialCommunityIcons
+          name="plus"
+          size={24}
+          color="white"
+          style={tw`mx-auto`}
+        />
+      </Pressable>
+
+      {/* Modal for adding inactive exercises */}
+      <Modal
+        visible={showModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowModal(false)}
+      >
+        <View
+          style={tw`flex-1 justify-center items-center bg-black bg-opacity-50`}
+        >
+          <View style={tw`bg-white p-4 rounded-lg w-3/4 max-h-96`}>
+            <Text style={tw`text-lg font-bold mb-2`}>Add an Exercise</Text>
+            <FlatList
+              data={inActiveExercises}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={tw`p-4 border-b border-gray-200`}
+                  onPress={() => {
+                    handleReactiveExercise(item.id);
+                  }}
+                >
+                  <Text>{item.name}</Text>
+                </TouchableOpacity>
+              )}
+            />
+            <Pressable
+              style={tw`mt-4 bg-red-500 py-4 rounded`}
+              onPress={() => setShowModal(false)}
+            >
+              <Text style={tw`text-white text-center`}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

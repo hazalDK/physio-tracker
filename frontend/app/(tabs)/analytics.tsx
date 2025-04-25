@@ -192,12 +192,18 @@ function PainLevelGraph() {
         </View>
       </View>
 
-      <View style={tw`items-center mt-6`}>
-        <Text style={tw`text-lg font-bold mb-2`}>Weekly Pain Levels</Text>
+      <View style={tw`mt-6`}>
+        <Text style={tw`text-lg text-center font-bold mb-2`}>
+          Weekly Pain Levels
+        </Text>
         <BarChart
           data={chartData}
           width={screenWidth}
           height={220}
+          withHorizontalLabels={true}
+          fromZero
+          yAxisSuffix=""
+          yAxisLabel=""
           chartConfig={{
             backgroundColor: "#ffffff",
             backgroundGradientFrom: "#ffffff",
@@ -208,14 +214,15 @@ function PainLevelGraph() {
             style: {
               borderRadius: 16,
             },
+            propsForLabels: {
+              dx: -5, // Adjust label positioning if needed
+            },
           }}
           style={{
-            marginVertical: 8,
+            marginLeft: -10, // Negative margin to pull chart left
+            marginRight: 10, // Compensate for the negative left margin
             borderRadius: 16,
           }}
-          yAxisSuffix=""
-          yAxisLabel=""
-          fromZero
         />
       </View>
 

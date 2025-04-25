@@ -1,0 +1,196 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ExerciseHistoryDetail Component renders correctly with data 1`] = `
+<RCTScrollView
+  refreshControl={
+    <RefreshControlMock
+      onRefresh={[Function]}
+      refreshing={false}
+    />
+  }
+  style={
+    [
+      "flex-1 bg-white px-4 pt-2",
+    ]
+  }
+  testID="scroll-view"
+>
+  <RCTRefreshControl />
+  <View>
+    <Text
+      style={
+        [
+          "text-xl mt-32 font-bold mb-4",
+        ]
+      }
+    >
+      Exercise History
+    </Text>
+    <View
+      style={
+        [
+          "border-2 border-gray-200 rounded-lg p-4 mb-3",
+        ]
+      }
+    >
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
+          }
+        }
+      >
+        <View>
+          <Text
+            style={
+              [
+                "font-bold text-lg",
+              ]
+            }
+          >
+            April 24, 2025
+          </Text>
+          <Text
+            style={
+              [
+                "text-gray-500",
+              ]
+            }
+          >
+            2
+             exercise
+            s
+             reported
+          </Text>
+          <Text
+            style={
+              [
+                "text-red-500",
+              ]
+            }
+            testID="pain-level"
+          >
+            Overall Pain: 
+            3
+            /10
+          </Text>
+        </View>
+        <Ionicons-Mock
+          color="#14b8a6"
+          name="chevron-down"
+          size={24}
+        />
+      </View>
+    </View>
+    <View
+      style={
+        [
+          "border-2 border-gray-200 rounded-lg p-4 mb-3",
+        ]
+      }
+    >
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
+          }
+        }
+      >
+        <View>
+          <Text
+            style={
+              [
+                "font-bold text-lg",
+              ]
+            }
+          >
+            April 23, 2025
+          </Text>
+          <Text
+            style={
+              [
+                "text-gray-500",
+              ]
+            }
+          >
+            1
+             exercise
+             reported
+          </Text>
+          <Text
+            style={
+              [
+                "text-red-500",
+              ]
+            }
+            testID="pain-level"
+          >
+            Overall Pain: 
+            2
+            /10
+          </Text>
+        </View>
+        <Ionicons-Mock
+          color="#14b8a6"
+          name="chevron-down"
+          size={24}
+        />
+      </View>
+    </View>
+  </View>
+</RCTScrollView>
+`;

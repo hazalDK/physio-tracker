@@ -7,10 +7,11 @@ import { useAuth } from "./useAuth";
 /**
  * Custom hook to fetch and manage active exercises and user exercises data.
  */
-export function useFetchActiveExercises(): {
+export function useFetchDashboardExercises(): {
   loading: boolean;
   userExercises: UserExerciseItem[];
   exercises: ExerciseItem[];
+  inActiveExercises: ExerciseItem[];
   refreshKey: number;
   fetchData: () => Promise<void>;
   refreshData: () => void;
@@ -18,6 +19,9 @@ export function useFetchActiveExercises(): {
   const [loading, setLoading] = useState(true);
   const [userExercises, setUserExercises] = useState<UserExerciseItem[]>([]);
   const [exercises, setExercises] = useState<ExerciseItem[]>([]);
+  const [inActiveExercises, setInActiveExercises] = useState<ExerciseItem[]>(
+    []
+  );
   const [refreshKey, setRefreshKey] = useState(0);
   const { createApiInstance, refreshToken } = useAuth();
 
@@ -32,9 +36,14 @@ export function useFetchActiveExercises(): {
 
       try {
         // Fetch user exercises and active exercises data
-        const [userExercisesResponse, exercisesResponse] = await Promise.all([
+        const [
+          userExercisesResponse,
+          exercisesResponse,
+          inactiveExercisesResponse,
+        ] = await Promise.all([
           api.get("/user-exercises/"),
           api.get("/users/active_exercises/"),
+          api.get("/users/inactive_exercises/"),
         ]);
 
         // Set user exercises and active exercises data
@@ -47,6 +56,18 @@ export function useFetchActiveExercises(): {
         setExercises(
           Array.isArray(exercisesResponse.data) ? exercisesResponse.data : []
         );
+
+        setInActiveExercises(
+          Array.isArray(inactiveExercisesResponse.data)
+            ? inactiveExercisesResponse.data
+            : []
+        );
+
+        setInActiveExercises(
+          Array.isArray(inactiveExercisesResponse.data)
+            ? inactiveExercisesResponse.data
+            : []
+        );
       } catch (error) {
         // Handle 401 error by refreshing the token and retrying the request
         if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -58,10 +79,12 @@ export function useFetchActiveExercises(): {
           if (!api) return;
 
           // Retry fetching user exercises and active exercises data
-          const [retryUserExercises, retryExercises] = await Promise.all([
-            api.get("/user-exercises/"),
-            api.get("/users/active_exercises/"),
-          ]);
+          const [retryUserExercises, retryExercises, retryInactiveExercises] =
+            await Promise.all([
+              api.get("/user-exercises/"),
+              api.get("/users/active_exercises/"),
+              api.get("/users/inactive_exercises/"),
+            ]);
 
           // Set user exercises and active exercises data
           setUserExercises(
@@ -72,6 +95,12 @@ export function useFetchActiveExercises(): {
 
           setExercises(
             Array.isArray(retryExercises.data) ? retryExercises.data : []
+          );
+
+          setInActiveExercises(
+            Array.isArray(retryInactiveExercises.data)
+              ? retryInactiveExercises.data
+              : []
           );
         } else {
           // Handle other errors
@@ -102,6 +131,7 @@ export function useFetchActiveExercises(): {
     loading,
     userExercises,
     exercises,
+    inActiveExercises,
     refreshKey,
     fetchData,
     refreshData,

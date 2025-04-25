@@ -378,6 +378,21 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer = ExerciseSerializer(active_exercises, many=True, context={'request': request})
             return Response(serializer.data)
         return Response({"detail": "Not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    @action(detail=False, methods=['GET'])
+    def inactive_exercises(self, request):
+        """Get only inactive exercises for the current user"""
+        if request.user.is_authenticated:
+            inactive_user_exercises = UserExercise.objects.filter(
+                user=request.user, 
+                is_active=False
+            ).select_related('exercise')
+            
+            inactive_exercises = [ue.exercise for ue in inactive_user_exercises]
+            # Pass the request in the context
+            serializer = ExerciseSerializer(inactive_exercises, many=True, context={'request': request})
+            return Response(serializer.data)
+        return Response({"detail": "Not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class InjuryTypeViewSet(viewsets.ModelViewSet):
@@ -422,8 +437,10 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
     serializer_class = UserExerciseSerializer
 
     def get_queryset(self):
-        reset_user_exercises(self.request.user)
-        return self.queryset.filter(user=self.request.user, is_active=True)
+        base_qs = UserExercise.objects.filter(user=self.request.user)
+        # if self.action != 'reactivate_exercise':
+        #     base_qs = base_qs.filter(is_active=True)
+        return base_qs
     
     def create(self, request, *args, **kwargs):
         """
@@ -610,7 +627,69 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
             return Response({
                 'message': "Exercise kept in your routine. Consider modifying how you perform it or consulting your healthcare provider.",
                 'removed': False
-            })    
+            })  
+          
+    @action(detail=True, methods=['PUT'])
+    def remove_exercise(self, request, pk=None):
+        """
+        Endpoint to remove an exercise from the user's routine.
+        """
+        user_exercise = self.get_object()
+        
+        # Marks the exercise as inactive
+        user_exercise.is_active = False
+        user_exercise.pain_level = 0 
+        user_exercise.completed = False
+        user_exercise.date_deactivated = timezone.now()
+        user_exercise.save()
+        
+        return Response({
+            'message': "Exercise removed from your routine.",
+            'removed': True
+        })
+    
+    @action(detail=True, methods=['PUT'])
+    def remove_exercise(self, request, pk=None):
+        """
+        Endpoint to remove an exercise from the user's routine and any reports.
+        """
+        user_exercise = self.get_object()
+        
+        # First remove this exercise from all reports where it's marked as completed
+        reports_with_exercise = Report.objects.filter(
+            user=request.user,
+            exercises_completed=user_exercise
+        )
+        
+        for report in reports_with_exercise:
+            # Remove from the many-to-many relationship
+            report.exercises_completed.remove(user_exercise)
+            
+            # Delete the corresponding ReportExercise entries
+            ReportExercise.objects.filter(
+                report=report,
+                user_exercise=user_exercise
+            ).delete()
+            
+            # Recalculate the report's pain level
+            remaining_report_exercises = report.report_exercises.all()
+            if remaining_report_exercises.exists():
+                avg_pain = sum(re.pain_level for re in remaining_report_exercises) / remaining_report_exercises.count()
+                report.pain_level = avg_pain
+                report.save()
+        
+        # Then mark the exercise as inactive
+        user_exercise.is_active = False
+        user_exercise.pain_level = 0 
+        user_exercise.completed = False
+        user_exercise.date_deactivated = timezone.now()
+        user_exercise.save()
+        
+        return Response({
+            'message': "Exercise removed from your routine and related reports.",
+            'removed': True
+    })
+
 class ReportViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Report model.
@@ -956,7 +1035,7 @@ class ReportViewSet(viewsets.ModelViewSet):
                 active_exercises = [
                     ue for ue in all_user_exercises 
                     if ue.date_activated <= report_date and 
-                    (ue.date_deactivated is None or ue.date_deactivated > report_date)
+                    (ue.date_deactivated is None or ue.date_deactivated >= report_date)
                 ]
                 total_exercises = len(active_exercises)
                 
@@ -1093,7 +1172,7 @@ class ReportViewSet(viewsets.ModelViewSet):
                 active_exercises = [
                     ue.id for ue in all_user_exercises 
                     if ue.date_activated <= report_date and 
-                    (ue.date_deactivated is None or ue.date_deactivated > report_date)
+                    (ue.date_deactivated is None or ue.date_deactivated >= report_date)
                 ]
                 
                 report_exercises = ReportExercise.objects.filter(report=report)
