@@ -49,7 +49,11 @@ function AdherenceGraph() {
   if (loading) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white`}>
-        <ActivityIndicator size="large" color="#14b8a6" />
+        <ActivityIndicator
+          testID="loading-indicator"
+          size="large"
+          color="#14b8a6"
+        />
       </View>
     );
   }
@@ -57,7 +61,9 @@ function AdherenceGraph() {
   if (error) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white px-4`}>
-        <Text style={tw`text-red-500 text-lg`}>{error}</Text>
+        <Text testID="adherence-error-message" style={tw`text-red-500 text-lg`}>
+          {error}
+        </Text>
       </View>
     );
   }
@@ -65,11 +71,13 @@ function AdherenceGraph() {
   return (
     <ScrollView style={tw`flex-1 bg-white px-4`}>
       <View style={tw`flex-row justify-between items-center mt-32 mb-4`}>
-        <TouchableOpacity onPress={goToPreviousWeek}>
+        <TouchableOpacity testID="prev-week-button" onPress={goToPreviousWeek}>
           <Ionicons name="chevron-back" size={24} color="#14b8a6" />
         </TouchableOpacity>
-        <Text style={tw`text-lg font-bold`}>{weekTitle}</Text>
-        <TouchableOpacity onPress={goToNextWeek}>
+        <Text testID="week-title" style={tw`text-lg font-bold`}>
+          {weekTitle}
+        </Text>
+        <TouchableOpacity testID="next-week-button" onPress={goToNextWeek}>
           <Ionicons name="chevron-forward" size={24} color="#14b8a6" />
         </TouchableOpacity>
       </View>
@@ -159,7 +167,11 @@ function PainLevelGraph() {
   if (loading) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white`}>
-        <ActivityIndicator size="large" color="#14b8a6" />
+        <ActivityIndicator
+          testID="pain_level_loading-indicator"
+          size="large"
+          color="#14b8a6"
+        />
       </View>
     );
   }
@@ -167,7 +179,9 @@ function PainLevelGraph() {
   if (error) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white px-4`}>
-        <Text style={tw`text-red-500 text-lg`}>{error}</Text>
+        <Text testID="pain-error-message" style={tw`text-red-500 text-lg`}>
+          {error}
+        </Text>
       </View>
     );
   }
@@ -175,11 +189,19 @@ function PainLevelGraph() {
   return (
     <ScrollView style={tw`flex-1 bg-white px-4`}>
       <View style={tw`flex-row justify-between items-center mt-32 mb-4`}>
-        <TouchableOpacity onPress={goToPreviousWeek}>
+        <TouchableOpacity
+          testID="pain_level_prev_week_button"
+          onPress={goToPreviousWeek}
+        >
           <Ionicons name="chevron-back" size={24} color="#14b8a6" />
         </TouchableOpacity>
-        <Text style={tw`text-lg font-bold`}>{weekTitle}</Text>
-        <TouchableOpacity onPress={goToNextWeek}>
+        <Text testID="pain-week-title" style={tw`text-lg font-bold`}>
+          {weekTitle}
+        </Text>
+        <TouchableOpacity
+          testID="pain_level_next_week_button"
+          onPress={goToNextWeek}
+        >
           <Ionicons name="chevron-forward" size={24} color="#14b8a6" />
         </TouchableOpacity>
       </View>

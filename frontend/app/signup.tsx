@@ -244,6 +244,7 @@ export default function Signup() {
             },
           ]}
           placeholder="****"
+          testID="password-input"
           secureTextEntry={!securePassword}
           value={password}
           onChangeText={(text) => {
@@ -261,7 +262,7 @@ export default function Signup() {
           style={tw`ml-2`}
           onPress={() => setSecurePassword(!securePassword)}
         >
-          <Text>{securePassword ? "🙈" : "👁️"}</Text>
+          <Text testID="secure-password">{securePassword ? "🙈" : "👁️"}</Text>
         </TouchableOpacity>
       </View>
       <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>Confirm password:</Text>
@@ -276,6 +277,7 @@ export default function Signup() {
               outlineColor: "#ccc",
             },
           ]}
+          testID="confirm-password-input"
           placeholder="****"
           secureTextEntry={!secureConfirmPassword}
           value={confirmPassword}
@@ -294,7 +296,9 @@ export default function Signup() {
           style={tw`ml-2`}
           onPress={() => setSecureConfirmPassword(!secureConfirmPassword)}
         >
-          <Text>{secureConfirmPassword ? "🙈" : "👁️"}</Text>
+          <Text testID="secure-confirm-password">
+            {secureConfirmPassword ? "🙈" : "👁️"}
+          </Text>
         </TouchableOpacity>
       </View>
       <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>Date of birth:</Text>

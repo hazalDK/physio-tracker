@@ -48,9 +48,9 @@ export default function Index() {
     const completedExercises = userExercises.filter(
       (exercise) => exercise.completed
     );
-    const totalExercises = userExercises.length;
+    const totalExercises = exercises.length;
     if (totalExercises > 0) {
-      setProgress(Math.round(completedExercises.length / totalExercises));
+      setProgress(completedExercises.length / totalExercises);
     }
   };
 
@@ -87,7 +87,11 @@ export default function Index() {
   if (loading) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white`}>
-        <ActivityIndicator size="large" color="#14b8a6" />
+        <ActivityIndicator
+          testID="loading-indicator"
+          size="large"
+          color="#14b8a6"
+        />
       </View>
     );
   }
@@ -113,7 +117,9 @@ export default function Index() {
 
   return (
     <View style={tw`flex-1 bg-white justify-center items-center`}>
-      <Text style={tw`mt-10 text-lg`}>Completed {progress * 100}%</Text>
+      <Text style={tw`mt-10 text-lg`}>
+        Completed {Math.round(progress * 100)}%
+      </Text>
       <Progress.Bar
         progress={progress}
         width={200}
@@ -174,6 +180,7 @@ export default function Index() {
 
       {/* Add Inactive Exercise Button */}
       <Pressable
+        testID="add-exercise-button"
         style={({ pressed, hovered }) => [
           tw`absolute bottom-4 left-4 p-4 rounded-full`,
           {

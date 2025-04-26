@@ -47,7 +47,7 @@ export default function Login() {
           timeout: 30000,
           headers: {
             "Content-Type": "application/json",
-            adapter: require("axios/lib/adapters/http"),
+            // adapter: require("axios/lib/adapters/http"),
           },
         }
       );
@@ -73,6 +73,7 @@ export default function Login() {
   return (
     <View style={tw`flex-1 justify-center items-center bg-white`}>
       <Text
+        testID="login-title"
         style={[
           tw`text-3xl font-semibold mb-10`,
           {
@@ -143,7 +144,9 @@ export default function Login() {
         ]}
         onPress={() => handleLogin()}
       >
-        <Text style={tw`text-white font-semibold`}>Login</Text>
+        <Text testID="login-button" style={tw`text-white font-semibold`}>
+          Login
+        </Text>
       </Pressable>
     </View>
   );
