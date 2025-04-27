@@ -264,7 +264,11 @@ export default function Chatbot() {
   if (loading) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white`}>
-        <ActivityIndicator size="large" color="#14b8a6" />
+        <ActivityIndicator
+          testID="activity-indicator"
+          size="large"
+          color="#14b8a6"
+        />
       </View>
     );
   }
@@ -293,6 +297,7 @@ export default function Chatbot() {
           </Text>
 
           <Pressable
+            testID="reset-button"
             onPress={handleReset}
             style={({ pressed }) => [
               tw`p-2 rounded-full`,
@@ -335,6 +340,7 @@ export default function Chatbot() {
             multiline
           />
           <Pressable
+            testID="send-button"
             onPress={sendMessage}
             disabled={!inputText.trim() || isLoading}
             style={({ pressed }) => [

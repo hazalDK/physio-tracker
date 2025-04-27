@@ -1,9 +1,27 @@
-import { Tabs } from "expo-router";
-import React from "react";
-
+import { Tabs, Redirect, SplashScreen } from "expo-router";
+import React, { useEffect, useState } from "react";
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
+import * as SecureStore from "expo-secure-store";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function TabLayout() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    // This is just a safety check in case the root layout check didn't run
+    setAuthChecked(true);
+  }, []);
+
+  if (!authChecked) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    SplashScreen.hideAsync();
+    return <Redirect href="/login" />;
+  }
+
   return (
     <Tabs
       screenOptions={{

@@ -64,21 +64,25 @@ export default function Exercise() {
   const setsVals = getDropdownData(userExercise?.sets ?? 10);
   const painLevels = getPainLevelData();
 
-  // Exercise not found error handling
-  if (!exercise) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Exercise not found</Text>
-      </View>
-    );
-  }
-
   // Loading state
   // If loading is true, show a loading indicator
   if (loading) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white`}>
-        <ActivityIndicator size="large" color="#14b8a6" />
+        <ActivityIndicator
+          testID="activity-indicator"
+          size="large"
+          color="#14b8a6"
+        />
+      </View>
+    );
+  }
+
+  // Exercise not found error handling
+  if (!exercise) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>Exercise not found</Text>
       </View>
     );
   }

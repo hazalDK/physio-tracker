@@ -6,7 +6,7 @@ import {
 } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Redirect, Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
@@ -15,6 +15,8 @@ import "react-native-reanimated";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamsList } from "@/types/navigation";
+import { useAuthStore, hydrateAuthStore } from "@/stores/authStore";
+import { View } from "react-native";
 
 // Prevent the splash screen from auto-hiding until the app is ready
 SplashScreen.preventAutoHideAsync();
@@ -29,46 +31,37 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
-  const navigation =
-    useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
-  const [authState, setAuthState] = useState<
-    "checking" | "authenticated" | "unauthenticated"
-  >("checking");
+  const router = useRouter();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
+  const [authChecked, setAuthChecked] = useState(false);
 
   // Check if the app is loaded and the authentication state is set
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const accessToken = await SecureStore.getItemAsync("access_token");
-        setAuthState(accessToken ? "authenticated" : "unauthenticated");
-      } catch (error) {
-        console.error("Error checking auth status:", error);
-        setAuthState("unauthenticated");
-      }
+    const checkAuthentication = async () => {
+      const token = await SecureStore.getItemAsync("userToken");
+      setIsAuthenticated(!!token);
+      setAuthChecked(true);
+      SplashScreen.hideAsync();
     };
-    checkAuthStatus();
+    checkAuthentication();
   }, []);
 
-  // Hide the splash screen once the app is loaded and the authentication state is determined
-  // If the user is unauthenticated, navigate to the login screen
   useEffect(() => {
-    if (loaded && authState !== "checking") {
-      SplashScreen.hideAsync();
-      if (authState === "unauthenticated") {
-        navigation.navigate("login");
-      }
-    }
-  }, [loaded, authState]);
+    hydrateAuthStore();
+  }, []);
 
-  if (!loaded || authState === "checking") {
+  if (!loaded || !authChecked) {
     return null;
   }
+
+  console.log("isAuthenticated", isAuthenticated);
 
   // If the app is loaded and the authentication state is set, render the app's navigation stack
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={colorScheme === "light" ? DarkTheme : DefaultTheme}>
-        <Stack>
+        <Stack initialRouteName={isAuthenticated ? "(tabs)" : "login"}>
           <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="signup" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

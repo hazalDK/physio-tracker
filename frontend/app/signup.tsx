@@ -9,6 +9,7 @@ import tw from "tailwind-react-native-classnames";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import { useInjuryData } from "@/hooks/useInjuryData";
+import { useAuthStore } from "@/stores/authStore";
 
 // Signup component for user registration.
 // This component allows users to enter their personal information, including name, email, password, and injury type.
@@ -28,6 +29,7 @@ export default function Signup() {
   const [passwordError, setPasswordError] = useState("");
   const [securePassword, setSecurePassword] = useState(false);
   const [secureConfirmPassword, setSecureConfirmPassword] = useState(false);
+  const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
 
   // Register the user
   async function handleRegister() {
@@ -95,7 +97,7 @@ export default function Signup() {
       // Store tokens
       await SecureStore.setItemAsync("access_token", response.data.access);
       await SecureStore.setItemAsync("refresh_token", response.data.refresh);
-
+      setIsAuthenticated(true);
       // Navigate to the home screen
       router.replace("/(tabs)");
     } catch (error: any) {

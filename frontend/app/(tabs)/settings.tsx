@@ -8,6 +8,7 @@ import ReminderComponent from "../../components/ReminderComponent";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamsList } from "@/types/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/stores/authStore";
 
 // Settings screen component
 // This component allows the user to update their password, reminder time, and sign out of the app.
@@ -22,14 +23,7 @@ export default function Settings() {
   const [secureEntry, setSecureEntry] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const { createApiInstance } = useAuth();
-
-  // Regex to validate password complexity
-  // Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character
-  const validatePassword = (password: string) => {
-    const regex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    return regex.test(password);
-  };
+  const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
 
   // Function to handle sign out
   // This function deletes the access and refresh tokens from SecureStore and navigates to the login screen
@@ -37,11 +31,20 @@ export default function Settings() {
     try {
       await SecureStore.deleteItemAsync("access_token");
       await SecureStore.deleteItemAsync("refresh_token");
+      setIsAuthenticated(false);
       navigation.navigate("login");
       Alert.alert("Signed out", "You have been successfully signed out.");
     } catch (error) {
       Alert.alert("Error", "Failed to sign out. Please try again.");
     }
+  };
+
+  // Regex to validate password complexity
+  // Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character
+  const validatePassword = (password: string) => {
+    const regex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return regex.test(password);
   };
 
   // Function to handle password update

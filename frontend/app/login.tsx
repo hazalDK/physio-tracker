@@ -6,6 +6,7 @@ import { TextInput, TouchableOpacity } from "react-native-gesture-handler";
 import tw from "tailwind-react-native-classnames";
 import axios from "axios";
 import { router } from "expo-router";
+import { useAuthStore } from "@/stores/authStore";
 
 // React native component for the login screen
 // This component allows users to enter their username and password to log in to the app
@@ -15,6 +16,7 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
 
   const storeToken = async (key: string, value: string) => {
     try {
@@ -47,7 +49,6 @@ export default function Login() {
           timeout: 30000,
           headers: {
             "Content-Type": "application/json",
-            // adapter: require("axios/lib/adapters/http"),
           },
         }
       );
@@ -55,7 +56,7 @@ export default function Login() {
       // Store tokens using correct SecureStore methods
       await storeToken("access_token", response.data.access);
       await storeToken("refresh_token", response.data.refresh);
-
+      setIsAuthenticated(true);
       // Navigate to home screen after successful login
       router.replace("/(tabs)");
     } catch (error) {

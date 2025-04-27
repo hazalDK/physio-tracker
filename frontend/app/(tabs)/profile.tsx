@@ -2,7 +2,6 @@ import {
   View,
   Text,
   Pressable,
-  Alert,
   Modal,
   TextInput,
   TouchableOpacity,
@@ -41,7 +40,11 @@ export default function Profile() {
   if (loading) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-white`}>
-        <ActivityIndicator size="large" color="#14b8a6" />
+        <ActivityIndicator
+          testID="loading-indicator"
+          size="large"
+          color="#14b8a6"
+        />
       </View>
     );
   }
@@ -140,12 +143,13 @@ export default function Profile() {
             <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>Date of birth:</Text>
             <View style={tw`flex-row items-center mb-4`}>
               <TouchableOpacity
+                testID="date-picker-button"
                 style={[
                   tw`flex-1 text-center bg-gray-200 h-8 border border-gray-300 rounded justify-center`,
                 ]}
                 onPress={() => setOpen(true)}
               >
-                <Text style={{ color: "#8f8e8e" }}>
+                <Text testID="datetime-text" style={{ color: "#8f8e8e" }}>
                   {newDateOfBirth
                     ? newDateOfBirth.toLocaleDateString()
                     : userProfile?.date_of_birth
@@ -166,6 +170,7 @@ export default function Profile() {
 
             {open && (
               <DateTimePicker
+                testID="date-time-picker"
                 value={
                   newDateOfBirth ||
                   new Date(userProfile?.date_of_birth || Date.now())
@@ -197,7 +202,7 @@ export default function Profile() {
                 onPress={handleEditProfile}
                 disabled={isUpdating}
               >
-                <Text style={tw`text-white`}>
+                <Text testID="update-button" style={tw`text-white`}>
                   {isUpdating ? "Updating..." : "Update"}
                 </Text>
               </Pressable>
