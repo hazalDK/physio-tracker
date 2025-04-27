@@ -126,17 +126,6 @@ def reset_chat_history(request):
     request.session['chat_history'] = []
     return Response({'message': 'Chat history reset.'})
 
-def reset_user_exercises(user):
-    """
-    Reset the UserExercise instances for the user if they haven't been reset in the last 24 hours.
-    """
-    now = timezone.now()
-    if user.last_reset is None or (now - user.last_reset) > timedelta(days=1):
-        # Reset completed and pain_level for the user's active exercises
-        UserExercise.objects.filter(user=user, is_active=True).update(completed=False, pain_level=0)
-        user.last_reset = now
-        user.save()
-
 def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
     """
     Update exercise level based on pain level.
@@ -187,7 +176,7 @@ def update_exercise_level_based_on_pain(user, pain_level, exercise_name):
                     new_user_exercise.pain_level = 0
                     new_user_exercise.completed = False
                     new_user_exercise.is_active = True
-                    new_user_exercise.deactived_date = None
+                    new_user_exercise.date_deactivated = None
                     new_user_exercise.save()
                 else:
                     new_user_exercise = UserExercise.objects.create(
@@ -267,7 +256,7 @@ def increase_difficulty(user, exercise_name):
                     new_user_exercise.pain_level = 0
                     new_user_exercise.completed = False
                     new_user_exercise.is_active = True
-                    new_user_exercise.deactived_date = None
+                    new_user_exercise.date_deactivated = None
                     new_user_exercise.save()
                 else:
                     new_user_exercise = UserExercise.objects.create(
@@ -438,8 +427,7 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         base_qs = UserExercise.objects.filter(user=self.request.user)
-        # if self.action != 'reactivate_exercise':
-        #     base_qs = base_qs.filter(is_active=True)
+        self.reset_user_exercises()
         return base_qs
     
     def create(self, request, *args, **kwargs):
@@ -638,8 +626,6 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         
         # Mark the exercise as inactive
         user_exercise.is_active = False
-        user_exercise.pain_level = 0 
-        user_exercise.completed = False
         user_exercise.date_deactivated = timezone.now()
         user_exercise.save()
         
@@ -671,8 +657,6 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         
         # Marks the exercise as active again
         user_exercise.is_active = True
-        user_exercise.pain_level = 0 
-        user_exercise.completed = False
         user_exercise.date_deactivated = None
         user_exercise.save()
         
@@ -680,6 +664,22 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
             'message': "Exercise added back to your routine.",
             'added': True
         })
+
+    def reset_user_exercises(self):
+        """
+        Reset the UserExercise instances for the user if it's a new day (midnight has passed)
+        since the last reset.
+        """
+        now = timezone.now()
+        today = now.date()
+
+        user = self.request.user
+        
+        if user.last_reset is None or user.last_reset.date() < today:
+            # Reset completed and pain_level for the user's active exercises
+            UserExercise.objects.filter(user=user).update(completed=False, pain_level=0)
+            user.last_reset = now
+            user.save()
 
 class ReportViewSet(viewsets.ModelViewSet):
     """
@@ -961,7 +961,7 @@ class ReportViewSet(viewsets.ModelViewSet):
                 date_activated__lte=end_date,
             ).filter(
                 Q(date_deactivated__isnull=True) | 
-                Q(date_deactivated__gte=start_date)
+                Q(date_deactivated__gt=start_date)
             ).select_related('exercise')
 
             # For each day in date range, determine which exercises were active
@@ -978,9 +978,18 @@ class ReportViewSet(viewsets.ModelViewSet):
                 # Get report for this date if exists
                 day_report = next((r for r in reports if r.date == date), None)
                 if day_report:
-                    # Count completed exercises from report
+                    # Only count completed exercises that were active on this date
                     report_exercises = ReportExercise.objects.filter(report=day_report)
-                    daily_adherence[date]['completed'] = report_exercises.count()
+                    completed_count = 0
+                    
+                    for report_exercise in report_exercises:
+                        user_exercise = report_exercise.user_exercise
+                        # Check if this exercise was active on this date
+                        if (user_exercise.date_activated <= date and 
+                            (user_exercise.date_deactivated is None or user_exercise.date_deactivated > date)):
+                            completed_count += 1
+                    
+                    daily_adherence[date]['completed'] = completed_count
 
             # Calculate percentages and format for chart
             labels = []
@@ -1019,26 +1028,34 @@ class ReportViewSet(viewsets.ModelViewSet):
             for report in week_reports:
                 report_date = report.date
                 
-                # Find the completed exercises count for this report
-                completed = ReportExercise.objects.filter(report=report).count()
-                
-                # Get total active exercises for this date
+                # Find active exercises for this date
                 active_exercises = [
                     ue for ue in all_user_exercises 
                     if ue.date_activated <= report_date and 
-                    (ue.date_deactivated is None or ue.date_deactivated >= report_date)
+                    (ue.date_deactivated is None or ue.date_deactivated > report_date)
                 ]
                 total_exercises = len(active_exercises)
                 
+                # Only count completed exercises that were active on this date
+                report_exercises = ReportExercise.objects.filter(report=report)
+                completed_count = 0
+                
+                for report_exercise in report_exercises:
+                    user_exercise = report_exercise.user_exercise
+                    # Check if this exercise was active on this date
+                    if (user_exercise.date_activated <= report_date and 
+                        (user_exercise.date_deactivated is None or user_exercise.date_deactivated > report_date)):
+                        completed_count += 1
+                
                 if total_exercises > 0:
-                    adherence = (completed / total_exercises) * 100
+                    adherence = (completed_count / total_exercises) * 100
                     adherence = min(adherence, 100)
                 else:
                     adherence = 0
                     
                 history.append({
                     'date': report_date.strftime('%A, %B %d'),
-                    'completed': f"{completed}/{total_exercises}",
+                    'completed': f"{completed_count}/{total_exercises}",
                     'adherence': round(adherence)
                 })
             
@@ -1089,34 +1106,27 @@ class ReportViewSet(viewsets.ModelViewSet):
                 date__lte=end_date
             ).prefetch_related('report_exercises')
 
-            # Get all user exercises that were active at any point during the date range
+            # Get all user exercises regardless of active status
             all_user_exercises = UserExercise.objects.filter(
-                user=user,
-                date_activated__lte=end_date,
-            ).filter(
-                Q(date_deactivated__isnull=True) | 
-                Q(date_deactivated__gte=start_date)
+                user=user
             ).select_related('exercise')
 
-            # Calculate daily pain levels considering only active exercises
+            # Calculate daily pain levels considering ALL completed exercises
             for report in reports:
                 report_date = report.date
                 if report_date in daily_pain:
-                    # Get all active exercises for this date
+                    # Get all exercises completed in this report
+                    report_exercises = ReportExercise.objects.filter(report=report)
+                    
+                    # Calculate total active exercises for context
                     active_exercises = [
                         ue.id for ue in all_user_exercises 
                         if ue.date_activated <= report_date and 
                         (ue.date_deactivated is None or ue.date_deactivated > report_date)
                     ]
-                    
                     daily_pain[report_date]['total_exercises'] = len(active_exercises)
                     
-                    # Get all report exercises for this report that were active
-                    report_exercises = ReportExercise.objects.filter(
-                        report=report,
-                        user_exercise__id__in=active_exercises
-                    )
-                    
+                    # Use all report exercises for pain calculation, not just active ones
                     pain_sum = sum(re.pain_level for re in report_exercises)
                     count = report_exercises.count()
                     
@@ -1159,22 +1169,22 @@ class ReportViewSet(viewsets.ModelViewSet):
             for report in week_reports:
                 report_date = report.date
 
-                # Get active exercises for report date
+                # Get active exercises for report date (for context)
                 active_exercises = [
                     ue.id for ue in all_user_exercises 
                     if ue.date_activated <= report_date and 
                     (ue.date_deactivated is None or ue.date_deactivated >= report_date)
                 ]
                 
+                # Get ALL report exercises regardless of active status
                 report_exercises = ReportExercise.objects.filter(report=report)
-                completed = report_exercises.count()
-                total = len(active_exercises)
+                completed_all = report_exercises.count()
 
                 avg_pain = report.pain_level if report.pain_level is not None else 0
 
                 history.append({
                     'date': report_date.strftime('%A, %B %d'),
-                    'exercises': f"{completed}/{total}",
+                    'exercises': completed_all, 
                     'pain_level': round(avg_pain, 1)
                 })
             

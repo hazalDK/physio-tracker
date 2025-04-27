@@ -20,6 +20,10 @@ import { useFetchDashboardExercises } from "@/hooks/useFetchDashBoardExercises";
 import { useReactivateExercise } from "@/hooks/useReactivateExercise";
 
 // Main screen component
+// This component fetches and displays a list of exercises, allows the user to navigate to an exercise screen,
+// and provides a chatbot button for additional assistance.
+// It also includes a modal for reactivating inactive exercises and progress tracking.
+
 export default function Index() {
   const {
     loading,
@@ -44,9 +48,10 @@ export default function Index() {
     fetchData();
   }, []);
 
+  // Function to set the progress value based on completed exercises
   const setProgressValue = () => {
     const completedExercises = userExercises.filter(
-      (exercise) => exercise.completed
+      (exercise) => exercise.completed && exercise.is_active
     );
     const totalExercises = exercises.length;
     if (totalExercises > 0) {
@@ -65,6 +70,7 @@ export default function Index() {
     }, [refreshData])
   );
 
+  // Function to navigate to the exercise screen and passes the exercise and user exercise ID
   const redirectToExercise = (exercise: ExerciseItem) => {
     const userExercise = userExercises.find(
       (userExercise) => userExercise.exercise === exercise.id
@@ -80,6 +86,7 @@ export default function Index() {
     });
   };
 
+  // Function to navigate to the chatbot screen
   const handlePress = () => {
     chatbotNavigation.navigate("chatbot");
   };
@@ -158,8 +165,6 @@ export default function Index() {
           </View>
         )}
       />
-
-      {/* Chatbot Button */}
       <Pressable
         style={({ pressed, hovered }) => [
           tw`absolute bottom-4 right-4 p-4 rounded-full`,
@@ -177,8 +182,6 @@ export default function Index() {
           style={tw`mx-auto`}
         />
       </Pressable>
-
-      {/* Add Inactive Exercise Button */}
       <Pressable
         testID="add-exercise-button"
         style={({ pressed, hovered }) => [
@@ -197,8 +200,6 @@ export default function Index() {
           style={tw`mx-auto`}
         />
       </Pressable>
-
-      {/* Modal for adding inactive exercises */}
       <Modal
         visible={showModal}
         transparent={true}

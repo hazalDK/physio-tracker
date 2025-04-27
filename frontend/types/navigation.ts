@@ -1,3 +1,4 @@
+// Tabs navigation parameters
 export type TabParamList = {
   index: undefined;
   analytics: undefined;
@@ -5,6 +6,7 @@ export type TabParamList = {
   settings: undefined;
 };
 
+// Root stack navigation parameters
 export type RootStackParamsList = {
   login: undefined;
   signup: undefined;

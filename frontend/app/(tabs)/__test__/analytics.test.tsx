@@ -31,7 +31,7 @@ jest.mock("expo-font", () => ({
 
 jest.mock("@expo/vector-icons", () => {
   const React = require("react");
-  const mockIcon = (props) => React.createElement("Icon", props);
+  const mockIcon = (props: any) => React.createElement("Icon", props);
 
   // Return an object with all common icon sets
   return {
@@ -49,8 +49,14 @@ jest.mock("@react-navigation/material-top-tabs", () => {
   const { View } = require("react-native");
   return {
     createMaterialTopTabNavigator: () => ({
-      Navigator: ({ children }) => <View>{children}</View>,
-      Screen: ({ component: Component }) => <Component />,
+      Navigator: ({ children }: { children: React.ReactNode }) => (
+        <View>{children}</View>
+      ),
+      Screen: ({
+        component: Component,
+      }: {
+        component: React.ComponentType;
+      }) => <Component />,
     }),
   };
 });
@@ -72,8 +78,8 @@ describe("Analytics Component", () => {
     },
     average: 85,
     history: [
-      { date: "2025-04-23", completed: 3, adherence: 75 },
-      { date: "2025-04-24", completed: 4, adherence: 100 },
+      { date: "Sunday, April 27", completed: "3/4", adherence: 75 },
+      { date: "Saturday, April 26", completed: "4/4", adherence: 100 },
     ],
     error: null,
     weekTitle: "April 20 - April 26, 2025",
@@ -91,8 +97,8 @@ describe("Analytics Component", () => {
     },
     average: 3.3,
     history: [
-      { date: "2025-04-23", exercises: 3, pain_level: 4 },
-      { date: "2025-04-24", exercises: 4, pain_level: 2 },
+      { date: "Sunday, April 27", exercises: 3, pain_level: 4 },
+      { date: "Saturday, April 26", exercises: 4, pain_level: 2 },
     ],
     error: null,
     weekTitle: "April 20 - April 26, 2025",
@@ -116,10 +122,20 @@ describe("Analytics Component", () => {
 
     expect(getByText("Average Adherence: 85%")).toBeTruthy();
     expect(getByText("Weekly Adherence")).toBeTruthy();
-    expect(getByText("Exercise History")).toBeTruthy();
     expect(getByTestId("week-title")).toHaveTextContent(
       "April 20 - April 26, 2025"
     );
+    expect(getByText("Exercise History")).toBeTruthy();
+    expect(getByTestId("adherence-history-date-0")).toHaveTextContent(
+      "Sunday, April 27"
+    );
+    expect(getByText("3/4 active exercises completed")).toBeTruthy();
+    expect(getByText("Adherence: 75%")).toBeTruthy();
+    expect(getByTestId("adherence-history-date-1")).toHaveTextContent(
+      "Saturday, April 26"
+    );
+    expect(getByText("4/4 active exercises completed")).toBeTruthy();
+    expect(getByText("Adherence: 100%")).toBeTruthy();
   });
 
   it("renders PainLevelGraph correctly with data", () => {
@@ -133,10 +149,20 @@ describe("Analytics Component", () => {
 
     expect(getByText("Average Pain Level: 3.3/10")).toBeTruthy();
     expect(getByText("Weekly Pain Levels")).toBeTruthy();
-    expect(getByText("Pain History")).toBeTruthy();
     expect(getByTestId("pain-week-title")).toHaveTextContent(
       "April 20 - April 26, 2025"
     );
+    expect(getByText("Pain History")).toBeTruthy();
+    expect(getByTestId("pain-history-date-0")).toHaveTextContent(
+      "Sunday, April 27"
+    );
+    expect(getByText("3 exercises completed")).toBeTruthy();
+    expect(getByText("Pain Level: 4/10")).toBeTruthy();
+    expect(getByTestId("pain-history-date-1")).toHaveTextContent(
+      "Saturday, April 26"
+    );
+    expect(getByText("4 exercises completed")).toBeTruthy();
+    expect(getByText("Pain Level: 2/10")).toBeTruthy();
   });
 
   it("shows loading indicator when data is loading for adherence", () => {

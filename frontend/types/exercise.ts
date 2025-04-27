@@ -1,4 +1,4 @@
-// Define the interface for the exercise item
+// Interface for the exercise item
 export interface ExerciseItem {
   id: number;
   name: string;
@@ -10,7 +10,7 @@ export interface ExerciseItem {
   category: number;
 }
 
-// Define the interface for the userExercise item
+// Interface for the userExercise item
 export interface UserExerciseItem {
   id: number;
   user: number;
@@ -20,4 +20,5 @@ export interface UserExerciseItem {
   hold: number;
   pain_level: number;
   completed: boolean;
+  is_active: boolean;
 }

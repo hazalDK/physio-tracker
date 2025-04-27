@@ -530,12 +530,10 @@ class APITests(APITestCase):
             completed=False,
             is_active=False
         )
-        print(UserExercise.objects.filter(id=user_exercise.id))  # Should return a queryset with one object
 
         url = reverse('userexercise-reactivate-exercise', args=[user_exercise.id])
         response = self.client.put(url, {}, format='json')
 
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         # Verify the exercise was added back
@@ -580,6 +578,49 @@ class APITests(APITestCase):
         # Verify the exercise remained inactive
         inactive_exercise.refresh_from_db()
         self.assertFalse(inactive_exercise.is_active)
+    
+    def test_reset_user_exercise(self):
+        """Test resetting a user exercise"""
+        # Delete any existing beginner exercise for this user
+        UserExercise.objects.filter(user=self.user, exercise=self.beginner_exercise).delete()
+        
+        # Create a user exercise
+        user_exercise = UserExercise.objects.create(
+            user=self.user,
+            exercise=self.beginner_exercise,
+            sets=4,
+            reps=8,
+            pain_level=2,  # Setting a non-zero pain level to test reset
+            completed=True,  # Setting to completed to test reset
+            is_active=True
+        )
+        
+        # Set the user's last_reset to yesterday to trigger a reset
+        yesterday = timezone.now() - timezone.timedelta(days=1)
+        self.user.last_reset = yesterday
+        self.user.save()
+        
+        # Get the URL for the user exercise list endpoint
+        url = reverse('userexercise-list')  # Assuming you're using DRF's default router naming
+        
+        # Make the request to the list endpoint, which will trigger get_queryset() and the reset
+        response = self.client.get(url)
+        
+        # Check response status
+        self.assertEqual(response.status_code, 200)
+        
+        # Refresh the user exercise from the database
+        user_exercise.refresh_from_db()
+        
+        # Verify the user exercise was reset
+        self.assertFalse(user_exercise.completed)
+        self.assertEqual(user_exercise.pain_level, 0)
+        
+        # Verify the user's last_reset was updated to today
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.last_reset.date(), timezone.now().date())
+        
+            
     
     def test_create_report(self):
         """Test creating a report"""

@@ -1,7 +1,6 @@
 import { Tabs, Redirect, SplashScreen } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
-import * as SecureStore from "expo-secure-store";
 import { useAuthStore } from "@/stores/authStore";
 
 export default function TabLayout() {
@@ -17,6 +16,7 @@ export default function TabLayout() {
     return null;
   }
 
+  // Hide the splash screen after authentication check
   if (!isAuthenticated) {
     SplashScreen.hideAsync();
     return <Redirect href="/login" />;

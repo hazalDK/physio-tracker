@@ -129,8 +129,13 @@ function AdherenceGraph() {
             key={index}
             style={tw`border-2 border-gray-300 rounded-lg p-4 mb-3`}
           >
-            <Text style={tw`font-bold`}>{item.date}</Text>
-            <Text>{item.completed} exercises completed</Text>
+            <Text
+              testID={`adherence-history-date-${index}`}
+              style={tw`font-bold`}
+            >
+              {item.date}
+            </Text>
+            <Text>{item.completed} active exercises completed</Text>
             <Text style={{ color: "#14b8a6" }}>
               Adherence: {item.adherence}%
             </Text>
@@ -255,7 +260,9 @@ function PainLevelGraph() {
             key={index}
             style={tw`border-2 border-gray-300 rounded-lg p-4 mb-3`}
           >
-            <Text style={tw`font-bold`}>{item.date}</Text>
+            <Text testID={`pain-history-date-${index}`} style={tw`font-bold`}>
+              {item.date}
+            </Text>
             <Text>{item.exercises} exercises completed</Text>
             <Text style={tw`text-red-500`}>
               Pain Level: {item.pain_level}/10
