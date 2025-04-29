@@ -35,6 +35,9 @@ export default function Index() {
   } = useFetchDashboardExercises();
 
   const { reactivateExercise } = useReactivateExercise();
+  const [imageErrorMap, setImageErrorMap] = useState<Map<string, boolean>>(
+    new Map()
+  );
 
   const [progress, setProgress] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -122,6 +125,15 @@ export default function Index() {
       });
   };
 
+  // Function to handle image loading errors
+  const handleImageError = (video_id: string) => {
+    setImageErrorMap((prev) => new Map(prev).set(video_id, true)); // Mark this video_id as having an error
+  };
+
+  const handleImageLoad = (video_id: string) => {
+    setImageErrorMap((prev) => new Map(prev).set(video_id, false)); // Reset the error state
+  };
+
   return (
     <View style={tw`flex-1 bg-white justify-center items-center`}>
       <Text style={tw`mt-10 text-lg`}>
@@ -151,12 +163,21 @@ export default function Index() {
                 },
               ]}
             >
-              <Image
-                source={{
-                  uri: `https://img.youtube.com/vi/${item.video_id}/maxresdefault.jpg`,
-                }}
-                style={tw`w-28 h-28 rounded-lg mx-auto mb-2`}
-              />
+              {imageErrorMap.get(item.video_id) ? (
+                <Image
+                  source={require("../../assets/images/placeholder.jpg")}
+                  style={tw`w-28 h-28 rounded-lg mx-auto mb-2`}
+                />
+              ) : (
+                <Image
+                  source={{
+                    uri: `https://img.youtube.com/vi/${item.video_id}/maxresdefault.jpg`,
+                  }}
+                  style={tw`w-28 h-28 rounded-lg mx-auto mb-2`}
+                  onLoad={() => handleImageLoad(item.video_id)}
+                  onError={() => handleImageError(item.video_id)}
+                />
+              )}
               <Text style={tw`text-center font-semibold`}>{item.name}</Text>
               <Text style={tw`text-center`}>
                 Difficulty level: {item.difficulty_level}

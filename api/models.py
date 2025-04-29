@@ -47,7 +47,9 @@ class Exercise(models.Model):
     name = models.CharField(default="", max_length=100)
     slug = models.SlugField(unique=True, blank=True, null=True)
     video_link = models.URLField(default="", blank=True, max_length=500)
-    video_id = models.CharField(default="", max_length=100, blank=True)  # Store the video ID separately for easier access
+    video_id = models.CharField(default="", max_length=100, blank=True)
+    reps = models.IntegerField(default=0)
+    sets = models.IntegerField(default=0)
     hold = models.IntegerField(default=0) 
     start = models.IntegerField(default=0, blank=True)
     end = models.IntegerField(default=0, blank=True) 
@@ -85,6 +87,8 @@ class Exercise(models.Model):
             'video_id': self.video_id,
             'difficulty_level': self.difficulty_level,
             'additional_notes': self.additional_notes,
+            'reps': self.reps,
+            'sets': self.sets,
             'hold': self.hold,
             'start': self.start,
             'end': self.end,
@@ -212,7 +216,7 @@ class User(AbstractUser):
         # Assign exercises based on injury type
         if self.injury_type:
             for exercise in self.injury_type.treatment.all():
-                UserExercise.objects.get_or_create(user=self, exercise=exercise, defaults={'sets': 4, 'reps': 8, 'hold': exercise.hold, 'pain_level': 0, 'completed': False, 'is_active': True})
+                UserExercise.objects.get_or_create(user=self, exercise=exercise, defaults={'sets': exercise.sets, 'reps': exercise.reps, 'hold': exercise.hold, 'pain_level': 0, 'completed': False, 'is_active': True})
 
         super().save(*args, **kwargs)
 
