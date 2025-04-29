@@ -1,6 +1,5 @@
 import React from "react";
 import { render, waitFor } from "@testing-library/react-native";
-import { act } from "react-test-renderer";
 import RootLayout from "../_layout";
 import * as SplashScreen from "expo-splash-screen";
 import * as SecureStore from "expo-secure-store";

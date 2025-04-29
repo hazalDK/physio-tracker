@@ -178,8 +178,13 @@ export default function Exercise() {
         <YoutubePlayer
           height={240}
           play={playing}
-          videoId={"2pbHPfsC3-U"}
+          videoId={exercise.video_id}
           onChangeState={onStateChange}
+          initialPlayerParams={
+            exercise.start && exercise.end > 0
+              ? { start: exercise.start, end: exercise.end, controls: false }
+              : {}
+          }
         />
       </View>
 

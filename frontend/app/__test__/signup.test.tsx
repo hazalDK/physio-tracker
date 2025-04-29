@@ -1,12 +1,12 @@
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import { Alert } from "react-native";
+import renderer from "react-test-renderer";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import Signup from "../signup";
 import { useInjuryData } from "@/hooks/useInjuryData";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 // Mock dependencies
 jest.mock("axios");
@@ -17,7 +17,7 @@ jest.mock("expo-router", () => ({
   },
 }));
 jest.mock("@react-navigation/native", () => ({
-  Link: ({ children }) => children,
+  Link: ({ children }: { children: React.ReactNode }) => children,
 }));
 jest.mock("react-native/Libraries/Alert/Alert", () => ({
   alert: jest.fn(),
@@ -49,6 +49,11 @@ describe("Signup Component", () => {
       ],
       loading: false,
     });
+  });
+
+  it("renders correctly with data", () => {
+    const tree = renderer.create(<Signup />).toJSON();
+    expect(tree).toMatchSnapshot();
   });
 
   it("renders correctly", () => {

@@ -1,5 +1,6 @@
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import renderer from "react-test-renderer";
 import Chatbot from "../chatbot";
 
 // Mock dependencies
@@ -79,6 +80,11 @@ describe("Chatbot Component", () => {
       createApiInstance: jest.fn().mockResolvedValue(mockApi),
       refreshToken: jest.fn().mockResolvedValue("new-token"),
     }));
+  });
+
+  it("renders correctly with data", () => {
+    const tree = renderer.create(<Chatbot />).toJSON();
+    expect(tree).toMatchSnapshot();
   });
 
   it("renders initial messages and loading state", async () => {

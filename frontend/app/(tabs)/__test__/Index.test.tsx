@@ -2,6 +2,7 @@
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import { NavigationContainer } from "@react-navigation/native";
+import renderer from "react-test-renderer";
 import Index from "../index";
 import { useFetchDashboardExercises } from "@/hooks/useFetchDashBoardExercises";
 import { useReactivateExercise } from "@/hooks/useReactivateExercise";
@@ -33,8 +34,8 @@ jest.mock(
 
 describe("Index Component", () => {
   const mockUserExercises = [
-    { id: 1, exercise: 101, completed: true },
-    { id: 2, exercise: 102, completed: false },
+    { id: 1, exercise: 101, completed: true, is_active: true },
+    { id: 2, exercise: 102, completed: false, is_active: true },
   ];
 
   const mockExercises = [
@@ -61,7 +62,7 @@ describe("Index Component", () => {
       name: "Exercise 3",
       difficulty_level: "Hard",
       video_id: "ghi789",
-      inactive: true,
+      is_active: false,
     },
   ];
 
@@ -84,6 +85,11 @@ describe("Index Component", () => {
     (useReactivateExercise as jest.Mock).mockReturnValue({
       reactivateExercise: mockReactivateExercise,
     });
+  });
+
+  it("renders correctly with data", () => {
+    const tree = renderer.create(<Index />).toJSON();
+    expect(tree).toMatchSnapshot();
   });
 
   it("renders correctly with exercises", () => {

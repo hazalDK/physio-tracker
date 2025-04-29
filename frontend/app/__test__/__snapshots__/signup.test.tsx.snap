@@ -1,0 +1,448 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Signup Component renders correctly with data 1`] = `
+<View
+  style={{}}
+>
+  <Text
+    style={
+      [
+        {},
+        {
+          "color": "#14b8a6",
+        },
+      ]
+    }
+  >
+    Registration
+  </Text>
+  <Text
+    style={
+      [
+        {},
+        {
+          "color": "#8f8e8e",
+        },
+      ]
+    }
+  >
+    Already Registered? Log in
+     
+    here
+  </Text>
+  <Text
+    style={
+      [
+        {},
+        {
+          "color": "#8f8e8e",
+        },
+      ]
+    }
+  >
+    First Name:
+  </Text>
+  <TextInput
+    onChangeText={[Function]}
+    placeholder="Enter first name here"
+    style={
+      [
+        {},
+        {
+          "borderColor": "#e5e7eb",
+          "borderWidth": 1,
+          "color": "#8f8e8e",
+          "outlineColor": "#ccc",
+        },
+      ]
+    }
+    value=""
+  />
+  <Text
+    style={
+      [
+        {},
+        {
+          "color": "#8f8e8e",
+        },
+      ]
+    }
+  >
+    Last Name:
+  </Text>
+  <TextInput
+    onChangeText={[Function]}
+    placeholder="Enter last name here"
+    style={
+      [
+        {},
+        {
+          "borderColor": "#e5e7eb",
+          "borderWidth": 1,
+          "color": "#8f8e8e",
+          "outlineColor": "#ccc",
+        },
+      ]
+    }
+    value=""
+  />
+  <Text
+    style={
+      [
+        {},
+        {
+          "color": "#8f8e8e",
+        },
+      ]
+    }
+  >
+    Username:
+  </Text>
+  <TextInput
+    onChangeText={[Function]}
+    placeholder="Enter username here"
+    style={
+      [
+        {},
+        {
+          "borderColor": "#e5e7eb",
+          "borderWidth": 1,
+          "color": "#8f8e8e",
+          "outlineColor": "#ccc",
+        },
+      ]
+    }
+    value=""
+  />
+  <Text
+    style={
+      [
+        {},
+        {
+          "color": "#8f8e8e",
+        },
+      ]
+    }
+  >
+    Email:
+  </Text>
+  <TextInput
+    keyboardType="email-address"
+    onChangeText={[Function]}
+    placeholder="example@gmail.com"
+    style={
+      [
+        {},
+        {
+          "borderColor": "#e5e7eb",
+          "borderWidth": 1,
+          "color": "#8f8e8e",
+          "outlineColor": "#ccc",
+        },
+      ]
+    }
+    value=""
+  />
+  <Text
+    style={
+      [
+        {},
+        {
+          "color": "#8f8e8e",
+        },
+      ]
+    }
+  >
+    Password:
+  </Text>
+  <View
+    style={{}}
+  >
+    <TextInput
+      onChangeText={[Function]}
+      placeholder="****"
+      secureTextEntry={true}
+      style={
+        [
+          {},
+          {
+            "borderColor": "#e5e7eb",
+            "borderWidth": 1,
+            "color": "#8f8e8e",
+            "outlineColor": "#ccc",
+          },
+        ]
+      }
+      testID="password-input"
+      value=""
+    />
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "opacity": 1,
+        }
+      }
+    >
+      <Text
+        testID="secure-password"
+      >
+        👁️
+      </Text>
+    </View>
+  </View>
+  <Text
+    style={
+      [
+        {},
+        {
+          "color": "#8f8e8e",
+        },
+      ]
+    }
+  >
+    Confirm password:
+  </Text>
+  <View
+    style={{}}
+  >
+    <TextInput
+      onChangeText={[Function]}
+      placeholder="****"
+      secureTextEntry={true}
+      style={
+        [
+          {},
+          {
+            "borderColor": "#e5e7eb",
+            "borderWidth": 1,
+            "color": "#8f8e8e",
+            "outlineColor": "#ccc",
+          },
+        ]
+      }
+      testID="confirm-password-input"
+      value=""
+    />
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "opacity": 1,
+        }
+      }
+    >
+      <Text
+        testID="secure-confirm-password"
+      >
+        👁️
+      </Text>
+    </View>
+  </View>
+  <Text
+    style={
+      [
+        {},
+        {
+          "color": "#8f8e8e",
+        },
+      ]
+    }
+  >
+    Date of birth:
+  </Text>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "borderColor": "#e5e7eb",
+        "borderWidth": 1,
+        "opacity": 1,
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "#8f8e8e",
+        }
+      }
+    >
+      28/04/2025
+    </Text>
+  </View>
+  <Text
+    style={
+      [
+        {},
+        {
+          "color": "#8f8e8e",
+        },
+      ]
+    }
+  >
+    Injury type:
+  </Text>
+  <Dropdown
+    data={
+      [
+        {
+          "label": "Fracture",
+          "value": 1,
+        },
+        {
+          "label": "Sprain",
+          "value": 2,
+        },
+      ]
+    }
+    labelField="label"
+    onChange={[Function]}
+    placeholder="Select injury type"
+    placeholderStyle={
+      {
+        "color": "#8f8e8e",
+      }
+    }
+    selectedTextStyle={
+      {
+        "color": "#8f8e8e",
+      }
+    }
+    style={
+      [
+        {},
+        {
+          "borderColor": "#e5e7eb",
+          "borderWidth": 1,
+        },
+      ]
+    }
+    valueField="value"
+  />
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {},
+        {
+          "backgroundColor": "#14b8a6",
+          "opacity": 1,
+        },
+      ]
+    }
+  >
+    <Text
+      style={{}}
+    >
+      Sign Up
+    </Text>
+  </View>
+</View>
+`;

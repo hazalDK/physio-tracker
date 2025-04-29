@@ -5,6 +5,8 @@ export interface ExerciseItem {
   slug: string;
   video_link: string;
   video_id: string;
+  start: number;
+  end: number;
   difficulty_level: string;
   additional_notes: string;
   category: number;

@@ -1,6 +1,7 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import Exercise from "../exercise";
+import renderer from "react-test-renderer";
 
 // Mock dependencies
 jest.mock("@react-navigation/native", () => ({
@@ -92,6 +93,11 @@ describe("Exercise Component", () => {
         { label: "1 - Minimal", value: 1 },
       ],
     });
+  });
+
+  it("renders correctly with data", () => {
+    const tree = renderer.create(<Exercise />).toJSON();
+    expect(tree).toMatchSnapshot();
   });
 
   it("renders exercise details correctly", () => {

@@ -1,6 +1,7 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, fireEvent } from "@testing-library/react-native";
 import { NavigationContainer } from "@react-navigation/native";
+import renderer from "react-test-renderer";
 import Analytics from "../analytics";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 
@@ -109,6 +110,17 @@ describe("Analytics Component", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it("renders correctly with data", () => {
+    // Add mock implementation before rendering
+    (useAnalyticsData as jest.Mock).mockReturnValue({
+      ...mockAdherenceData,
+      loading: false,
+    });
+
+    const tree = renderer.create(<Analytics />).toJSON();
+    expect(tree).toMatchSnapshot();
   });
 
   it("renders AdherenceGraph correctly with data", () => {

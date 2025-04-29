@@ -1,6 +1,7 @@
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import { Alert } from "react-native";
+import renderer from "react-test-renderer";
 import Settings from "../settings";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,6 +39,11 @@ describe("Settings Component", () => {
     (useAuth as jest.Mock).mockReturnValue({
       createApiInstance: mockCreateApiInstance,
     });
+  });
+
+  it("renders correctly with data", () => {
+    const tree = renderer.create(<Settings />).toJSON();
+    expect(tree).toMatchSnapshot();
   });
 
   it("renders component correctly", () => {

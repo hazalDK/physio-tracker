@@ -1,6 +1,7 @@
 // login.test.tsx
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import renderer from "react-test-renderer";
 import { Alert } from "react-native";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
@@ -36,6 +37,11 @@ jest.mock("tailwind-react-native-classnames", () => ({
 describe("Login Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it("renders correctly with data", () => {
+    const tree = renderer.create(<Login />).toJSON();
+    expect(tree).toMatchSnapshot();
   });
 
   it("renders correctly", () => {

@@ -1,5 +1,6 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, fireEvent } from "@testing-library/react-native";
+import renderer from "react-test-renderer";
 import { Alert } from "react-native";
 import Profile from "../profile";
 import { useProfileData } from "@/hooks/useProfileData";
@@ -46,6 +47,21 @@ describe("Profile Component", () => {
   beforeEach(() => {
     // Reset mocks before each test
     jest.clearAllMocks();
+  });
+
+  // Update the first test to provide mock data
+  it("renders correctly with data", () => {
+    // Add mock implementation before rendering
+    (useProfileData as jest.Mock).mockReturnValue({
+      loading: false,
+      userProfile: mockUserProfile,
+      injuryTypes: mockInjuryTypes,
+      isModalVisible: false,
+      toggleModal: jest.fn(),
+    });
+
+    const tree = renderer.create(<Profile />).toJSON();
+    expect(tree).toMatchSnapshot();
   });
 
   it("renders loading state when loading is true", () => {

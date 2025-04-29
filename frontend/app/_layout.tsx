@@ -55,8 +55,6 @@ export default function RootLayout() {
     return null;
   }
 
-  console.log("isAuthenticated", isAuthenticated);
-
   // If the app is loaded and the authentication state is set, render the app's navigation stack
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

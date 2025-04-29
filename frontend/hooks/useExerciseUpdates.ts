@@ -181,7 +181,6 @@ export function useExerciseUpdates(userExerciseId: number | null) {
 
   const handleRemoval = async () => {
     try {
-      console.log("Removing exercise with ID:", userExerciseId);
       // Validate user exercise ID
       if (!userExerciseId) {
         Alert.alert("Error", "Invalid exercise ID");
