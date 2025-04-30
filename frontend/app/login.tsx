@@ -103,7 +103,9 @@ export default function Login() {
       >
         Login
       </Text>
-      <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>Username:</Text>
+      <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>
+        Username (case sensitive):
+      </Text>
       <TextInput
         value={username}
         onChangeText={(text) => setUsername(text)}
@@ -112,7 +114,7 @@ export default function Login() {
         style={[inputStyle, inputTextStyle]}
         placeholder="Enter username here"
       ></TextInput>
-      <Text style={[tw`mb-2 mt-4`, { color: "#8f8e8e" }]}>Password:</Text>
+      <Text style={[tw`mb-2 mt-2`, { color: "#8f8e8e" }]}>Password:</Text>
       <View style={[tw`w-64 mb-4 flex-row`]}>
         <TextInput
           style={[
