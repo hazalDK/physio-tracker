@@ -27,7 +27,7 @@ exports[`Login Component renders correctly with data 1`] = `
       ]
     }
   >
-    Username:
+    Username (case sensitive):
   </Text>
   <TextInput
     autoComplete="username"
