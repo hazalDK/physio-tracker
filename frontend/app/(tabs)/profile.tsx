@@ -23,12 +23,14 @@ export default function Profile() {
     newUsername,
     newFirstName,
     newLastName,
+    newEmail,
     newDateOfBirth,
     open,
     isUpdating,
     setNewUsername,
     setNewFirstName,
     setNewLastName,
+    setNewEmail,
     setNewDateOfBirth,
     setOpen,
     handleEditProfile,
@@ -139,6 +141,16 @@ export default function Profile() {
               value={newLastName}
               onChangeText={setNewLastName}
               editable={!isUpdating}
+            />
+            <Text style={tw`mb-1`}>Update Email:</Text>
+            <TextInput
+              style={tw`border border-gray-300 p-2 mb-4 rounded`}
+              placeholder="email"
+              value={newEmail}
+              onChangeText={setNewEmail}
+              editable={!isUpdating}
+              keyboardType="email-address"
+              testID="email-input"
             />
             <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>Date of birth:</Text>
             <View style={tw`flex-row items-center mb-4`}>

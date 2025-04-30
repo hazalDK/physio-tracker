@@ -16,6 +16,7 @@ export function useProfileData() {
   const [newUsername, setNewUsername] = useState("");
   const [newFirstName, setNewFirstName] = useState("");
   const [newLastName, setNewLastName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [newDateOfBirth, setNewDateOfBirth] = useState<Date | undefined>(
     undefined
   );
@@ -94,8 +95,21 @@ export function useProfileData() {
     setIsUpdating(true);
 
     // Validate input fields to ensure at least one field is filled
-    if (!newUsername && !newFirstName && !newLastName && !newDateOfBirth) {
+    if (
+      !newUsername &&
+      !newFirstName &&
+      !newLastName &&
+      !newEmail &&
+      !newDateOfBirth
+    ) {
       Alert.alert("Error", "Please fill in at least one field");
+      setIsUpdating(false);
+      return;
+    }
+
+    // Basic email validation if email is provided
+    if (newEmail && !validateEmail(newEmail)) {
+      Alert.alert("Error", "Please enter a valid email address");
       setIsUpdating(false);
       return;
     }
@@ -111,6 +125,7 @@ export function useProfileData() {
         ...(newUsername && { username: newUsername }),
         ...(newFirstName && { first_name: newFirstName }),
         ...(newLastName && { last_name: newLastName }),
+        ...(newEmail && { email: newEmail }),
         ...(newDateOfBirth && {
           date_of_birth: newDateOfBirth.toISOString().split("T")[0],
         }),
@@ -129,6 +144,7 @@ export function useProfileData() {
         setNewUsername("");
         setNewFirstName("");
         setNewLastName("");
+        setNewEmail("");
         setNewDateOfBirth(undefined);
         fetchUserProfile();
       } else {
@@ -144,10 +160,25 @@ export function useProfileData() {
     }
   };
 
+  // Function to validate email format
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
   // Function to toggle the visibility of the modal
   // This function is called when the user clicks the button to open or close the modal
   const toggleModal = () => {
     setIsModalVisible(!isModalVisible);
+
+    // If opening the modal, initialize form fields with current profile values
+    if (!isModalVisible && userProfile) {
+      setNewUsername(userProfile.username || "");
+      setNewFirstName(userProfile.first_name || "");
+      setNewLastName(userProfile.last_name || "");
+      setNewEmail(userProfile.email || "");
+      // Date of birth is handled separately since it needs to be converted to a Date object
+    }
   };
 
   return {
@@ -158,12 +189,14 @@ export function useProfileData() {
     newUsername,
     newFirstName,
     newLastName,
+    newEmail,
     newDateOfBirth,
     open,
     isUpdating,
     setNewUsername,
     setNewFirstName,
     setNewLastName,
+    setNewEmail,
     setNewDateOfBirth,
     setOpen,
     handleEditProfile,

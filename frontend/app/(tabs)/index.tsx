@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Modal,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import tw from "tailwind-react-native-classnames";
@@ -134,58 +135,122 @@ export default function Index() {
     setImageErrorMap((prev) => new Map(prev).set(video_id, false)); // Reset the error state
   };
 
-  return (
-    <View style={tw`flex-1 bg-white justify-center items-center`}>
-      <Text style={tw`mt-10 text-lg`}>
-        Completed {Math.round(progress * 100)}%
-      </Text>
-      <Progress.Bar
-        progress={progress}
-        width={200}
-        color="#14b8a6"
-        style={tw`mb-5`}
-      />
-      <FlatList
-        style={tw`mx-auto`}
-        data={exercises}
-        numColumns={2}
-        renderItem={({ item }) => (
-          <View>
-            <Pressable
-              onPress={() => redirectToExercise(item)}
-              style={({ pressed, hovered }) => [
-                tw`border rounded-lg h-52 w-40 m-2 p-2 shadow-md`,
-                {
-                  borderColor: "#14b8a6",
-                  borderWidth: 1,
-                  backgroundColor: hovered ? "#8f8e8e" : "#ffffff",
-                  opacity: pressed ? 0.8 : 1,
-                },
-              ]}
-            >
-              {imageErrorMap.get(item.video_id) ? (
-                <Image
-                  source={require("../../assets/images/placeholder.jpg")}
-                  style={tw`w-28 h-28 rounded-lg mx-auto mb-2`}
-                />
-              ) : (
-                <Image
-                  source={{
-                    uri: `https://img.youtube.com/vi/${item.video_id}/maxresdefault.jpg`,
-                  }}
-                  style={tw`w-28 h-28 rounded-lg mx-auto mb-2`}
-                  onLoad={() => handleImageLoad(item.video_id)}
-                  onError={() => handleImageError(item.video_id)}
-                />
-              )}
-              <Text style={tw`text-center font-semibold`}>{item.name}</Text>
-              <Text style={tw`text-center`}>
-                Difficulty level: {item.difficulty_level}
-              </Text>
-            </Pressable>
-          </View>
+  // Filter exercises based on completion status
+  const completedExercises = exercises.filter((exercise) => {
+    const userExercise = userExercises.find(
+      (ue) => ue.exercise === exercise.id
+    );
+    return userExercise?.completed && userExercise?.is_active;
+  });
+
+  const incompletedExercises = exercises.filter((exercise) => {
+    const userExercise = userExercises.find(
+      (ue) => ue.exercise === exercise.id
+    );
+    return (
+      (!userExercise?.completed && userExercise?.is_active) || !userExercise
+    );
+  });
+
+  // Render exercise item
+  const renderExerciseItem = ({ item }: { item: ExerciseItem }) => (
+    <View>
+      <Pressable
+        onPress={() => redirectToExercise(item)}
+        style={({ pressed, hovered }) => [
+          tw`border rounded-lg h-52 w-40 m-2 p-2 shadow-md`,
+          {
+            borderColor: "#14b8a6",
+            borderWidth: 1,
+            backgroundColor: hovered ? "#8f8e8e" : "#ffffff",
+            opacity: pressed ? 0.8 : 1,
+          },
+        ]}
+      >
+        {imageErrorMap.get(item.video_id) ? (
+          <Image
+            source={require("../../assets/images/placeholder.jpg")}
+            style={tw`w-28 h-28 rounded-lg mx-auto mb-2`}
+          />
+        ) : (
+          <Image
+            source={{
+              uri: `https://img.youtube.com/vi/${item.video_id}/maxresdefault.jpg`,
+            }}
+            style={tw`w-28 h-28 rounded-lg mx-auto mb-2`}
+            onLoad={() => handleImageLoad(item.video_id)}
+            onError={() => handleImageError(item.video_id)}
+          />
         )}
-      />
+        <Text style={tw`text-center font-semibold`}>{item.name}</Text>
+        <Text style={tw`text-center`}>
+          Difficulty level: {item.difficulty_level}
+        </Text>
+      </Pressable>
+    </View>
+  );
+
+  return (
+    <View style={tw`flex-1 bg-white pt-12 px-4`}>
+      <ScrollView
+        contentContainerStyle={tw`pb-24`}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={tw`items-center mb-6`}>
+          <Text style={tw`text-lg`}>
+            Completed {Math.round(progress * 100)}%
+          </Text>
+          <Progress.Bar
+            progress={progress}
+            width={200}
+            color="#14b8a6"
+            style={tw`mt-2`}
+          />
+        </View>
+
+        <Text style={tw`text-lg font-bold mb-2`}>Incompleted Exercises</Text>
+        {incompletedExercises.length > 0 ? (
+          <FlatList
+            style={tw`mb-4`}
+            data={incompletedExercises}
+            numColumns={2}
+            renderItem={renderExerciseItem}
+            keyExtractor={(item) => item.id.toString()}
+            scrollEnabled={false}
+            ListEmptyComponent={
+              <Text style={tw`text-center text-gray-500 my-4`}>
+                No incompleted exercises
+              </Text>
+            }
+          />
+        ) : (
+          <Text style={tw`text-center text-gray-500 my-4`}>
+            No incompleted exercises
+          </Text>
+        )}
+
+        <Text style={tw`text-lg font-bold mb-2`}>Completed Exercises</Text>
+        {completedExercises.length > 0 ? (
+          <FlatList
+            style={tw`mb-4`}
+            data={completedExercises}
+            numColumns={2}
+            renderItem={renderExerciseItem}
+            keyExtractor={(item) => item.id.toString()}
+            scrollEnabled={false}
+            ListEmptyComponent={
+              <Text style={tw`text-center text-gray-500 my-4`}>
+                No completed exercises
+              </Text>
+            }
+          />
+        ) : (
+          <Text style={tw`text-center text-gray-500 my-4`}>
+            No completed exercises
+          </Text>
+        )}
+      </ScrollView>
+
       <Pressable
         style={({ pressed, hovered }) => [
           tw`absolute bottom-4 right-4 p-4 rounded-full`,
@@ -245,6 +310,11 @@ export default function Index() {
                   <Text>{item.name}</Text>
                 </TouchableOpacity>
               )}
+              ListEmptyComponent={
+                <Text style={tw`text-center text-gray-500 my-4`}>
+                  No inactive exercises available
+                </Text>
+              }
             />
             <Pressable
               style={tw`mt-4 bg-red-500 py-4 rounded`}

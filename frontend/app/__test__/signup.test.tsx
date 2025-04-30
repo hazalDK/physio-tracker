@@ -7,6 +7,7 @@ import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import Signup from "../signup";
 import { useInjuryData } from "@/hooks/useInjuryData";
+import { useAuthStore } from "@/stores/authStore";
 
 // Mock dependencies
 jest.mock("axios");
@@ -36,10 +37,52 @@ jest.mock("tailwind-react-native-classnames", () => ({
 jest.mock("@/hooks/useInjuryData", () => ({
   useInjuryData: jest.fn(),
 }));
+jest.mock("@/stores/authStore", () => ({
+  useAuthStore: jest.fn(),
+}));
+jest.mock("react-native-safe-area-context", () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
+
+// Create a mock for Signup component and setInjuryType function
+const mockSetInjuryType = jest.fn();
+
+// Fix: Use doMock instead or use a factory pattern that doesn't reference out-of-scope variables
+jest.mock("../signup", () => {
+  return jest.fn((props) => {
+    // Inside the render function, we have access to React since imports are processed
+    return <MockSignupComponent {...props} />;
+  });
+});
+
+// Create a mock component outside the jest.mock call
+const MockSignupComponent = (props: { testInjuryType: unknown }) => {
+  React.useEffect(() => {
+    if (props.testInjuryType) {
+      mockSetInjuryType(props.testInjuryType);
+    }
+  }, [props.testInjuryType]);
+
+  // We'll override the implementation in beforeEach
+  return null;
+};
 
 describe("Signup Component", () => {
+  const mockSetIsAuthenticated = jest.fn();
+  let OriginalSignup: React.ComponentType<any>;
+
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Store the original module
+    OriginalSignup = jest.requireActual("../signup").default;
+
+    // Update the mock implementation for each test
+    (Signup as jest.Mock).mockImplementation((props) => {
+      return (
+        <OriginalSignup {...props} setInjuryTypeForTest={mockSetInjuryType} />
+      );
+    });
 
     // Mock the useInjuryData hook
     (useInjuryData as jest.Mock).mockReturnValue({
@@ -49,25 +92,43 @@ describe("Signup Component", () => {
       ],
       loading: false,
     });
+
+    // Mock the authStore
+    (useAuthStore as unknown as jest.Mock).mockImplementation((callback) => {
+      return callback({ setIsAuthenticated: mockSetIsAuthenticated });
+    });
+
+    // Set default environment variable
+    process.env.API_URL = "http://test-api.com";
   });
 
   it("renders correctly with data", () => {
-    const tree = renderer.create(<Signup />).toJSON();
+    const tree = renderer
+      .create(
+        <Signup testInjuryType={undefined} setInjuryTypeForTest={undefined} />
+      )
+      .toJSON();
     expect(tree).toMatchSnapshot();
   });
 
-  it("renders correctly", () => {
-    const { getByText, getByPlaceholderText } = render(<Signup />);
+  it("renders all form fields correctly", () => {
+    const { getByText, getByPlaceholderText } = render(
+      <Signup testInjuryType={undefined} setInjuryTypeForTest={undefined} />
+    );
 
     expect(getByText("Registration")).toBeTruthy();
     expect(getByPlaceholderText("Enter first name here")).toBeTruthy();
     expect(getByPlaceholderText("Enter last name here")).toBeTruthy();
     expect(getByPlaceholderText("Enter username here")).toBeTruthy();
     expect(getByPlaceholderText("example@gmail.com")).toBeTruthy();
+    expect(getByText("Date of Birth")).toBeTruthy();
+    expect(getByText("Injury Type")).toBeTruthy();
   });
 
-  it("handles input changes", () => {
-    const { getByPlaceholderText } = render(<Signup />);
+  it("handles input changes for all fields", () => {
+    const { getByPlaceholderText, getByText } = render(
+      <Signup testInjuryType={undefined} setInjuryTypeForTest={undefined} />
+    );
 
     const firstNameInput = getByPlaceholderText("Enter first name here");
     const lastNameInput = getByPlaceholderText("Enter last name here");
@@ -85,34 +146,78 @@ describe("Signup Component", () => {
     expect(emailInput.props.value).toBe("john@example.com");
   });
 
-  it("validates email format", () => {
-    const { getByPlaceholderText } = render(<Signup />);
+  it("validates email format and shows error message for invalid email", () => {
+    const { getByPlaceholderText, getByText } = render(
+      <Signup testInjuryType={undefined} setInjuryTypeForTest={undefined} />
+    );
 
     const emailInput = getByPlaceholderText("example@gmail.com");
 
-    // Invalid email
+    // Input invalid email
     fireEvent.changeText(emailInput, "invalid-email");
 
-    // Valid email
+    // Check for error message
+    expect(
+      getByText("Please enter a valid email (e.g., user@example.com).")
+    ).toBeTruthy();
+
+    // Input valid email should clear error
     fireEvent.changeText(emailInput, "valid@example.com");
+    expect(() =>
+      getByText("Please enter a valid email (e.g., user@example.com).")
+    ).toThrow();
   });
 
-  it("validates password requirements", () => {
-    const { getByTestId } = render(<Signup />);
+  it("validates password requirements and shows error message", () => {
+    const { getByTestId, getByText } = render(
+      <Signup testInjuryType={undefined} setInjuryTypeForTest={undefined} />
+    );
 
-    const passwordInputs = getByTestId("password-input");
+    const passwordInput = getByTestId("password-input");
 
-    // Invalid password (too short)
-    fireEvent.changeText(passwordInputs, "short");
+    // Input invalid password (too short)
+    fireEvent.changeText(passwordInput, "short");
 
-    // Valid password
-    fireEvent.changeText(passwordInputs, "ValidP@ss1!");
+    // Check for error message
+    expect(
+      getByText(
+        "Password must be 8+ chars with uppercase, lowercase, number, and special char."
+      )
+    ).toBeTruthy();
+
+    // Input valid password should clear error
+    fireEvent.changeText(passwordInput, "ValidP@ss1");
+    expect(() =>
+      getByText(
+        "Password must be 8+ chars with uppercase, lowercase, number, and special char."
+      )
+    ).toThrow();
+  });
+
+  it("shows an alert when form is submitted with missing fields", async () => {
+    const alertSpy = jest.spyOn(Alert, "alert");
+    const { getByText } = render(
+      <Signup testInjuryType={1} setInjuryTypeForTest={mockSetInjuryType} />
+    );
+
+    // Submit without filling any fields
+    fireEvent.press(getByText("Sign Up"));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(
+        "Error",
+        "Please fill all required fields"
+      );
+    });
   });
 
   it("shows an alert when passwords do not match", async () => {
     const alertSpy = jest.spyOn(Alert, "alert");
 
-    const { getByPlaceholderText, getByText, getByTestId } = render(<Signup />);
+    // Render with the test injury type prop
+    const { getByPlaceholderText, getByText, getByTestId } = render(
+      <Signup testInjuryType={1} setInjuryTypeForTest={undefined} />
+    );
 
     // Fill all required fields
     fireEvent.changeText(getByPlaceholderText("Enter first name here"), "John");
@@ -126,11 +231,10 @@ describe("Signup Component", () => {
       "john@example.com"
     );
 
-    // Set different passwords
-    const passwordInputs = getByTestId("password-input");
-    fireEvent.changeText(passwordInputs, "Password1!");
+    // Fill passwords with different values
+    const passwordInput = getByTestId("password-input");
+    fireEvent.changeText(passwordInput, "Password1!");
 
-    // Find the other password input and set a different value
     const confirmPasswordInput = getByTestId("confirm-password-input");
     fireEvent.changeText(confirmPasswordInput, "DifferentPass1!");
 
@@ -151,7 +255,10 @@ describe("Signup Component", () => {
       },
     });
 
-    const { getByPlaceholderText, getByText, getByTestId } = render(<Signup />);
+    // Render with the test injury type prop
+    const { getByPlaceholderText, getByText, getByTestId } = render(
+      <Signup testInjuryType={1} setInjuryTypeForTest={undefined} />
+    );
 
     // Fill out the form with valid data
     fireEvent.changeText(getByPlaceholderText("Enter first name here"), "John");
@@ -166,10 +273,9 @@ describe("Signup Component", () => {
     );
 
     // Set matching passwords
-    const passwordInputs = getByTestId("password-input");
-    fireEvent.changeText(passwordInputs, "Password1!");
+    const passwordInput = getByTestId("password-input");
+    fireEvent.changeText(passwordInput, "Password1!");
 
-    // Find the confirm password input
     const confirmPasswordInput = getByTestId("confirm-password-input");
     fireEvent.changeText(confirmPasswordInput, "Password1!");
 
@@ -177,6 +283,20 @@ describe("Signup Component", () => {
     fireEvent.press(getByText("Sign Up"));
 
     await waitFor(() => {
+      // Verify API was called with correct data
+      expect(axios.post).toHaveBeenCalledWith(
+        "http://test-api.com/users/register/",
+        expect.objectContaining({
+          username: "johndoe",
+          email: "john@example.com",
+          password: "Password1!",
+          first_name: "John",
+          last_name: "Doe",
+          injury_type: 1,
+        }),
+        expect.any(Object)
+      );
+
       // Verify that SecureStore was called to store tokens
       expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
         "access_token",
@@ -187,12 +307,15 @@ describe("Signup Component", () => {
         "fake-refresh-token"
       );
 
+      // Verify auth state was updated
+      expect(mockSetIsAuthenticated).toHaveBeenCalledWith(true);
+
       // Verify that router was called to navigate to home
       expect(router.replace).toHaveBeenCalledWith("/(tabs)");
     });
   });
 
-  it("handles registration failure with server errors", async () => {
+  it("handles registration failure with server errors - username", async () => {
     const alertSpy = jest.spyOn(Alert, "alert");
 
     // Mock axios post to return an error with field errors
@@ -204,7 +327,10 @@ describe("Signup Component", () => {
       },
     });
 
-    const { getByPlaceholderText, getByText, getByTestId } = render(<Signup />);
+    // Render with the test injury type prop
+    const { getByPlaceholderText, getByText, getByTestId } = render(
+      <Signup testInjuryType={1} setInjuryTypeForTest={undefined} />
+    );
 
     // Fill out the form with valid data
     fireEvent.changeText(getByPlaceholderText("Enter first name here"), "John");
@@ -219,10 +345,9 @@ describe("Signup Component", () => {
     );
 
     // Set matching passwords
-    const passwordInputs = getByTestId("password-input");
-    fireEvent.changeText(passwordInputs, "Password1!");
+    const passwordInput = getByTestId("password-input");
+    fireEvent.changeText(passwordInput, "Password1!");
 
-    // Find the confirm password input
     const confirmPasswordInput = getByTestId("confirm-password-input");
     fireEvent.changeText(confirmPasswordInput, "Password1!");
 
@@ -237,22 +362,50 @@ describe("Signup Component", () => {
     });
   });
 
-  it("toggles password visibility", () => {
-    const { getByTestId } = render(<Signup />);
+  it("handles registration failure with server errors - email", async () => {
+    const alertSpy = jest.spyOn(Alert, "alert");
 
+    // Mock axios post to return an error with email field errors
+    (axios.post as jest.Mock).mockRejectedValueOnce({
+      response: {
+        data: {
+          email: ["A user with this email already exists."],
+        },
+      },
+    });
+
+    // Render with the test injury type prop
+    const { getByPlaceholderText, getByText, getByTestId } = render(
+      <Signup testInjuryType={1} setInjuryTypeForTest={undefined} />
+    );
+
+    // Fill out the form with valid data
+    fireEvent.changeText(getByPlaceholderText("Enter first name here"), "John");
+    fireEvent.changeText(getByPlaceholderText("Enter last name here"), "Doe");
+    fireEvent.changeText(
+      getByPlaceholderText("Enter username here"),
+      "johndoe"
+    );
+    fireEvent.changeText(
+      getByPlaceholderText("example@gmail.com"),
+      "john@example.com"
+    );
+
+    // Set matching passwords
     const passwordInput = getByTestId("password-input");
-    const toggleButton = getByTestId("secure-password");
+    fireEvent.changeText(passwordInput, "Password1!");
 
-    // Initially, password should be hidden (secureTextEntry is true)
-    expect(passwordInput.props.secureTextEntry).toBe(true);
+    const confirmPasswordInput = getByTestId("confirm-password-input");
+    fireEvent.changeText(confirmPasswordInput, "Password1!");
 
-    // Press toggle button to show password
-    fireEvent.press(toggleButton);
+    // Submit the form
+    fireEvent.press(getByText("Sign Up"));
 
-    // Now password should be visible (secureTextEntry is false)
-    expect(passwordInput.props.secureTextEntry).toBe(false);
-
-    // The toggle button should now show the hide icon
-    expect(getByTestId("secure-password").props.children).toBe("🙈");
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(
+        "Registration Failed",
+        "Email: A user with this email already exists."
+      );
+    });
   });
 });

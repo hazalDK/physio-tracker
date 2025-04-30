@@ -137,12 +137,14 @@ describe("Profile Component", () => {
       newUsername: "testuser",
       newFirstName: "Test",
       newLastName: "User",
+      newEmail: "test@example.com",
       newDateOfBirth: new Date("1990-01-01"),
       open: false,
       isUpdating: false,
       setNewUsername: jest.fn(),
       setNewFirstName: jest.fn(),
       setNewLastName: jest.fn(),
+      setNewEmail: jest.fn(),
       setNewDateOfBirth: jest.fn(),
       setOpen: jest.fn(),
       handleEditProfile: jest.fn(),
@@ -157,6 +159,7 @@ describe("Profile Component", () => {
     expect(getByPlaceholderText("username").props.value).toBe("testuser");
     expect(getByPlaceholderText("first name").props.value).toBe("Test");
     expect(getByPlaceholderText("last name").props.value).toBe("User");
+    expect(getByPlaceholderText("email").props.value).toBe("test@example.com");
     expect(getByTestId("datetime-text").props.children).toBe("01/01/1990");
   });
 
@@ -164,6 +167,7 @@ describe("Profile Component", () => {
     const setNewUsername = jest.fn();
     const setNewFirstName = jest.fn();
     const setNewLastName = jest.fn();
+    const setNewEmail = jest.fn();
 
     (useProfileData as jest.Mock).mockReturnValue({
       loading: false,
@@ -173,12 +177,14 @@ describe("Profile Component", () => {
       newUsername: "",
       newFirstName: "",
       newLastName: "",
+      newEmail: "",
       newDateOfBirth: null,
       open: false,
       isUpdating: false,
       setNewUsername,
       setNewFirstName,
       setNewLastName,
+      setNewEmail,
       setNewDateOfBirth: jest.fn(),
       setOpen: jest.fn(),
       handleEditProfile: jest.fn(),
@@ -190,10 +196,12 @@ describe("Profile Component", () => {
     fireEvent.changeText(getByPlaceholderText("username"), "newusername");
     fireEvent.changeText(getByPlaceholderText("first name"), "New");
     fireEvent.changeText(getByPlaceholderText("last name"), "Name");
+    fireEvent.changeText(getByPlaceholderText("email"), "new@example.com");
 
     expect(setNewUsername).toHaveBeenCalledWith("newusername");
     expect(setNewFirstName).toHaveBeenCalledWith("New");
     expect(setNewLastName).toHaveBeenCalledWith("Name");
+    expect(setNewEmail).toHaveBeenCalledWith("new@example.com");
   });
 
   it("opens date picker when date field is pressed", () => {
@@ -207,12 +215,14 @@ describe("Profile Component", () => {
       newUsername: "testuser",
       newFirstName: "Test",
       newLastName: "User",
+      newEmail: "test@example.com",
       newDateOfBirth: new Date("1990-01-01"),
       open: false,
       isUpdating: false,
       setNewUsername: jest.fn(),
       setNewFirstName: jest.fn(),
       setNewLastName: jest.fn(),
+      setNewEmail: jest.fn(),
       setNewDateOfBirth: jest.fn(),
       setOpen,
       handleEditProfile: jest.fn(),
@@ -236,12 +246,14 @@ describe("Profile Component", () => {
       newUsername: "testuser",
       newFirstName: "Test",
       newLastName: "User",
+      newEmail: "test@example.com",
       newDateOfBirth: new Date("1990-01-01"),
       open: false,
       isUpdating: false,
       setNewUsername: jest.fn(),
       setNewFirstName: jest.fn(),
       setNewLastName: jest.fn(),
+      setNewEmail: jest.fn(),
       setNewDateOfBirth,
       setOpen: jest.fn(),
       handleEditProfile: jest.fn(),
@@ -265,12 +277,14 @@ describe("Profile Component", () => {
       newUsername: "testuser",
       newFirstName: "Test",
       newLastName: "User",
+      newEmail: "test@example.com",
       newDateOfBirth: new Date("1990-01-01"),
       open: false,
       isUpdating: false,
       setNewUsername: jest.fn(),
       setNewFirstName: jest.fn(),
       setNewLastName: jest.fn(),
+      setNewEmail: jest.fn(),
       setNewDateOfBirth: jest.fn(),
       setOpen: jest.fn(),
       handleEditProfile,
@@ -292,12 +306,14 @@ describe("Profile Component", () => {
       newUsername: "testuser",
       newFirstName: "Test",
       newLastName: "User",
+      newEmail: "test@example.com",
       newDateOfBirth: new Date("1990-01-01"),
       open: false,
       isUpdating: true,
       setNewUsername: jest.fn(),
       setNewFirstName: jest.fn(),
       setNewLastName: jest.fn(),
+      setNewEmail: jest.fn(),
       setNewDateOfBirth: jest.fn(),
       setOpen: jest.fn(),
       handleEditProfile: jest.fn(),
@@ -309,6 +325,38 @@ describe("Profile Component", () => {
     expect(getByPlaceholderText("username").props.editable).toBe(false);
     expect(getByPlaceholderText("first name").props.editable).toBe(false);
     expect(getByPlaceholderText("last name").props.editable).toBe(false);
+    expect(getByPlaceholderText("email").props.editable).toBe(false);
     expect(getByText("Updating...")).toBeTruthy();
+  });
+
+  it("handles email input changes in modal", () => {
+    const setNewEmail = jest.fn();
+
+    (useProfileData as jest.Mock).mockReturnValue({
+      loading: false,
+      userProfile: mockUserProfile,
+      injuryTypes: mockInjuryTypes,
+      isModalVisible: true,
+      newUsername: "testuser",
+      newFirstName: "Test",
+      newLastName: "User",
+      newEmail: "test@example.com",
+      newDateOfBirth: new Date("1990-01-01"),
+      open: false,
+      isUpdating: false,
+      setNewUsername: jest.fn(),
+      setNewFirstName: jest.fn(),
+      setNewLastName: jest.fn(),
+      setNewEmail,
+      setNewDateOfBirth: jest.fn(),
+      setOpen: jest.fn(),
+      handleEditProfile: jest.fn(),
+      toggleModal: jest.fn(),
+    });
+
+    const { getByTestId } = render(<Profile />);
+
+    fireEvent.changeText(getByTestId("email-input"), "updated@example.com");
+    expect(setNewEmail).toHaveBeenCalledWith("updated@example.com");
   });
 });

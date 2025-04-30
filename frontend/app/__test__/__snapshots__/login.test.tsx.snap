@@ -41,6 +41,8 @@ exports[`Login Component renders correctly with data 1`] = `
           "borderWidth": 1,
           "color": "#8f8e8e",
           "outlineColor": "#ccc",
+          "placeholderTextColor": "#8f8e8e",
+          "textAlign": "center",
         },
       ]
     }
@@ -60,7 +62,11 @@ exports[`Login Component renders correctly with data 1`] = `
     Password:
   </Text>
   <View
-    style={{}}
+    style={
+      [
+        {},
+      ]
+    }
   >
     <TextInput
       onChangeText={[Function]}
@@ -74,19 +80,51 @@ exports[`Login Component renders correctly with data 1`] = `
             "borderWidth": 1,
             "color": "#8f8e8e",
             "outlineColor": "#ccc",
+            "placeholderTextColor": "#8f8e8e",
+            "textAlign": "center",
           },
         ]
       }
+      testID="password-input"
       value=""
     />
-    <TouchableOpacity
-      onPress={[Function]}
-      style={{}}
+    <View
+      pointerEvents="box-none"
+      style={
+        {
+          "alignItems": "center",
+          "height": 40,
+          "justifyContent": "center",
+          "position": "absolute",
+          "right": 10,
+          "width": 30,
+          "zIndex": 10,
+        }
+      }
     >
-      <Text>
-        🙈
-      </Text>
-    </TouchableOpacity>
+      <TouchableOpacity
+        hitSlop={
+          {
+            "bottom": 10,
+            "left": 10,
+            "right": 10,
+            "top": 10,
+          }
+        }
+        onPress={[Function]}
+      >
+        <Text
+          style={
+            {
+              "fontSize": 16,
+            }
+          }
+          testID="secure-password"
+        >
+          🙈
+        </Text>
+      </TouchableOpacity>
+    </View>
   </View>
   <Text
     style={

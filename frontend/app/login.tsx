@@ -4,6 +4,14 @@ import { View, Text, Pressable, Alert } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { TextInput, TouchableOpacity } from "react-native-gesture-handler";
 import tw from "tailwind-react-native-classnames";
+
+// Define inputTextStyle for consistent styling
+const inputTextStyle = {
+  color: "#8f8e8e",
+  borderColor: "#e5e7eb",
+  borderWidth: 1,
+  outlineColor: "#ccc",
+};
 import axios from "axios";
 import { router } from "expo-router";
 import { useAuthStore } from "@/stores/authStore";
@@ -71,6 +79,17 @@ export default function Login() {
       setIsLoading(false);
     }
   }
+
+  // Input field style
+  const inputStyle = tw`flex text-center bg-gray-200 w-64 h-10 border rounded justify-center mb-4`;
+  const inputTextStyle = {
+    color: "#8f8e8e",
+    placeholderTextColor: "#8f8e8e",
+    borderColor: "#e5e7eb",
+    borderWidth: 1,
+    textAlign: "center" as "center", // Explicitly cast to valid TextStyle value
+    outlineColor: "#ccc",
+  };
   return (
     <View style={tw`flex-1 justify-center items-center bg-white`}>
       <Text
@@ -90,46 +109,52 @@ export default function Login() {
         onChangeText={(text) => setUsername(text)}
         textContentType="username"
         autoComplete="username"
-        style={[
-          tw`flex text-center bg-gray-200 w-56 h-8 border rounded justify-center`,
-          {
-            color: "#8f8e8e",
-            borderColor: "#e5e7eb",
-            borderWidth: 1,
-            outlineColor: "#ccc",
-          },
-        ]}
+        style={[inputStyle, inputTextStyle]}
         placeholder="Enter username here"
       ></TextInput>
       <Text style={[tw`mb-2 mt-4`, { color: "#8f8e8e" }]}>Password:</Text>
-      <View style={tw`flex-row items-center mb-4`}>
+      <View style={[tw`w-64 mb-4 flex-row`]}>
         <TextInput
           style={[
-            tw`flex text-center bg-gray-200 w-48 h-8 border rounded justify-center`,
-            {
-              color: "#8f8e8e",
-              borderColor: "#e5e7eb",
-              borderWidth: 1,
-              outlineColor: "#ccc",
-            },
+            tw`bg-gray-200 h-10 border rounded flex-1 text-left px-4`,
+            inputTextStyle,
           ]}
           placeholder="****"
+          testID="password-input"
           secureTextEntry={!securePassword}
           value={password}
-          onChangeText={(text) => {
-            setPassword(text);
-          }}
+          onChangeText={setPassword}
         />
-        <TouchableOpacity
-          style={tw`ml-2`}
-          onPress={() => setSecurePassword(!securePassword)}
+        <View
+          style={{
+            position: "absolute",
+            right: 10,
+            height: 40,
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 10,
+            width: 30,
+          }}
+          pointerEvents="box-none"
         >
-          <Text>{securePassword ? "🙈" : "👁️"}</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setSecurePassword(!securePassword)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text testID="secure-password" style={{ fontSize: 16 }}>
+              {securePassword ? "🙈" : "👁️"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
       <Text style={[tw`mt-2`, { color: "#8f8e8e" }]}>
         Don't have an account? Create an account{" "}
-        <Link screen="signup" params={{}}>
+        <Link
+          style={{ color: "#14b8a6", fontWeight: "bold" }}
+          screen="signup"
+          params={{}}
+        >
           here
         </Link>
       </Text>
