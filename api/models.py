@@ -172,8 +172,7 @@ class InjuryType(models.Model):
         }
 
 # Custom user model
-# GET: two variants: get physiotherapist user's details (viewing their profile etc)
-#                    get patient user's details (viewing their profile etc)
+# GET: get patient user's details (viewing their profile etc)
 # POST: signup - no access via views should be available
 # PUT: edit or update details about the user - name, dob, exercise list, username, password
 # DELETE: delete user in profile (only for current user)
