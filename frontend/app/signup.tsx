@@ -422,7 +422,7 @@ export default function Signup({
             ]}
             onPress={handleRegister}
           >
-            <Text style={tw`text-white font-semibold text-lg`}>Sign Up</Text>
+            <Text style={tw`text-white font-semibold`}>Sign Up</Text>
           </Pressable>
         </View>
       </ScrollView>

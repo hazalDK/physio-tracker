@@ -166,6 +166,11 @@ export default function Login() {
             backgroundColor: hovered ? "#0d9488" : "#14b8a6",
             // Slightly reduce the opacity when the button is pressed
             opacity: pressed ? 0.8 : 1,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 3,
+            elevation: 2,
           },
         ]}
         onPress={() => handleLogin()}
