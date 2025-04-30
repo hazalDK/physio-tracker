@@ -2,6 +2,7 @@ import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import Exercise from "../exercise";
 import renderer from "react-test-renderer";
+import { useExerciseData } from "@/hooks/useExerciseData";
 
 // Mock dependencies
 jest.mock("@react-navigation/native", () => ({
@@ -61,7 +62,7 @@ describe("Exercise Component", () => {
         reps: 10,
         sets: 3,
         hold: 5,
-        is_completed: false,
+        completed: false,
       },
     });
 
@@ -159,7 +160,7 @@ describe("Exercise Component", () => {
     expect(handleRemovalMock).toHaveBeenCalled();
   });
 
-  it("renders completion form with correct fields", () => {
+  it("renders completion form with correct fields when the exercise is not completed", () => {
     // Override the default mock implementation to show completion form
     mockUseExerciseUpdates.mockReturnValue({
       ...mockUseExerciseUpdates(),
@@ -174,6 +175,44 @@ describe("Exercise Component", () => {
     expect(getByText("Sets Completed")).toBeTruthy();
     expect(getByText("Pain Level (0-10)")).toBeTruthy();
     expect(getByText("Save")).toBeTruthy();
+  });
+
+  // The specific test that's failing:
+  it("renders completion form with correct fields when the exercise is completed", () => {
+    // Override the default mock implementation to show completion form with is_completed: true
+    mockUseExerciseData.mockReturnValue({
+      loading: false,
+      exercise: {
+        id: 1,
+        name: "Test Exercise",
+        difficulty_level: "Medium",
+        additional_notes: "Test notes for the exercise",
+        youtube_url: "2pbHPfsC3-U",
+      },
+      userExercise: {
+        id: 2,
+        exercise_id: 1,
+        reps: 10,
+        sets: 3,
+        hold: 5,
+        completed: true,
+      },
+    });
+
+    // Fix: Keep using the default mockUseExerciseUpdates implementation
+    // but override only the showCompletionForm value
+    mockUseExerciseUpdates.mockReturnValue({
+      ...mockUseExerciseUpdates(),
+      showCompletionForm: true,
+    });
+
+    const { getByText } = render(<Exercise />);
+
+    expect(getByText("Complete Exercise")).toBeTruthy();
+    expect(getByText("Reps Completed")).toBeTruthy();
+    expect(getByText("Sets Completed")).toBeTruthy();
+    expect(getByText("Pain Level (0-10)")).toBeTruthy();
+    expect(getByText("Update")).toBeTruthy();
   });
 
   it("renders removal confirmation dialog", () => {

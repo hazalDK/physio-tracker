@@ -310,7 +310,9 @@ export default function Exercise() {
                     },
                   ]}
                 >
-                  <Text style={tw`text-white font-bold text-lg`}>Save</Text>
+                  <Text style={tw`text-white font-bold text-lg`}>
+                    {userExercise?.completed ? "Update" : "Save"}
+                  </Text>
                 </Pressable>
               </View>
             </TouchableWithoutFeedback>
