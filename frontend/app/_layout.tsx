@@ -4,19 +4,17 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
+
 import { useFonts } from "expo-font";
-import { Redirect, Stack, useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { useNavigation } from "@react-navigation/native";
-import { RootStackParamsList } from "@/types/navigation";
+
 import { useAuthStore, hydrateAuthStore } from "@/stores/authStore";
-import { View } from "react-native";
 
 // Prevent the splash screen from auto-hiding until the app is ready
 SplashScreen.preventAutoHideAsync();

@@ -5,13 +5,6 @@ import * as SecureStore from "expo-secure-store";
 import { TextInput, TouchableOpacity } from "react-native-gesture-handler";
 import tw from "tailwind-react-native-classnames";
 
-// Define inputTextStyle for consistent styling
-const inputTextStyle = {
-  color: "#8f8e8e",
-  borderColor: "#e5e7eb",
-  borderWidth: 1,
-  outlineColor: "#ccc",
-};
 import axios from "axios";
 import { router } from "expo-router";
 import { useAuthStore } from "@/stores/authStore";

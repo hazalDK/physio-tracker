@@ -1,4 +1,3 @@
-// login.test.tsx
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import renderer from "react-test-renderer";
@@ -20,7 +19,7 @@ jest.mock("expo-router", () => ({
 }));
 
 jest.mock("@react-navigation/native", () => ({
-  Link: ({ children }) => children,
+  Link: ({ children }: { children: React.ReactNode }) => children,
 }));
 jest.mock("react-native/Libraries/Alert/Alert", () => ({
   alert: jest.fn(),

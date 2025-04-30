@@ -10,7 +10,11 @@ jest.mock("@/hooks/useProfileData");
 
 // Mock DateTimePicker
 jest.mock("@react-native-community/datetimepicker", () => {
-  const mockComponent = ({ value, onChange }) => {
+  const mockComponent = ({
+    onChange,
+  }: {
+    onChange: (event: { type: string }, date?: Date) => void;
+  }) => {
     return (
       <button
         data-testid="date-picker-button"

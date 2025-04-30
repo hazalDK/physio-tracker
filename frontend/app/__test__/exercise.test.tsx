@@ -2,7 +2,6 @@ import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import Exercise from "../exercise";
 import renderer from "react-test-renderer";
-import { useExerciseData } from "@/hooks/useExerciseData";
 
 // Mock dependencies
 jest.mock("@react-navigation/native", () => ({
