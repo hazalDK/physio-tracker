@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders correctly 1`] = `
+exports[`ReminderComponent renders correctly 1`] = `
 <View
   style={
     {
@@ -27,6 +27,12 @@ exports[`renders correctly 1`] = `
     }
   }
 >
+  <DateTimePicker
+    is24Hour={true}
+    mode="time"
+    onChange={[Function]}
+    value={2025-05-03T09:30:00.000Z}
+  />
   <View
     accessibilityState={
       {
@@ -170,7 +176,7 @@ exports[`renders correctly 1`] = `
 </View>
 `;
 
-exports[`renders with no permissions 1`] = `
+exports[`ReminderComponent renders with no permissions 1`] = `
 <View
   style={
     {
@@ -197,6 +203,12 @@ exports[`renders with no permissions 1`] = `
     }
   }
 >
+  <DateTimePicker
+    is24Hour={true}
+    mode="time"
+    onChange={[Function]}
+    value={2025-05-03T09:30:00.000Z}
+  />
   <View
     accessibilityState={
       {
@@ -340,7 +352,7 @@ exports[`renders with no permissions 1`] = `
 </View>
 `;
 
-exports[`renders with permissions granted 1`] = `
+exports[`ReminderComponent renders with permissions granted 1`] = `
 <View
   style={
     {
@@ -367,6 +379,12 @@ exports[`renders with permissions granted 1`] = `
     }
   }
 >
+  <DateTimePicker
+    is24Hour={true}
+    mode="time"
+    onChange={[Function]}
+    value={2025-05-03T09:30:00.000Z}
+  />
   <View
     accessibilityState={
       {
@@ -510,7 +528,7 @@ exports[`renders with permissions granted 1`] = `
 </View>
 `;
 
-exports[`renders with reminder disabled 1`] = `
+exports[`ReminderComponent renders with reminder disabled 1`] = `
 <View
   style={
     {
@@ -537,6 +555,12 @@ exports[`renders with reminder disabled 1`] = `
     }
   }
 >
+  <DateTimePicker
+    is24Hour={true}
+    mode="time"
+    onChange={[Function]}
+    value={2025-05-03T09:30:00.000Z}
+  />
   <View
     accessibilityState={
       {
@@ -680,7 +704,7 @@ exports[`renders with reminder disabled 1`] = `
 </View>
 `;
 
-exports[`renders with reminder enabled 1`] = `
+exports[`ReminderComponent renders with reminder enabled 1`] = `
 <View
   style={
     {
@@ -707,6 +731,12 @@ exports[`renders with reminder enabled 1`] = `
     }
   }
 >
+  <DateTimePicker
+    is24Hour={true}
+    mode="time"
+    onChange={[Function]}
+    value={2025-05-03T09:30:00.000Z}
+  />
   <View
     accessibilityState={
       {
@@ -754,7 +784,7 @@ exports[`renders with reminder enabled 1`] = `
           "width": 240,
         },
         {
-          "backgroundColor": "#14b8a6",
+          "backgroundColor": "#ef4444",
           "opacity": 1,
         },
       ]
@@ -768,7 +798,7 @@ exports[`renders with reminder enabled 1`] = `
         }
       }
     >
-      Enable Reminder
+      Disable Reminder
     </Text>
   </View>
   <View
@@ -845,7 +875,7 @@ exports[`renders with reminder enabled 1`] = `
       }
     }
   >
-    No reminder set
+    Reminder set for 10:30
   </Text>
 </View>
 `;

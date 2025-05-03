@@ -1,20 +1,17 @@
 import * as React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import * as SecureStore from "expo-secure-store";
-import renderer from "react-test-renderer";
-
+import renderer, { act } from "react-test-renderer";
 import ReminderComponent from "../ReminderComponent";
 
-// Mock required dependencies to prevent errors during snapshot testing
+// Mock dependencies
 jest.mock("expo-notifications", () => ({
   setNotificationHandler: jest.fn(),
   getPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
   requestPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
   scheduleNotificationAsync: jest.fn().mockResolvedValue("notification-id"),
   cancelAllScheduledNotificationsAsync: jest.fn(),
-  getAllScheduledNotificationsAsync: jest
-    .fn()
-    .mockResolvedValue([{ identifier: "test-id" }]),
+  getAllScheduledNotificationsAsync: jest.fn().mockResolvedValue([]),
   setNotificationChannelAsync: jest.fn(),
   addNotificationReceivedListener: jest
     .fn()
@@ -36,91 +33,112 @@ jest.mock("expo-device", () => ({
   isDevice: true,
 }));
 
-jest.mock("@react-native-community/datetimepicker", () => {
-  const MockDateTimePicker = (props) => {
-    return <></>;
-  };
-  return MockDateTimePicker;
-});
+jest.mock("@react-native-community/datetimepicker", () => "DateTimePicker");
 
-// Main test case
-it(`renders correctly`, () => {
-  const tree = renderer.create(<ReminderComponent />).toJSON();
+// Mock the current date
+const mockDate = new Date(2025, 4, 3, 10, 30, 0); // May 3, 2025, 10:30:00
+jest.spyOn(global, "Date").mockImplementation(() => mockDate);
 
-  expect(tree).toMatchSnapshot();
-  expect(tree).toBeDefined();
-  expect(tree).not.toBeNull();
-});
+describe("ReminderComponent", () => {
+  let tree: any;
 
-it(`renders with reminder enabled`, () => {
-  // Create with useEffect mocked to set state
-  const component = renderer.create(<ReminderComponent />);
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
-  // Manually update the component's state to enabled
-  const instance = component.getInstance();
-  if (instance) {
-    // Access state if using class components
-    // For functional components with hooks, this approach won't work directly
-  }
+  afterEach(() => {
+    // Clean up the component
+    if (tree) {
+      tree.unmount();
+      tree = null;
+    }
+    jest.clearAllMocks();
+  });
 
-  const tree = component.toJSON();
-  expect(tree).toMatchSnapshot();
-});
+  it("renders correctly", async () => {
+    await act(async () => {
+      tree = renderer.create(<ReminderComponent />);
+    });
 
-it(`renders with reminder disabled`, () => {
-  // Create with useEffect mocked to set state
-  const component = renderer.create(<ReminderComponent />);
+    expect(tree.toJSON()).toMatchSnapshot();
+  });
 
-  // Manually update the component's state to disabled
-  const instance = component.getInstance();
-  if (instance) {
-    // Access state if using class components
-    // For functional components with hooks, this approach won't work directly
-  }
+  it("renders with reminder enabled", async () => {
+    (SecureStore.getItemAsync as jest.Mock)
+      .mockResolvedValueOnce("true") // reminderEnabled
+      .mockResolvedValueOnce(JSON.stringify({ hours: 10, minutes: 30 })); // reminderTime
 
-  const tree = component.toJSON();
-  expect(tree).toMatchSnapshot();
-});
+    let tree: any;
 
-it(`renders with no permissions`, () => {
-  // Mock the getPermissionsAsync to return no permissions
-  jest.mock("expo-notifications", () => ({
-    ...jest.requireActual("expo-notifications"),
-    getPermissionsAsync: jest.fn().mockResolvedValue({ status: "denied" }),
-  }));
+    await act(async () => {
+      tree = renderer.create(<ReminderComponent />);
+    });
 
-  const component = renderer.create(<ReminderComponent />);
-  const tree = component.toJSON();
-  expect(tree).toMatchSnapshot();
-});
+    expect(tree.toJSON()).toMatchSnapshot();
+  });
 
-it(`renders with permissions granted`, () => {
-  // Mock the getPermissionsAsync to return granted permissions
-  jest.mock("expo-notifications", () => ({
-    ...jest.requireActual("expo-notifications"),
-    getPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
-  }));
+  it("renders with reminder disabled", async () => {
+    (SecureStore.getItemAsync as jest.Mock)
+      .mockResolvedValueOnce("false") // reminderEnabled
+      .mockResolvedValueOnce(JSON.stringify({ hours: 10, minutes: 30 })); // reminderTime
 
-  const component = renderer.create(<ReminderComponent />);
-  const tree = component.toJSON();
-  expect(tree).toMatchSnapshot();
-});
+    let tree: any;
 
-it("saves reminder settings when Save Setting is pressed", async () => {
-  const { getByText } = render(<ReminderComponent />);
+    await act(async () => {
+      tree = renderer.create(<ReminderComponent />);
+    });
 
-  const saveButton = getByText("Save Setting");
+    expect(tree.toJSON()).toMatchSnapshot();
+  });
 
-  fireEvent.press(saveButton);
+  it("renders with no permissions", async () => {
+    const notifications = require("expo-notifications");
+    notifications.getPermissionsAsync.mockResolvedValue({ status: "denied" });
+    notifications.requestPermissionsAsync.mockResolvedValue({
+      status: "denied",
+    });
 
-  await waitFor(() => {
-    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
-      "reminderEnabled",
-      expect.any(String)
-    );
-    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
-      "reminderTime",
-      expect.any(String)
-    );
+    let tree: any;
+
+    await act(async () => {
+      tree = renderer.create(<ReminderComponent />);
+    });
+
+    expect(tree.toJSON()).toMatchSnapshot();
+  });
+
+  it("renders with permissions granted", async () => {
+    const notifications = require("expo-notifications");
+    notifications.getPermissionsAsync.mockResolvedValue({ status: "granted" });
+    notifications.requestPermissionsAsync.mockResolvedValue({
+      status: "granted",
+    });
+
+    let tree: any;
+
+    await act(async () => {
+      tree = renderer.create(<ReminderComponent />);
+    });
+
+    expect(tree.toJSON()).toMatchSnapshot();
+  });
+
+  it("saves reminder settings when Save Setting is pressed", async () => {
+    const { getByText } = render(<ReminderComponent />);
+
+    await act(async () => {
+      fireEvent.press(getByText("Save Setting"));
+    });
+
+    await waitFor(() => {
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
+        "reminderEnabled",
+        expect.any(String)
+      );
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
+        "reminderTime",
+        expect.any(String)
+      );
+    });
   });
 });

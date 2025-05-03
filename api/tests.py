@@ -5,7 +5,6 @@ from django.utils import timezone
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from django.db import IntegrityError
-import json
 
 from .models import (
     User, InjuryType, Exercise, ExerciseCategory, UserExercise, 

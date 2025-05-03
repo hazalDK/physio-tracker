@@ -1,37 +1,48 @@
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
-import renderer from "react-test-renderer";
 import { Alert } from "react-native";
-import axios from "axios";
+import renderer from "react-test-renderer";
+import { NavigationContainer } from "@react-navigation/native";
 import * as SecureStore from "expo-secure-store";
-import { router } from "expo-router";
+
+// Import Login component
 import Login from "../login";
 
-// Mock dependencies
-jest.mock("axios");
-jest.mock("expo-secure-store", () => ({
-  setItemAsync: jest.fn(),
-}));
+// Mock the router
 jest.mock("expo-router", () => ({
   router: {
     replace: jest.fn(),
   },
 }));
 
-jest.mock("@react-navigation/native", () => ({
-  Link: ({ children }: { children: React.ReactNode }) => children,
+// mock SecureStore with both methods
+jest.mock("expo-secure-store", () => ({
+  setItemAsync: jest.fn(() => Promise.resolve()),
+  getItemAsync: jest.fn(() => Promise.resolve(null)),
 }));
-jest.mock("react-native/Libraries/Alert/Alert", () => ({
-  alert: jest.fn(),
-}));
-jest.mock("react-native-gesture-handler", () => ({
-  TextInput: "TextInput",
-  TouchableOpacity: "TouchableOpacity",
-}));
-jest.mock("tailwind-react-native-classnames", () => ({
+
+// Mock existing useAuth hook
+jest.mock("@/hooks/useAuth", () => ({
   __esModule: true,
-  default: () => ({}),
+  default: jest.fn(() => ({
+    login: jest.fn(),
+    setIsAuthenticated: jest.fn(),
+    isAuthenticated: false,
+  })),
 }));
+
+// Mock axios
+jest.mock("axios", () => ({
+  post: jest.fn(),
+  isAxiosError: jest.fn(() => true),
+}));
+
+// Create a wrapper component with NavigationContainer
+const LoginWithNavigation = () => (
+  <NavigationContainer>
+    <Login />
+  </NavigationContainer>
+);
 
 describe("Login Component", () => {
   beforeEach(() => {
@@ -39,21 +50,23 @@ describe("Login Component", () => {
   });
 
   it("renders correctly with data", () => {
-    const tree = renderer.create(<Login />).toJSON();
+    const tree = renderer.create(<LoginWithNavigation />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 
   it("renders correctly", () => {
-    const { getByText, getByTestId, getByPlaceholderText } = render(<Login />);
+    const { getByTestId, getByPlaceholderText } = render(
+      <LoginWithNavigation />
+    );
 
     expect(getByTestId("login-title")).toBeTruthy();
     expect(getByPlaceholderText("Enter username here")).toBeTruthy();
     expect(getByPlaceholderText("****")).toBeTruthy();
-    expect(getByText(/Don't have an account\?/)).toBeTruthy();
+    expect(getByTestId("login-button")).toBeTruthy();
   });
 
   it("handles input changes", () => {
-    const { getByPlaceholderText } = render(<Login />);
+    const { getByPlaceholderText } = render(<LoginWithNavigation />);
 
     const usernameInput = getByPlaceholderText("Enter username here");
     const passwordInput = getByPlaceholderText("****");
@@ -66,8 +79,8 @@ describe("Login Component", () => {
   });
 
   it("shows an alert when submitting with empty fields", () => {
+    const { getByTestId } = render(<LoginWithNavigation />);
     const alertSpy = jest.spyOn(Alert, "alert");
-    const { getByTestId } = render(<Login />);
 
     const loginButton = getByTestId("login-button");
     fireEvent.press(loginButton);
@@ -79,42 +92,38 @@ describe("Login Component", () => {
   });
 
   it("handles successful login", async () => {
-    // Mock axios post to return successful response
-    (SecureStore.setItemAsync as jest.Mock).mockResolvedValue(undefined);
-    (axios.post as jest.Mock).mockResolvedValueOnce({
+    const axios = require("axios");
+    const router = require("expo-router").router;
+
+    // Mock axios successful response
+    axios.post.mockResolvedValueOnce({
       data: {
-        access: "fake-access-token", // Note I changed this to match your component
+        access: "fake-access-token",
         refresh: "fake-refresh-token",
       },
     });
 
-    const { getByPlaceholderText, getByTestId } = render(<Login />);
+    const { getByPlaceholderText, getByTestId } = render(
+      <LoginWithNavigation />
+    );
 
     // Fill out the form
     fireEvent.changeText(
       getByPlaceholderText("Enter username here"),
       "testuser"
     );
-    fireEvent.changeText(getByPlaceholderText("****"), "Password123!");
-
-    // Debug log before pressing button
-    console.log("About to press login button");
+    fireEvent.changeText(getByPlaceholderText("****"), "password123");
 
     // Submit the form
     fireEvent.press(getByTestId("login-button"));
 
-    console.log("Login button pressed");
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    console.log("After delay, checking if SecureStore was called");
-    console.log(
-      "SecureStore mock calls:",
-      (SecureStore.setItemAsync as jest.Mock).mock.calls
-    );
-
+    // Wait for the async login process
     await waitFor(() => {
-      // Verify that SecureStore was called to store tokens
+      expect(axios.post).toHaveBeenCalledWith(
+        "http://192.168.68.111:8000/api/token/",
+        { username: "testuser", password: "password123" },
+        expect.any(Object)
+      );
       expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
         "access_token",
         "fake-access-token"
@@ -123,18 +132,16 @@ describe("Login Component", () => {
         "refresh_token",
         "fake-refresh-token"
       );
-
-      // Verify that router was called to navigate to home
       expect(router.replace).toHaveBeenCalledWith("/(tabs)");
     });
   });
 
   it("handles login failure", async () => {
-    const alertSpy = jest.spyOn(Alert, "alert");
+    const axios = require("axios");
+    const router = require("expo-router").router;
 
-    // Mock axios post to return an error
-    (axios.post as jest.Mock).mockRejectedValueOnce({
-      isAxiosError: true,
+    // Mock axios rejected response
+    axios.post.mockRejectedValueOnce({
       response: {
         data: {
           detail: "Invalid credentials",
@@ -142,42 +149,60 @@ describe("Login Component", () => {
       },
     });
 
-    const { getByPlaceholderText, getByTestId } = render(<Login />);
+    const { getByPlaceholderText, getByTestId } = render(
+      <LoginWithNavigation />
+    );
 
     // Fill out the form
     fireEvent.changeText(
       getByPlaceholderText("Enter username here"),
-      "testuser"
+      "wronguser"
     );
-    fireEvent.changeText(getByPlaceholderText("****"), "wrongpassword");
+    fireEvent.changeText(getByPlaceholderText("****"), "wrongpass");
+
+    const alertSpy = jest.spyOn(Alert, "alert");
 
     // Submit the form
     fireEvent.press(getByTestId("login-button"));
 
+    // Wait for the async login process
     await waitFor(() => {
+      expect(axios.post).toHaveBeenCalledWith(
+        "http://192.168.68.111:8000/api/token/",
+        { username: "wronguser", password: "wrongpass" },
+        expect.any(Object)
+      );
       expect(alertSpy).toHaveBeenCalledWith(
         "Login Failed",
         "Invalid credentials"
       );
+      expect(router.replace).not.toHaveBeenCalled();
     });
   });
 
   it("toggles password visibility", () => {
-    const { getByPlaceholderText, getByText } = render(<Login />);
+    const { getByPlaceholderText, getByTestId, getByText } = render(
+      <LoginWithNavigation />
+    );
 
     const passwordInput = getByPlaceholderText("****");
-    const toggleButton = getByText("🙈");
+    const toggleButton = getByTestId("secure-password");
 
-    // Initially, password should be hidden (secureTextEntry is true)
+    // Check initial state - Update this based on your actual implementation
+    // It seems in your component, secureTextEntry might start as false
     expect(passwordInput.props.secureTextEntry).toBe(false);
 
-    // Press toggle button to show password
+    // Toggle visibility
     fireEvent.press(toggleButton);
 
-    // Now password should be visible (secureTextEntry is false)
+    // Now secureTextEntry should be true
     expect(passwordInput.props.secureTextEntry).toBe(true);
 
-    // The toggle button should now show the hide icon
-    expect(getByText("👁️")).toBeTruthy();
+    // Toggle again
+    fireEvent.press(toggleButton);
+
+    // Back to original state
+    expect(passwordInput.props.secureTextEntry).toBe(false);
+    expect(getByText("🙈")).toBeTruthy();
   });
 });

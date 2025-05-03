@@ -3,6 +3,7 @@ import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import { Alert } from "react-native";
 import renderer from "react-test-renderer";
 import axios from "axios";
+import { NavigationContainer } from "@react-navigation/native";
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import Signup from "../signup";
@@ -11,20 +12,28 @@ import { useAuthStore } from "@/stores/authStore";
 
 // Mock dependencies
 jest.mock("axios");
-jest.mock("expo-secure-store");
+jest.mock("expo-secure-store", () => ({
+  setItemAsync: jest.fn(() => Promise.resolve()),
+  getItemAsync: jest.fn(() => Promise.resolve(null)),
+}));
 jest.mock("expo-router", () => ({
   router: {
     replace: jest.fn(),
   },
 }));
 jest.mock("@react-navigation/native", () => ({
-  Link: ({ children }: { children: React.ReactNode }) => children,
+  Link: ({ children }) => children,
+  NavigationContainer: ({ children }) => children,
 }));
-jest.mock("react-native/Libraries/Alert/Alert", () => ({
-  alert: jest.fn(),
-}));
+jest.mock("react-native", () => {
+  const RN = jest.requireActual("react-native");
+  RN.Alert.alert = jest.fn();
+  return RN;
+});
 jest.mock("react-native-gesture-handler", () => ({
   TextInput: "TextInput",
+  TouchableOpacity: "TouchableOpacity",
+  ScrollView: "ScrollView",
 }));
 jest.mock("react-native-element-dropdown", () => ({
   Dropdown: "Dropdown",
@@ -42,47 +51,27 @@ jest.mock("@/stores/authStore", () => ({
 }));
 jest.mock("react-native-safe-area-context", () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  SafeAreaProvider: ({ children }) => children,
 }));
 
-// Create a mock for Signup component and setInjuryType function
-const mockSetInjuryType = jest.fn();
+// Use the actual Signup component instead of mocking it
+jest.unmock("../signup");
 
-// Fix: Use doMock instead or use a factory pattern that doesn't reference out-of-scope variables
-jest.mock("../signup", () => {
-  return jest.fn((props) => {
-    // Inside the render function, we have access to React since imports are processed
-    return <MockSignupComponent {...props} />;
-  });
-});
-
-// Create a mock component outside the jest.mock call
-const MockSignupComponent = (props: { testInjuryType: unknown }) => {
-  React.useEffect(() => {
-    if (props.testInjuryType) {
-      mockSetInjuryType(props.testInjuryType);
-    }
-  }, [props.testInjuryType]);
-
-  // We'll override the implementation in beforeEach
-  return null;
-};
+// Create a wrapper component with NavigationContainer
+const SignupWithNavigation = (props) => (
+  <NavigationContainer>
+    <Signup {...props} />
+  </NavigationContainer>
+);
 
 describe("Signup Component", () => {
   const mockSetIsAuthenticated = jest.fn();
-  let OriginalSignup: React.ComponentType<any>;
+  let alertMock: jest.SpyInstance;
+  const mockSetInjuryType = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Store the original module
-    OriginalSignup = jest.requireActual("../signup").default;
-
-    // Update the mock implementation for each test
-    (Signup as jest.Mock).mockImplementation((props) => {
-      return (
-        <OriginalSignup {...props} setInjuryTypeForTest={mockSetInjuryType} />
-      );
-    });
+    alertMock = jest.spyOn(Alert, "alert");
 
     // Mock the useInjuryData hook
     (useInjuryData as jest.Mock).mockReturnValue({
@@ -100,20 +89,26 @@ describe("Signup Component", () => {
 
     // Set default environment variable
     process.env.API_URL = "http://test-api.com";
+
+    // Mock console.error to suppress expected error logs
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it("renders correctly with data", () => {
-    const tree = renderer
-      .create(
-        <Signup testInjuryType={undefined} setInjuryTypeForTest={undefined} />
-      )
-      .toJSON();
+    const tree = renderer.create(<SignupWithNavigation />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 
   it("renders all form fields correctly", () => {
     const { getByText, getByPlaceholderText } = render(
-      <Signup testInjuryType={undefined} setInjuryTypeForTest={undefined} />
+      <SignupWithNavigation
+        testInjuryType={undefined}
+        setInjuryTypeForTest={undefined}
+      />
     );
 
     expect(getByText("Registration")).toBeTruthy();
@@ -126,9 +121,7 @@ describe("Signup Component", () => {
   });
 
   it("handles input changes for all fields", () => {
-    const { getByPlaceholderText, getByText } = render(
-      <Signup testInjuryType={undefined} setInjuryTypeForTest={undefined} />
-    );
+    const { getByPlaceholderText } = render(<SignupWithNavigation />);
 
     const firstNameInput = getByPlaceholderText("Enter first name here");
     const lastNameInput = getByPlaceholderText("Enter last name here");
@@ -148,7 +141,7 @@ describe("Signup Component", () => {
 
   it("validates email format and shows error message for invalid email", () => {
     const { getByPlaceholderText, getByText } = render(
-      <Signup testInjuryType={undefined} setInjuryTypeForTest={undefined} />
+      <SignupWithNavigation />
     );
 
     const emailInput = getByPlaceholderText("example@gmail.com");
@@ -169,9 +162,7 @@ describe("Signup Component", () => {
   });
 
   it("validates password requirements and shows error message", () => {
-    const { getByTestId, getByText } = render(
-      <Signup testInjuryType={undefined} setInjuryTypeForTest={undefined} />
-    );
+    const { getByTestId, getByText } = render(<SignupWithNavigation />);
 
     const passwordInput = getByTestId("password-input");
 
@@ -195,16 +186,18 @@ describe("Signup Component", () => {
   });
 
   it("shows an alert when form is submitted with missing fields", async () => {
-    const alertSpy = jest.spyOn(Alert, "alert");
     const { getByText } = render(
-      <Signup testInjuryType={1} setInjuryTypeForTest={mockSetInjuryType} />
+      <SignupWithNavigation
+        testInjuryType={1}
+        setInjuryTypeForTest={mockSetInjuryType}
+      />
     );
 
     // Submit without filling any fields
     fireEvent.press(getByText("Sign Up"));
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(
+      expect(alertMock).toHaveBeenCalledWith(
         "Error",
         "Please fill all required fields"
       );
@@ -212,11 +205,12 @@ describe("Signup Component", () => {
   });
 
   it("shows an alert when passwords do not match", async () => {
-    const alertSpy = jest.spyOn(Alert, "alert");
-
     // Render with the test injury type prop
     const { getByPlaceholderText, getByText, getByTestId } = render(
-      <Signup testInjuryType={1} setInjuryTypeForTest={undefined} />
+      <SignupWithNavigation
+        testInjuryType={1}
+        setInjuryTypeForTest={undefined}
+      />
     );
 
     // Fill all required fields
@@ -242,7 +236,7 @@ describe("Signup Component", () => {
     fireEvent.press(getByText("Sign Up"));
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith("Error", "Passwords do not match");
+      expect(alertMock).toHaveBeenCalledWith("Error", "Passwords do not match");
     });
   });
 
@@ -257,7 +251,10 @@ describe("Signup Component", () => {
 
     // Render with the test injury type prop
     const { getByPlaceholderText, getByText, getByTestId } = render(
-      <Signup testInjuryType={1} setInjuryTypeForTest={undefined} />
+      <SignupWithNavigation
+        testInjuryType={1}
+        setInjuryTypeForTest={undefined}
+      />
     );
 
     // Fill out the form with valid data
@@ -316,8 +313,6 @@ describe("Signup Component", () => {
   });
 
   it("handles registration failure with server errors - username", async () => {
-    const alertSpy = jest.spyOn(Alert, "alert");
-
     // Mock axios post to return an error with field errors
     (axios.post as jest.Mock).mockRejectedValueOnce({
       response: {
@@ -329,7 +324,10 @@ describe("Signup Component", () => {
 
     // Render with the test injury type prop
     const { getByPlaceholderText, getByText, getByTestId } = render(
-      <Signup testInjuryType={1} setInjuryTypeForTest={undefined} />
+      <SignupWithNavigation
+        testInjuryType={1}
+        setInjuryTypeForTest={undefined}
+      />
     );
 
     // Fill out the form with valid data
@@ -355,7 +353,7 @@ describe("Signup Component", () => {
     fireEvent.press(getByText("Sign Up"));
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(
+      expect(alertMock).toHaveBeenCalledWith(
         "Registration Failed",
         "Username: This username is already taken."
       );
@@ -363,8 +361,6 @@ describe("Signup Component", () => {
   });
 
   it("handles registration failure with server errors - email", async () => {
-    const alertSpy = jest.spyOn(Alert, "alert");
-
     // Mock axios post to return an error with email field errors
     (axios.post as jest.Mock).mockRejectedValueOnce({
       response: {
@@ -376,7 +372,10 @@ describe("Signup Component", () => {
 
     // Render with the test injury type prop
     const { getByPlaceholderText, getByText, getByTestId } = render(
-      <Signup testInjuryType={1} setInjuryTypeForTest={undefined} />
+      <SignupWithNavigation
+        testInjuryType={1}
+        setInjuryTypeForTest={undefined}
+      />
     );
 
     // Fill out the form with valid data
@@ -402,7 +401,7 @@ describe("Signup Component", () => {
     fireEvent.press(getByText("Sign Up"));
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(
+      expect(alertMock).toHaveBeenCalledWith(
         "Registration Failed",
         "Email: A user with this email already exists."
       );

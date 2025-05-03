@@ -17,7 +17,9 @@
       "supportsTablet": true,
       "userInterfaceStyle": "automatic",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
@@ -25,7 +27,10 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": ["RECEIVE_BOOT_COMPLETED", "POST_NOTIFICATIONS"]
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -41,9 +46,13 @@
         {
           "icon": "./assets/notification-icon.png",
           "color": "#14b8a6",
-          "sounds": ["./assets/notification.wav"]
+          "sounds": [
+            "./assets/notification.wav"
+          ]
         }
-      ]
+      ],
+      "expo-video",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
