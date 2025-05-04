@@ -40,20 +40,21 @@ load_dotenv()
 
 # Now you can access env vars:
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+API_URL = os.getenv("API_URL")
+HOST_DOMAIN = os.getenv("HOST_DOMAIN")
 
 ALLOWED_HOSTS = [    
     '127.0.0.1',
     'localhost',
-    '192.168.68.111',
+    HOST_DOMAIN,
 ]
 
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False
-# CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     'http://localhost:8081',
-    'http://192.168.68.111:8000',
+    API_URL,
 ]
 
 
@@ -86,11 +87,6 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
-# CORS_ALLOWED_ORIGINS = [
-#     'http://127.0.0.1:8000',
-#     'http://localhost:8081',
-#     'http://192.168.68.111:8000',
-# ]
 CORS_ALLOW_ALL_ORIGINS = True
 
 SESSION_COOKIE_DOMAIN = None

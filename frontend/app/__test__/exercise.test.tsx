@@ -95,12 +95,19 @@ describe("Exercise Component", () => {
     });
   });
 
-  it("renders correctly with data", () => {
-    let tree;
-    act(() => {
-      tree = renderer.create(<Exercise />).toJSON();
+  it("renders correctly with data", async () => {
+    let tree: any;
+    await act(async () => {
+      tree = renderer.create(<Exercise />);
     });
-    expect(tree).toMatchSnapshot();
+
+    // Allow any pending state updates and async operations to complete
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Then call toJSON() outside of act
+    const treeJSON = tree.toJSON();
+    expect(treeJSON).not.toBeNull();
+    expect(treeJSON).toMatchSnapshot();
   });
 
   it("renders exercise details correctly", () => {

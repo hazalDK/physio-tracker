@@ -184,7 +184,7 @@ describe("useAuth", () => {
       await result.current.createApiInstance();
 
       expect(axios.create).toHaveBeenCalledWith({
-        baseURL: "http://192.168.68.111:8000",
+        baseURL: "http://localhost:8000",
         timeout: 10000,
         headers: {
           Authorization: `Bearer ${mockToken}`,

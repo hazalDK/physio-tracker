@@ -1,3 +1,334 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Login Component renders correctly with data 1`] = `null`;
+exports[`Login Component renders correctly with data 1`] = `
+<View
+  style={
+    {
+      "alignItems": "center",
+      "backgroundColor": "rgba(255, 255, 255, 1)",
+      "flexBasis": "0%",
+      "flexGrow": 1,
+      "flexShrink": 1,
+      "justifyContent": "center",
+    }
+  }
+>
+  <Text
+    style={
+      [
+        {
+          "fontSize": 30,
+          "fontWeight": "600",
+          "lineHeight": 36,
+          "marginBottom": 40,
+        },
+        {
+          "color": "#14b8a6",
+        },
+      ]
+    }
+    testID="login-title"
+  >
+    Login
+  </Text>
+  <Text
+    style={
+      [
+        {
+          "marginBottom": 8,
+        },
+        {
+          "color": "#8f8e8e",
+        },
+      ]
+    }
+  >
+    Username (case sensitive):
+  </Text>
+  <TextInput
+    autoComplete="username"
+    collapsable={false}
+    handlerTag={1}
+    handlerType="NativeViewGestureHandler"
+    onChangeText={[Function]}
+    onGestureHandlerEvent={[Function]}
+    onGestureHandlerStateChange={[Function]}
+    placeholder="Enter username here"
+    style={
+      [
+        {
+          "backgroundColor": "rgba(229, 231, 235, 1)",
+          "borderBottomLeftRadius": 4,
+          "borderBottomRightRadius": 4,
+          "borderBottomWidth": 1,
+          "borderLeftWidth": 1,
+          "borderRightWidth": 1,
+          "borderTopLeftRadius": 4,
+          "borderTopRightRadius": 4,
+          "borderTopWidth": 1,
+          "display": "flex",
+          "height": 40,
+          "justifyContent": "center",
+          "marginBottom": 16,
+          "textAlign": "center",
+          "width": 256,
+        },
+        {
+          "borderColor": "#e5e7eb",
+          "borderWidth": 1,
+          "color": "#8f8e8e",
+          "outlineColor": "#ccc",
+          "placeholderTextColor": "#8f8e8e",
+          "textAlign": "center",
+        },
+      ]
+    }
+    textContentType="username"
+    value=""
+  />
+  <Text
+    style={
+      [
+        {
+          "marginBottom": 8,
+          "marginTop": 8,
+        },
+        {
+          "color": "#8f8e8e",
+        },
+      ]
+    }
+  >
+    Password:
+  </Text>
+  <View
+    style={
+      [
+        {
+          "flexDirection": "row",
+          "marginBottom": 16,
+          "width": 256,
+        },
+      ]
+    }
+  >
+    <TextInput
+      collapsable={false}
+      handlerTag={2}
+      handlerType="NativeViewGestureHandler"
+      onChangeText={[Function]}
+      onGestureHandlerEvent={[Function]}
+      onGestureHandlerStateChange={[Function]}
+      placeholder="****"
+      secureTextEntry={false}
+      style={
+        [
+          {
+            "backgroundColor": "rgba(229, 231, 235, 1)",
+            "borderBottomLeftRadius": 4,
+            "borderBottomRightRadius": 4,
+            "borderBottomWidth": 1,
+            "borderLeftWidth": 1,
+            "borderRightWidth": 1,
+            "borderTopLeftRadius": 4,
+            "borderTopRightRadius": 4,
+            "borderTopWidth": 1,
+            "flexBasis": "0%",
+            "flexGrow": 1,
+            "flexShrink": 1,
+            "height": 40,
+            "paddingLeft": 16,
+            "paddingRight": 16,
+            "textAlign": "left",
+          },
+          {
+            "borderColor": "#e5e7eb",
+            "borderWidth": 1,
+            "color": "#8f8e8e",
+            "outlineColor": "#ccc",
+            "placeholderTextColor": "#8f8e8e",
+            "textAlign": "center",
+          },
+        ]
+      }
+      testID="password-input"
+      value=""
+    />
+    <View
+      pointerEvents="box-none"
+      style={
+        {
+          "alignItems": "center",
+          "height": 40,
+          "justifyContent": "center",
+          "position": "absolute",
+          "right": 10,
+          "width": 30,
+          "zIndex": 10,
+        }
+      }
+    >
+      <RNGestureHandlerButton
+        collapsable={false}
+        delayLongPress={600}
+        enabled={true}
+        exclusive={true}
+        handlerTag={3}
+        handlerType="NativeViewGestureHandler"
+        hitSlop={
+          {
+            "bottom": 10,
+            "left": 10,
+            "right": 10,
+            "top": 10,
+          }
+        }
+        innerRef={null}
+        onGestureHandlerEvent={[Function]}
+        onGestureHandlerStateChange={[Function]}
+        rippleColor="transparent"
+        style={
+          [
+            undefined,
+            {
+              "cursor": undefined,
+            },
+          ]
+        }
+        touchSoundDisabled={false}
+      >
+        <View
+          accessible={true}
+          collapsable={false}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              {
+                "fontSize": 16,
+              }
+            }
+            testID="secure-password"
+          >
+            🙈
+          </Text>
+        </View>
+      </RNGestureHandlerButton>
+    </View>
+  </View>
+  <Text
+    style={
+      [
+        {
+          "marginTop": 8,
+        },
+        {
+          "color": "#8f8e8e",
+        },
+      ]
+    }
+  >
+    Don't have an account? Create an account
+     
+    <Text
+      accessibilityRole="link"
+      onPress={[Function]}
+      style={
+        [
+          {
+            "color": "rgb(0, 122, 255)",
+          },
+          {
+            "fontFamily": "System",
+            "fontWeight": "400",
+          },
+          {
+            "color": "#14b8a6",
+            "fontWeight": "bold",
+          },
+        ]
+      }
+    >
+      here
+    </Text>
+  </Text>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderBottomLeftRadius": 12,
+          "borderBottomRightRadius": 12,
+          "borderTopLeftRadius": 12,
+          "borderTopRightRadius": 12,
+          "display": "flex",
+          "marginBottom": 8,
+          "marginTop": 20,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 16,
+          "width": 240,
+        },
+        {
+          "backgroundColor": "#14b8a6",
+          "elevation": 2,
+          "opacity": 1,
+          "shadowColor": "#000",
+          "shadowOffset": {
+            "height": 2,
+            "width": 0,
+          },
+          "shadowOpacity": 0.1,
+          "shadowRadius": 3,
+        },
+      ]
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "rgba(255, 255, 255, 1)",
+          "fontWeight": "600",
+        }
+      }
+      testID="login-button"
+    >
+      Login
+    </Text>
+  </View>
+</View>
+`;

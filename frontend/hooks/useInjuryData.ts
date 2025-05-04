@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { injuryTypesData } from "@/types/Injury";
+import { getEnv } from "@/config";
 
 /**
  * Custom hook to fetch and manage injury types data.
@@ -17,7 +18,7 @@ export function useInjuryData(): {
   useEffect(() => {
     const fetchInjuryTypes = async () => {
       try {
-        const apiUrl = process.env.API_URL || "http://192.168.68.111:8000";
+        const apiUrl = getEnv("API_URL");
         const response = await axios.get<injuryTypesData[]>(
           `${apiUrl}/injury-types/`
         );

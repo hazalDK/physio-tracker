@@ -9,6 +9,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamsList } from "@/types/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/authStore";
+import { getEnv } from "@/config";
 
 // Settings screen component
 // This component allows the user to update their password, reminder time, and sign out of the app.
@@ -47,6 +48,9 @@ export default function Settings() {
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return regex.test(password);
   };
+
+  // Get the API URL from environment configuration
+  const apiUrl = getEnv("API_URL");
 
   // Function to handle password update
   // This function validates the input fields, makes an API call to update the password, and handles success or error responses
@@ -89,13 +93,10 @@ export default function Settings() {
       const api = await createApiInstance();
       if (!api) return;
 
-      const response = await api.put(
-        "http://192.168.68.111:8000/users/update_password/",
-        {
-          current_password: currentPassword,
-          new_password: newPassword,
-        }
-      );
+      const response = await api.put(`${apiUrl}/users/update_password/`, {
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
 
       // Handle success response from the API
       if (response.status === 200 || response.status === 201) {

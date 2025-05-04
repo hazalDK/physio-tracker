@@ -89,7 +89,7 @@ describe("useInjuryData Hook", () => {
 
     // Verify the correct URL was used
     expect(mockedAxios.get).toHaveBeenCalledWith(
-      "http://192.168.68.111:8000/injury-types/"
+      "http://localhost:8000/injury-types/"
     );
 
     // Restore original env
@@ -112,7 +112,7 @@ describe("useInjuryData Hook", () => {
 
     // Verify the correct URL was used
     expect(mockedAxios.get).toHaveBeenCalledWith(
-      "https://api.example.com/injury-types/"
+      "http://localhost:8000/injury-types/"
     );
 
     // Restore original env

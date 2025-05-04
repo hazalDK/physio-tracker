@@ -1,3 +1,533 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Signup Component renders correctly with data 1`] = `null`;
+exports[`Signup Component renders correctly with data 1`] = `
+<View
+  onLayout={[Function]}
+  style={
+    [
+      {},
+      {
+        "paddingBottom": 0,
+      },
+    ]
+  }
+>
+  <RCTScrollView
+    contentContainerStyle={{}}
+    showsVerticalScrollIndicator={false}
+    style={
+      [
+        {},
+        {
+          "paddingTop": 0,
+        },
+      ]
+    }
+  >
+    <View>
+      <View
+        style={{}}
+      >
+        <Text
+          style={
+            [
+              {},
+              {
+                "color": "#14b8a6",
+              },
+            ]
+          }
+        >
+          Registration
+        </Text>
+        <Text
+          style={
+            [
+              {},
+              {
+                "color": "#8f8e8e",
+              },
+            ]
+          }
+        >
+          Already Registered? Log in
+           
+          <Text
+            style={
+              {
+                "color": "#14b8a6",
+                "fontWeight": "bold",
+              }
+            }
+          >
+            here
+          </Text>
+        </Text>
+        <Text
+          style={
+            [
+              {},
+              {
+                "color": "#8f8e8e",
+              },
+            ]
+          }
+        >
+          First Name
+        </Text>
+        <TextInput
+          onChangeText={[Function]}
+          placeholder="Enter first name here"
+          style={
+            [
+              {},
+              {
+                "borderColor": "#e5e7eb",
+                "borderWidth": 1,
+                "color": "#8f8e8e",
+                "outlineColor": "#ccc",
+                "placeholderTextColor": "#8f8e8e",
+                "textAlign": "center",
+              },
+            ]
+          }
+          value=""
+        />
+        <Text
+          style={
+            [
+              {},
+              {
+                "color": "#8f8e8e",
+              },
+            ]
+          }
+        >
+          Last Name
+        </Text>
+        <TextInput
+          onChangeText={[Function]}
+          placeholder="Enter last name here"
+          style={
+            [
+              {},
+              {
+                "borderColor": "#e5e7eb",
+                "borderWidth": 1,
+                "color": "#8f8e8e",
+                "outlineColor": "#ccc",
+                "placeholderTextColor": "#8f8e8e",
+                "textAlign": "center",
+              },
+            ]
+          }
+          value=""
+        />
+        <Text
+          style={
+            [
+              {},
+              {
+                "color": "#8f8e8e",
+              },
+            ]
+          }
+        >
+          Username
+        </Text>
+        <TextInput
+          onChangeText={[Function]}
+          placeholder="Enter username here"
+          style={
+            [
+              {},
+              {
+                "borderColor": "#e5e7eb",
+                "borderWidth": 1,
+                "color": "#8f8e8e",
+                "outlineColor": "#ccc",
+                "placeholderTextColor": "#8f8e8e",
+                "textAlign": "center",
+              },
+            ]
+          }
+          value=""
+        />
+        <Text
+          style={
+            [
+              {},
+              {
+                "color": "#8f8e8e",
+              },
+            ]
+          }
+        >
+          Email
+        </Text>
+        <TextInput
+          keyboardType="email-address"
+          onChangeText={[Function]}
+          placeholder="example@gmail.com"
+          style={
+            [
+              {},
+              {
+                "borderColor": "#e5e7eb",
+                "borderWidth": 1,
+                "color": "#8f8e8e",
+                "outlineColor": "#ccc",
+                "placeholderTextColor": "#8f8e8e",
+                "textAlign": "center",
+              },
+            ]
+          }
+          value=""
+        />
+        <Text
+          style={
+            [
+              {},
+              {
+                "color": "#8f8e8e",
+              },
+            ]
+          }
+        >
+          Password
+        </Text>
+        <View
+          style={{}}
+        >
+          <TextInput
+            onChangeText={[Function]}
+            placeholder="****"
+            secureTextEntry={true}
+            style={
+              [
+                {},
+                {
+                  "borderColor": "#e5e7eb",
+                  "borderWidth": 1,
+                  "color": "#8f8e8e",
+                  "outlineColor": "#ccc",
+                  "placeholderTextColor": "#8f8e8e",
+                  "textAlign": "center",
+                },
+              ]
+            }
+            testID="password-input"
+            value=""
+          />
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            onClick={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "opacity": 1,
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "fontSize": 16,
+                }
+              }
+              testID="secure-password"
+            >
+              👁️
+            </Text>
+          </View>
+        </View>
+        <Text
+          style={
+            [
+              {},
+              {
+                "color": "#8f8e8e",
+              },
+            ]
+          }
+        >
+          Confirm Password
+        </Text>
+        <View
+          style={{}}
+        >
+          <TextInput
+            onChangeText={[Function]}
+            placeholder="****"
+            secureTextEntry={true}
+            style={
+              [
+                {},
+                {
+                  "borderColor": "#e5e7eb",
+                  "borderWidth": 1,
+                  "color": "#8f8e8e",
+                  "outlineColor": "#ccc",
+                  "placeholderTextColor": "#8f8e8e",
+                  "textAlign": "center",
+                },
+              ]
+            }
+            testID="confirm-password-input"
+            value=""
+          />
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            onClick={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "opacity": 1,
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "fontSize": 16,
+                }
+              }
+              testID="secure-confirm-password"
+            >
+              👁️
+            </Text>
+          </View>
+        </View>
+        <Text
+          style={
+            [
+              {},
+              {
+                "color": "#8f8e8e",
+              },
+            ]
+          }
+        >
+          Date of Birth
+        </Text>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "borderColor": "#e5e7eb",
+              "borderWidth": 1,
+              "color": "#8f8e8e",
+              "opacity": 1,
+              "outlineColor": "#ccc",
+              "placeholderTextColor": "#8f8e8e",
+              "textAlign": "center",
+            }
+          }
+          testID="date-picker-button"
+        >
+          <Text
+            style={
+              {
+                "color": "#8f8e8e",
+              }
+            }
+          >
+            04/05/2025
+          </Text>
+        </View>
+        <Text
+          style={
+            [
+              {},
+              {
+                "color": "#8f8e8e",
+              },
+            ]
+          }
+        >
+          Injury Type
+        </Text>
+        <Dropdown
+          containerStyle={{}}
+          data={
+            [
+              {
+                "label": "Fracture",
+                "value": 1,
+              },
+              {
+                "label": "Sprain",
+                "value": 2,
+              },
+            ]
+          }
+          inputSearchStyle={
+            {
+              "borderColor": "#e5e7eb",
+              "height": 40,
+            }
+          }
+          labelField="label"
+          maxHeight={300}
+          onBlur={[Function]}
+          onChange={[Function]}
+          onFocus={[Function]}
+          placeholder="Select injury type"
+          placeholderStyle={
+            {
+              "color": "#8f8e8e",
+            }
+          }
+          renderLeftIcon={[Function]}
+          search={true}
+          searchPlaceholder="Search..."
+          selectedTextStyle={
+            {
+              "color": "#14b8a6",
+            }
+          }
+          style={
+            [
+              {},
+              {
+                "borderColor": "#e5e7eb",
+                "borderWidth": 1,
+              },
+            ]
+          }
+          testID="injury-dropdown"
+          valueField="value"
+        />
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {},
+              {
+                "backgroundColor": "#14b8a6",
+                "elevation": 2,
+                "opacity": 1,
+                "shadowColor": "#000",
+                "shadowOffset": {
+                  "height": 2,
+                  "width": 0,
+                },
+                "shadowOpacity": 0.1,
+                "shadowRadius": 3,
+              },
+            ]
+          }
+        >
+          <Text
+            style={{}}
+          >
+            Sign Up
+          </Text>
+        </View>
+      </View>
+    </View>
+  </RCTScrollView>
+</View>
+`;

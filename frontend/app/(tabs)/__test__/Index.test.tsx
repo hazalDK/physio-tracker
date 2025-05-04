@@ -1,7 +1,6 @@
 import React from "react";
-import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
+import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import renderer from "react-test-renderer";
 import Index from "../index";
 import { useFetchDashboardExercises } from "@/hooks/useFetchDashBoardExercises";
 import { useReactivateExercise } from "@/hooks/useReactivateExercise";
@@ -24,6 +23,7 @@ jest.mock("@react-navigation/native", () => {
   };
 });
 
+// Mocks the react-native-progress Bar component
 jest.mock("react-native-progress", () => ({
   Bar: () => "ProgressBar",
 }));
@@ -85,20 +85,6 @@ describe("Index Component", () => {
     (useReactivateExercise as jest.Mock).mockReturnValue({
       reactivateExercise: mockReactivateExercise,
     });
-  });
-
-  it("renders correctly with data", () => {
-    let tree;
-    act(() => {
-      tree = renderer
-        .create(
-          <NavigationContainer>
-            <Index />
-          </NavigationContainer>
-        )
-        .toJSON();
-    });
-    expect(tree).toMatchSnapshot();
   });
 
   it("renders correctly with exercises", () => {

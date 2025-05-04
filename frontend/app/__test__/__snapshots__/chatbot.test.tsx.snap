@@ -1,3 +1,360 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Chatbot Component renders correctly with data 1`] = `null`;
+exports[`Chatbot Component renders correctly with data 1`] = `
+<RCTSafeAreaView
+  style={
+    {
+      "backgroundColor": "rgba(255, 255, 255, 1)",
+      "flexBasis": "0%",
+      "flexGrow": 1,
+      "flexShrink": 1,
+    }
+  }
+>
+  <View
+    onLayout={[Function]}
+    style={
+      [
+        {
+          "flexBasis": "0%",
+          "flexGrow": 1,
+          "flexShrink": 1,
+        },
+        {
+          "paddingBottom": 0,
+        },
+      ]
+    }
+  >
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "borderBottomColor": "rgba(229, 231, 235, 1)",
+          "borderBottomWidth": 1,
+          "borderLeftColor": "rgba(229, 231, 235, 1)",
+          "borderRightColor": "rgba(229, 231, 235, 1)",
+          "borderTopColor": "rgba(229, 231, 235, 1)",
+          "flexDirection": "row",
+          "justifyContent": "space-between",
+          "paddingBottom": 12,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 12,
+        }
+      }
+    >
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onFocus={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          [
+            {
+              "borderBottomLeftRadius": 9999,
+              "borderBottomRightRadius": 9999,
+              "borderTopLeftRadius": 9999,
+              "borderTopRightRadius": 9999,
+              "paddingBottom": 8,
+              "paddingLeft": 8,
+              "paddingRight": 8,
+              "paddingTop": 8,
+            },
+            {
+              "opacity": 1,
+            },
+          ]
+        }
+      >
+        <Ionicons
+          color="#14b8a6"
+          name="arrow-back"
+          size={24}
+        />
+      </View>
+      <Text
+        style={
+          {
+            "color": "rgba(31, 41, 55, 1)",
+            "fontSize": 18,
+            "fontWeight": "600",
+            "lineHeight": 28,
+          }
+        }
+      >
+        Physio Assistant
+      </Text>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onFocus={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          [
+            {
+              "borderBottomLeftRadius": 9999,
+              "borderBottomRightRadius": 9999,
+              "borderTopLeftRadius": 9999,
+              "borderTopRightRadius": 9999,
+              "paddingBottom": 8,
+              "paddingLeft": 8,
+              "paddingRight": 8,
+              "paddingTop": 8,
+            },
+            {
+              "opacity": 1,
+            },
+          ]
+        }
+        testID="reset-button"
+      >
+        <Ionicons
+          color="#14b8a6"
+          name="refresh"
+          size={24}
+        />
+      </View>
+    </View>
+    <RCTScrollView
+      contentContainerStyle={
+        {
+          "paddingBottom": 16,
+        }
+      }
+      onContentSizeChange={[Function]}
+      style={
+        {
+          "flexBasis": "0%",
+          "flexGrow": 1,
+          "flexShrink": 1,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 16,
+        }
+      }
+    >
+      <View>
+        <View
+          style={
+            {
+              "alignSelf": "flex-start",
+              "backgroundColor": "rgba(254, 243, 199, 1)",
+              "borderBottomColor": "rgba(252, 211, 77, 1)",
+              "borderBottomLeftRadius": 8,
+              "borderBottomRightRadius": 8,
+              "borderBottomWidth": 1,
+              "borderLeftColor": "rgba(252, 211, 77, 1)",
+              "borderLeftWidth": 1,
+              "borderRightColor": "rgba(252, 211, 77, 1)",
+              "borderRightWidth": 1,
+              "borderTopColor": "rgba(252, 211, 77, 1)",
+              "borderTopLeftRadius": 8,
+              "borderTopRightRadius": 8,
+              "borderTopWidth": 1,
+              "marginBottom": 16,
+              "paddingBottom": 8,
+              "paddingLeft": 12,
+              "paddingRight": 12,
+              "paddingTop": 8,
+            }
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "rgba(146, 64, 14, 1)",
+                "fontSize": 12,
+                "fontWeight": "500",
+                "lineHeight": 16,
+              }
+            }
+          >
+            DISCLAIMER: This feedback is generated by AI and is not a substitute for professional medical advice. Always consult with your healthcare provider before starting, changing, or stopping any exercise program.
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignSelf": "flex-start",
+                "backgroundColor": "rgba(229, 231, 235, 1)",
+                "borderBottomLeftRadius": 0,
+                "borderBottomRightRadius": 16,
+                "borderTopLeftRadius": 16,
+                "borderTopRightRadius": 16,
+                "marginBottom": 8,
+                "paddingBottom": 12,
+                "paddingLeft": 16,
+                "paddingRight": 16,
+                "paddingTop": 12,
+              },
+              {
+                "maxWidth": "75%",
+              },
+            ]
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "rgba(31, 41, 55, 1)",
+              }
+            }
+          >
+            Welcome to your physiotherapy assistant! How can I help you today?
+          </Text>
+        </View>
+      </View>
+    </RCTScrollView>
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "borderBottomColor": "rgba(229, 231, 235, 1)",
+          "borderLeftColor": "rgba(229, 231, 235, 1)",
+          "borderRightColor": "rgba(229, 231, 235, 1)",
+          "borderTopColor": "rgba(229, 231, 235, 1)",
+          "borderTopWidth": 1,
+          "flexDirection": "row",
+          "paddingBottom": 8,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 8,
+        }
+      }
+    >
+      <TextInput
+        multiline={true}
+        onChangeText={[Function]}
+        placeholder="Type your message..."
+        style={
+          {
+            "backgroundColor": "rgba(243, 244, 246, 1)",
+            "borderBottomLeftRadius": 9999,
+            "borderBottomRightRadius": 9999,
+            "borderTopLeftRadius": 9999,
+            "borderTopRightRadius": 9999,
+            "color": "rgba(0, 0, 0, 1)",
+            "flexBasis": "0%",
+            "flexGrow": 1,
+            "flexShrink": 1,
+            "marginRight": 8,
+            "paddingBottom": 8,
+            "paddingLeft": 16,
+            "paddingRight": 16,
+            "paddingTop": 8,
+          }
+        }
+        value=""
+      />
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": true,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onFocus={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          [
+            {
+              "borderBottomLeftRadius": 9999,
+              "borderBottomRightRadius": 9999,
+              "borderTopLeftRadius": 9999,
+              "borderTopRightRadius": 9999,
+              "paddingBottom": 8,
+              "paddingLeft": 8,
+              "paddingRight": 8,
+              "paddingTop": 8,
+            },
+            {
+              "backgroundColor": "#94a3b8",
+              "opacity": 1,
+            },
+          ]
+        }
+        testID="send-button"
+      >
+        <Ionicons
+          color="white"
+          name="send"
+          size={22}
+        />
+      </View>
+    </View>
+  </View>
+</RCTSafeAreaView>
+`;

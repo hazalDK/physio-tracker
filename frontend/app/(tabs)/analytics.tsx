@@ -24,7 +24,7 @@ import ExerciseHistoryDetail from "@/components/ExerciseHistoryDetail";
 const screenWidth = Dimensions.get("window").width - 40;
 
 // Component for the Adherence tab
-function AdherenceGraph() {
+export function AdherenceGraph() {
   const {
     loading,
     chartData,
@@ -147,7 +147,7 @@ function AdherenceGraph() {
 }
 
 // Component for the Pain Level tab
-function PainLevelGraph() {
+export function PainLevelGraph() {
   const {
     loading,
     chartData,

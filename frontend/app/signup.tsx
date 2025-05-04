@@ -20,6 +20,7 @@ import { router } from "expo-router";
 import { useInjuryData } from "@/hooks/useInjuryData";
 import { useAuthStore } from "@/stores/authStore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getEnv } from "@/config";
 
 // Signup component for user registration.
 // This component allows users to enter their personal information, including name, email, password, and injury type.
@@ -108,7 +109,7 @@ export default function Signup({
     }
 
     try {
-      const apiUrl = process.env.API_URL || "http://192.168.68.111:8000";
+      const apiUrl = getEnv("API_URL");
 
       // Format the date properly
       const formattedDate = dateOfBirth.toISOString().split("T")[0];

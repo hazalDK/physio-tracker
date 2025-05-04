@@ -82,13 +82,19 @@ describe("Chatbot Component", () => {
     }));
   });
 
-  it("renders correctly with data", () => {
-    let tree;
-    act(() => {
-      tree = renderer.create(<Chatbot />).toJSON();
+  it("renders correctly with data", async () => {
+    let tree: any;
+    await act(async () => {
+      tree = renderer.create(<Chatbot />);
     });
 
-    expect(tree).toMatchSnapshot();
+    // Allow any pending state updates and async operations to complete
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Then call toJSON() outside of act
+    const treeJSON = tree.toJSON();
+    expect(treeJSON).not.toBeNull();
+    expect(treeJSON).toMatchSnapshot();
   });
 
   it("renders initial messages and loading state", async () => {

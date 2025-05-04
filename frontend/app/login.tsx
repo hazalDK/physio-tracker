@@ -4,6 +4,7 @@ import { View, Text, Pressable, Alert } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { TextInput, TouchableOpacity } from "react-native-gesture-handler";
 import tw from "tailwind-react-native-classnames";
+import { getEnv } from "@/config";
 
 import axios from "axios";
 import { router } from "expo-router";
@@ -28,6 +29,9 @@ export default function Login() {
     }
   };
 
+  // Get the API URL from environment configuration
+  const apiUrl = getEnv("API_URL");
+
   async function handleLogin(): Promise<void> {
     if (isLoading) return;
     // Validate input fields
@@ -41,7 +45,7 @@ export default function Login() {
     try {
       // Make API call to login endpoint
       const response = await axios.post(
-        "http://192.168.68.111:8000/api/token/",
+        `${apiUrl}/api/token/`,
         {
           username,
           password,

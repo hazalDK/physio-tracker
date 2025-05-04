@@ -12,53 +12,62 @@ import { useAuthStore } from "@/stores/authStore";
 
 // Mock dependencies
 jest.mock("axios");
+
+// Mocks the secure store with both methods
 jest.mock("expo-secure-store", () => ({
   setItemAsync: jest.fn(() => Promise.resolve()),
   getItemAsync: jest.fn(() => Promise.resolve(null)),
 }));
+// Mocks expo-router
 jest.mock("expo-router", () => ({
   router: {
     replace: jest.fn(),
   },
 }));
+// Mocks the react-navigation/native library
 jest.mock("@react-navigation/native", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
   NavigationContainer: ({ children }: { children: React.ReactNode }) =>
     children,
 }));
+// Mocks the react-native library
 jest.mock("react-native", () => {
   const RN = jest.requireActual("react-native");
   RN.Alert.alert = jest.fn();
   return RN;
 });
+// Mocks the react-native-gesture-handler library
 jest.mock("react-native-gesture-handler", () => ({
   TextInput: "TextInput",
   TouchableOpacity: "TouchableOpacity",
   ScrollView: "ScrollView",
 }));
+// Mocks the react-native-element-dropdown library
 jest.mock("react-native-element-dropdown", () => ({
   Dropdown: "Dropdown",
 }));
+// Mocks the react-native-community-datetimepicker library
 jest.mock("@react-native-community/datetimepicker", () => "DateTimePicker");
+// Mocks tailwind-react-native-classnames
 jest.mock("tailwind-react-native-classnames", () => ({
   __esModule: true,
   default: () => ({}),
 }));
+// Mocks the injury data hook
 jest.mock("@/hooks/useInjuryData", () => ({
   useInjuryData: jest.fn(),
 }));
+// Mocks the auth store
 jest.mock("@/stores/authStore", () => ({
   useAuthStore: jest.fn(),
 }));
+// Mocks the react-native-safe-area-context library
 jest.mock("react-native-safe-area-context", () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
   SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-// Use the actual Signup component instead of mocking it
-jest.unmock("../signup");
-
-// Create a wrapper component with NavigationContainer
+// Creates a wrapper component with NavigationContainer
 const SignupWithNavigation = (props: any) => (
   <NavigationContainer>
     <Signup {...props} />
@@ -89,7 +98,7 @@ describe("Signup Component", () => {
     });
 
     // Set default environment variable
-    process.env.API_URL = "http://test-api.com";
+    process.env.API_URL = "http://localhost:8000";
 
     // Mock console.error to suppress expected error logs
     jest.spyOn(console, "error").mockImplementation(() => {});
@@ -99,12 +108,19 @@ describe("Signup Component", () => {
     jest.restoreAllMocks();
   });
 
-  it("renders correctly with data", () => {
-    let tree;
-    act(() => {
-      tree = renderer.create(<SignupWithNavigation />).toJSON();
+  it("renders correctly with data", async () => {
+    let tree: any;
+    await act(async () => {
+      tree = renderer.create(<SignupWithNavigation />);
     });
-    expect(tree).toMatchSnapshot();
+
+    // Allow any pending state updates and async operations to complete
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Then call toJSON() outside of act
+    const treeJSON = tree.toJSON();
+    expect(treeJSON).not.toBeNull();
+    expect(treeJSON).toMatchSnapshot();
   });
 
   it("renders all form fields correctly", () => {
@@ -286,7 +302,7 @@ describe("Signup Component", () => {
     await waitFor(() => {
       // Verify API was called with correct data
       expect(axios.post).toHaveBeenCalledWith(
-        "http://test-api.com/users/register/",
+        "http://localhost:8000/users/register/",
         expect.objectContaining({
           username: "johndoe",
           email: "john@example.com",

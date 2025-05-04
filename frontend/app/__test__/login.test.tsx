@@ -37,7 +37,7 @@ jest.mock("axios", () => ({
   isAxiosError: jest.fn(() => true),
 }));
 
-// Create a wrapper component with NavigationContainer
+// Creates a wrapper component with NavigationContainer
 const LoginWithNavigation = () => (
   <NavigationContainer>
     <Login />
@@ -49,12 +49,19 @@ describe("Login Component", () => {
     jest.clearAllMocks();
   });
 
-  it("renders correctly with data", () => {
-    let tree;
-    act(() => {
-      tree = renderer.create(<LoginWithNavigation />).toJSON();
+  it("renders correctly with data", async () => {
+    let tree: any;
+    await act(async () => {
+      tree = renderer.create(<LoginWithNavigation />);
     });
-    expect(tree).toMatchSnapshot();
+
+    // Allow any pending state updates and async operations to complete
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Then call toJSON() outside of act
+    const treeJSON = tree.toJSON();
+    expect(treeJSON).not.toBeNull();
+    expect(treeJSON).toMatchSnapshot();
   });
 
   it("renders correctly", () => {
@@ -123,7 +130,7 @@ describe("Login Component", () => {
     // Wait for the async login process
     await waitFor(() => {
       expect(axios.post).toHaveBeenCalledWith(
-        "http://192.168.68.111:8000/api/token/",
+        "http://localhost:8000/api/token/",
         { username: "testuser", password: "password123" },
         expect.any(Object)
       );
@@ -171,7 +178,7 @@ describe("Login Component", () => {
     // Wait for the async login process
     await waitFor(() => {
       expect(axios.post).toHaveBeenCalledWith(
-        "http://192.168.68.111:8000/api/token/",
+        "http://localhost:8000/api/token/",
         { username: "wronguser", password: "wrongpass" },
         expect.any(Object)
       );

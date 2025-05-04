@@ -4,6 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamsList } from "@/types/navigation";
 import { Alert } from "react-native";
+import { getEnv } from "@/config";
 
 /**
  * Custom hook to manage authentication and API instance creation.
@@ -16,6 +17,9 @@ export function useAuth(): {
 } {
   const navigation =
     useNavigation<StackNavigationProp<RootStackParamsList, "login">>();
+
+  // Get the API URL from environment configuration
+  const apiUrl = getEnv("API_URL") || "http://192.168.68.111:8000";
 
   // Function to get the access token from secure storage
   const getToken = async () => {
@@ -31,11 +35,9 @@ export function useAuth(): {
         throw new Error("No refresh token available");
       }
 
-      const refreshUrl = process.env.API_URL || "http://192.168.68.111:8000";
-      const refreshResponse = await axios.post(
-        `${refreshUrl}/api/token/refresh/`,
-        { refresh: refreshToken }
-      );
+      const refreshResponse = await axios.post(`${apiUrl}/api/token/refresh/`, {
+        refresh: refreshToken,
+      });
 
       const newToken = refreshResponse.data.access;
       const newRefreshToken = refreshResponse.data.refresh;
@@ -73,7 +75,7 @@ export function useAuth(): {
     }
 
     return axios.create({
-      baseURL: process.env.API_URL || "http://192.168.68.111:8000",
+      baseURL: apiUrl,
       timeout: 10000,
       headers: {
         Authorization: `Bearer ${token}`,

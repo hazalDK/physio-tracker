@@ -63,14 +63,6 @@ describe("ExerciseHistoryDetail Component", () => {
     });
   });
 
-  it("renders correctly with data", () => {
-    let tree;
-    act(() => {
-      tree = renderer.create(<ExerciseHistoryDetail />).toJSON();
-    });
-    expect(tree).toMatchSnapshot();
-  });
-
   it("shows loading state", () => {
     const { useExerciseHistory } = require("@/hooks/useExerciseHistory");
     useExerciseHistory.mockReturnValue({

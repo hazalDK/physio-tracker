@@ -47,12 +47,19 @@ describe("Settings Component", () => {
     });
   });
 
-  it("renders correctly with data", () => {
-    let tree;
-    act(() => {
-      tree = renderer.create(<Settings />).toJSON();
+  it("renders correctly with data", async () => {
+    let tree: any;
+    await act(async () => {
+      tree = renderer.create(<Settings />);
     });
-    expect(tree).toMatchSnapshot();
+
+    // Allow any pending state updates and async operations to complete
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Then call toJSON() outside of act
+    const treeJSON = tree.toJSON();
+    expect(treeJSON).not.toBeNull();
+    expect(treeJSON).toMatchSnapshot();
   });
 
   it("renders component correctly", () => {
@@ -294,7 +301,7 @@ describe("Settings Component", () => {
     await waitFor(() => {
       expect(mockCreateApiInstance).toHaveBeenCalled();
       expect(mockApi.put).toHaveBeenCalledWith(
-        "http://192.168.68.111:8000/users/update_password/",
+        "http://localhost:8000/users/update_password/",
         {
           current_password: "OldPassword123!",
           new_password: "NewPassword456@",

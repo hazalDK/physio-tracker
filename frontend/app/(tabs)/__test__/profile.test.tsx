@@ -54,7 +54,7 @@ describe("Profile Component", () => {
   });
 
   // Update the first test to provide mock data
-  it("renders correctly with data", () => {
+  it("renders correctly with data", async () => {
     // Add mock implementation before rendering
     (useProfileData as jest.Mock).mockReturnValue({
       loading: false,
@@ -64,11 +64,18 @@ describe("Profile Component", () => {
       toggleModal: jest.fn(),
     });
 
-    let tree;
-    act(() => {
-      tree = renderer.create(<Profile />).toJSON();
+    let tree: any;
+    await act(async () => {
+      tree = renderer.create(<Profile />);
     });
-    expect(tree).toMatchSnapshot();
+
+    // Allow any pending state updates and async operations to complete
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Then call toJSON() outside of act
+    const treeJSON = tree.toJSON();
+    expect(treeJSON).not.toBeNull();
+    expect(treeJSON).toMatchSnapshot();
   });
 
   it("renders loading state when loading is true", () => {
