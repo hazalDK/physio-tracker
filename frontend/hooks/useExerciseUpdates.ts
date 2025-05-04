@@ -4,7 +4,10 @@ import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "./useAuth";
 
 // Custom hook to manage exercise completion data and related operations.
-export function useExerciseUpdates(userExerciseId: number | null) {
+export function useExerciseUpdates(
+  userExerciseId: number | null,
+  exerciseDifficulty: string | undefined
+) {
   const [showCompletionForm, setShowCompletionForm] = useState(false);
   const [showRemovalConfirmation, setShowRemovalConfirmation] = useState(false);
   const [reps, setReps] = useState(0);
@@ -119,11 +122,19 @@ export function useExerciseUpdates(userExerciseId: number | null) {
         );
       } else if (painLevel <= 3) {
         // If pain level is low but not consistently low enough to increase difficulty
-        Alert.alert(
-          "Exercise Progress",
-          "Your pain level is low. Keep it up for 3 days to unlock higher difficulty!",
-          [{ text: "OK", onPress: () => navigation.goBack() }]
-        );
+        if (exerciseDifficulty !== "Advanced") {
+          Alert.alert(
+            "Exercise Progress",
+            "Your pain level is low. Keep it up for 3 days to unlock higher difficulty!",
+            [{ text: "OK", onPress: () => navigation.goBack() }]
+          );
+        } else {
+          Alert.alert(
+            "Exercise Progress",
+            "Great job! Your pain level is low. Keep it up!",
+            [{ text: "OK", onPress: () => navigation.goBack() }]
+          );
+        }
       } else {
         // Default success message if no special conditions
         Alert.alert("Success", "Exercise completed successfully", [

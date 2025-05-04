@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View, Text, Pressable, Alert, Linking } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import * as SecureStore from "expo-secure-store";
@@ -87,12 +87,21 @@ const requestPermissions = async () => {
 
 export default function ReminderComponent() {
   const [reminderTime, setReminderTime] = useState(new Date());
+  const [tempReminderTime, setTempReminderTime] = useState(new Date());
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Store subscription references for cleanup
+  const foregroundSubscriptionRef = useRef<{ remove: () => void } | null>(null);
+  const responseSubscriptionRef = useRef<{ remove: () => void } | null>(null);
+
+  // Used to prevent state updates after component unmount
+  const isMountedRef = useRef(true);
 
   // Load saved notification settings with improved time handling
   const loadSettings = async () => {
     try {
+      if (!isMountedRef.current) return;
       setIsLoading(true);
       // Load reminder enabled state
       const enabledValue = await SecureStore.getItemAsync("reminderEnabled");
@@ -127,28 +136,33 @@ export default function ReminderComponent() {
 
         localTime.setSeconds(0);
         time = localTime;
-      } else {
-        console.log("No saved time found, using default");
       }
 
+      if (!isMountedRef.current) return;
       setReminderEnabled(enabled);
       setReminderTime(time);
+      setTempReminderTime(time);
     } catch (error) {
       console.error("Error loading settings:", error);
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
   // Save notification settings with improved time handling
   const saveSettings = async () => {
-    // Create a time object with only the hour and minute information to avoid timezone issues
-    const timeToSave = {
-      hours: reminderTime.getHours(),
-      minutes: reminderTime.getMinutes(),
-    };
-
     try {
+      // Update the main reminderTime with the temporary value
+      setReminderTime(tempReminderTime);
+
+      // Create a time object with only the hour and minute information to avoid timezone issues
+      const timeToSave = {
+        hours: tempReminderTime.getHours(),
+        minutes: tempReminderTime.getMinutes(),
+      };
+
       await SecureStore.setItemAsync(
         "reminderEnabled",
         reminderEnabled.toString()
@@ -161,32 +175,29 @@ export default function ReminderComponent() {
       );
 
       // Update notification based on current settings
-
-      await toggleReminder(reminderEnabled);
-
-      Alert.alert("Success", "Notification settings saved successfully!");
+      if (isMountedRef.current) {
+        await toggleReminder(reminderEnabled);
+        Alert.alert("Success", "Notification settings saved successfully!");
+      }
     } catch (error) {
       console.error("Error saving settings:", error);
-      Alert.alert("Error", "Failed to save notification settings.");
+      if (isMountedRef.current) {
+        Alert.alert("Error", "Failed to save notification settings.");
+      }
     }
   };
 
   // Schedule notification function with improved logging
   const scheduleReminder = async () => {
-    // Triple cancellation to ensure clean slate (Android workaround)
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    await Notifications.cancelAllScheduledNotificationsAsync();
-
-    // Debug timezone information
-    const now = new Date();
-    const tzOffset = now.getTimezoneOffset();
-
-    const triggerTime = new Date(reminderTime);
-
     try {
+      // Triple cancellation to ensure clean slate (Android workaround)
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      await Notifications.cancelAllScheduledNotificationsAsync();
+
+      // Use the actual reminderTime for scheduling
+      const triggerTime = new Date(reminderTime);
+
       // Create the notification channel (Android only)
       if (Platform.OS === "android") {
         await Notifications.setNotificationChannelAsync("daily-reminder", {
@@ -229,7 +240,6 @@ export default function ReminderComponent() {
       });
 
       // Verifies it was actually scheduled
-      await new Promise((resolve) => setTimeout(resolve, 500));
       const scheduled = await Notifications.getAllScheduledNotificationsAsync();
 
       if (scheduled.length === 0) {
@@ -248,23 +258,25 @@ export default function ReminderComponent() {
       const hasPermission = await requestPermissions();
 
       if (!hasPermission) {
-        setReminderEnabled(false);
+        if (isMountedRef.current) {
+          setReminderEnabled(false);
+        }
         return false;
       }
 
       const success = await scheduleReminder();
 
-      setReminderEnabled(success);
+      if (isMountedRef.current) {
+        setReminderEnabled(success);
+      }
       return success;
     } else {
       try {
         await Notifications.cancelAllScheduledNotificationsAsync();
 
-        // Verify cancellation
-        const remaining =
-          await Notifications.getAllScheduledNotificationsAsync();
-
-        setReminderEnabled(false);
+        if (isMountedRef.current) {
+          setReminderEnabled(false);
+        }
         return true;
       } catch (error) {
         console.error("Error cancelling notifications:", error);
@@ -275,6 +287,8 @@ export default function ReminderComponent() {
 
   // Load settings on component mount and set up listeners
   useEffect(() => {
+    isMountedRef.current = true;
+
     const setupComponent = async () => {
       await loadSettings();
 
@@ -290,16 +304,29 @@ export default function ReminderComponent() {
           }
         });
 
+      foregroundSubscriptionRef.current = foregroundSubscription;
+
       const responseSubscription =
         Notifications.addNotificationResponseReceivedListener((response) => {});
 
-      return () => {
-        foregroundSubscription.remove();
-        responseSubscription.remove();
-      };
+      responseSubscriptionRef.current = responseSubscription;
     };
 
     setupComponent();
+
+    // Cleanup function to prevent memory leaks
+    return () => {
+      isMountedRef.current = false;
+
+      // Clean up subscriptions
+      if (foregroundSubscriptionRef.current) {
+        foregroundSubscriptionRef.current.remove();
+      }
+
+      if (responseSubscriptionRef.current) {
+        responseSubscriptionRef.current.remove();
+      }
+    };
   }, []);
 
   // Applies settings once they're loaded
@@ -309,45 +336,17 @@ export default function ReminderComponent() {
     }
   }, [isLoading]);
 
-  // Check Expo API versions - this might help identify compatibility issues
-  useEffect(() => {
-    const checkVersions = async () => {
-      try {
-        // const notificationsVersion = Notifications.getExperienceVersionAsync
-        //   ? await Notifications.getExperienceVersionAsync()
-        //   : "API not available";
-
-        const deviceInfo = {
-          brand: Device.brand,
-          manufacturer: Device.manufacturer,
-          modelName: Device.modelName,
-          osName: Device.osName,
-          osVersion: Device.osVersion,
-          platform: Platform.OS,
-          platformApiLevel: Platform.Version,
-        };
-
-        // Check if SecureStore is working
-        await SecureStore.setItemAsync("test-key", "test-value");
-      } catch (error) {
-        console.error("Debug", "Error checking versions", error);
-      }
-    };
-
-    checkVersions();
-  }, []);
-
   return (
     <View
       style={tw`items-center mt-2 p-4 border-2 border-gray-200 rounded-xl mb-4 w-80`}
     >
       <DateTimePicker
-        value={reminderTime}
+        value={tempReminderTime}
         mode="time"
         is24Hour={true}
         onChange={(_, selectedTime) => {
           if (selectedTime) {
-            setReminderTime(selectedTime);
+            setTempReminderTime(selectedTime);
           }
         }}
       />

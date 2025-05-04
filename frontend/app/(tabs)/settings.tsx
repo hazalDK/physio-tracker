@@ -20,6 +20,7 @@ export default function Settings() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [secureEntry, setSecureEntry] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const { createApiInstance } = useAuth();
@@ -188,7 +189,16 @@ export default function Settings() {
               secureTextEntry={secureEntry}
               placeholder="Enter current password"
               value={currentPassword}
-              onChangeText={setCurrentPassword}
+              onChangeText={(text) => {
+                setCurrentPassword(text);
+                if (!validatePassword(text)) {
+                  setPasswordError(
+                    "Password must be 8+ chars with uppercase, lowercase, number, and special char."
+                  );
+                } else {
+                  setPasswordError("");
+                }
+              }}
               editable={!isUpdating}
             />
 
@@ -198,7 +208,16 @@ export default function Settings() {
               secureTextEntry={secureEntry}
               placeholder="Enter new password"
               value={newPassword}
-              onChangeText={setNewPassword}
+              onChangeText={(text) => {
+                setNewPassword(text);
+                if (!validatePassword(text)) {
+                  setPasswordError(
+                    "Password must be 8+ chars with uppercase, lowercase, number, and special char."
+                  );
+                } else {
+                  setPasswordError("");
+                }
+              }}
               editable={!isUpdating}
             />
             <Text style={tw`mb-1`}>Confirm New Password:</Text>
@@ -207,10 +226,25 @@ export default function Settings() {
               secureTextEntry={secureEntry}
               placeholder="Confirm new password"
               value={confirmPassword}
-              onChangeText={setConfirmPassword}
+              onChangeText={(text) => {
+                setConfirmPassword(text);
+                if (!validatePassword(text)) {
+                  setPasswordError(
+                    "Password must be 8+ chars with uppercase, lowercase, number, and special char."
+                  );
+                } else {
+                  setPasswordError("");
+                }
+              }}
               editable={!isUpdating}
             />
-
+            {passwordError ? (
+              <Text
+                style={[tw`text-xs text-red-500 mb-2 px-4`, { maxWidth: 300 }]}
+              >
+                {passwordError}
+              </Text>
+            ) : null}
             <Pressable
               onPress={() => !isUpdating && setSecureEntry(!secureEntry)}
               style={tw`mb-4`}

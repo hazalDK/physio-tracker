@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 import { Alert } from "react-native";
 import renderer from "react-test-renderer";
 import { NavigationContainer } from "@react-navigation/native";
@@ -50,7 +50,10 @@ describe("Login Component", () => {
   });
 
   it("renders correctly with data", () => {
-    const tree = renderer.create(<LoginWithNavigation />).toJSON();
+    let tree;
+    act(() => {
+      tree = renderer.create(<LoginWithNavigation />).toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 

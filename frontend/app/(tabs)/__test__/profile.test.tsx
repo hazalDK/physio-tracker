@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent } from "@testing-library/react-native";
+import { render, fireEvent, act } from "@testing-library/react-native";
 import renderer from "react-test-renderer";
 import { Alert } from "react-native";
 import Profile from "../profile";
@@ -64,7 +64,10 @@ describe("Profile Component", () => {
       toggleModal: jest.fn(),
     });
 
-    const tree = renderer.create(<Profile />).toJSON();
+    let tree;
+    act(() => {
+      tree = renderer.create(<Profile />).toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 
@@ -362,5 +365,40 @@ describe("Profile Component", () => {
 
     fireEvent.changeText(getByTestId("email-input"), "updated@example.com");
     expect(setNewEmail).toHaveBeenCalledWith("updated@example.com");
+  });
+
+  it("shows error message for invalid email format", () => {
+    const setNewEmail = jest.fn();
+    const setEmailError = jest.fn();
+
+    (useProfileData as jest.Mock).mockReturnValue({
+      loading: false,
+      userProfile: mockUserProfile,
+      injuryTypes: mockInjuryTypes,
+      isModalVisible: true,
+      newUsername: "testuser",
+      newFirstName: "Test",
+      newLastName: "User",
+      newEmail: "test@gmail",
+      newDateOfBirth: new Date("1990-01-01"),
+      open: false,
+      isUpdating: false,
+      setNewUsername: jest.fn(),
+      setNewFirstName: jest.fn(),
+      setNewLastName: jest.fn(),
+      setNewEmail,
+      setNewDateOfBirth: jest.fn(),
+      setOpen: jest.fn(),
+      handleEditProfile: jest.fn(),
+      toggleModal: jest.fn(),
+      setEmailError,
+    });
+
+    const { getByTestId, getByText } = render(<Profile />);
+
+    fireEvent.changeText(getByTestId("email-input"), "invalid-email-format");
+    expect(() =>
+      getByText("Please enter a valid email (e.g., user@example.com).")
+    ).toThrow();
   });
 });

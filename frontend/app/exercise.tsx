@@ -57,7 +57,7 @@ export default function Exercise() {
     handleRemovalConfirmation,
     getDropdownData,
     getPainLevelData,
-  } = useExerciseUpdates(userExerciseId);
+  } = useExerciseUpdates(userExerciseId, exercise?.difficulty_level);
 
   // Generate dropdown data
   const repsVals = getDropdownData(userExercise?.reps ?? 20);

@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 import { Alert } from "react-native";
 import renderer from "react-test-renderer";
 import Settings from "../settings";
@@ -12,7 +12,13 @@ import axios from "axios";
 jest.mock("@react-navigation/native");
 jest.mock("@/hooks/useAuth");
 jest.mock("expo-secure-store");
-jest.mock("axios");
+jest.mock("axios", () => {
+  const actualAxios = jest.requireActual("axios");
+  return {
+    ...actualAxios,
+    isAxiosError: jest.fn((payload) => actualAxios.isAxiosError(payload)), // Mock implementation
+  };
+});
 jest.mock("../../../components/ReminderComponent", () => "ReminderComponent");
 
 // Mock Alert
@@ -42,7 +48,10 @@ describe("Settings Component", () => {
   });
 
   it("renders correctly with data", () => {
-    const tree = renderer.create(<Settings />).toJSON();
+    let tree;
+    act(() => {
+      tree = renderer.create(<Settings />).toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 
@@ -226,11 +235,25 @@ describe("Settings Component", () => {
       getByPlaceholderText("Enter current password"),
       "oldpassword"
     );
+
+    fireEvent.changeText(getByPlaceholderText("Enter new password"), "Valis@1");
+
+    expect(
+      getByText(
+        "Password must be 8+ chars with uppercase, lowercase, number, and special char."
+      )
+    ).toBeTruthy();
+
     fireEvent.changeText(getByPlaceholderText("Enter new password"), "simple");
     fireEvent.changeText(
       getByPlaceholderText("Confirm new password"),
       "simple"
     );
+    expect(
+      getByText(
+        "Password must be 8+ chars with uppercase, lowercase, number, and special char."
+      )
+    ).toBeTruthy();
 
     // Try to update
     fireEvent.press(getByText("Update"));
@@ -291,10 +314,11 @@ describe("Settings Component", () => {
         status: 400,
         data: { error: "Current password is incorrect" },
       },
-      isAxiosError: true,
     };
+    (axios.isAxiosError as unknown as jest.Mock).mockReturnValue(true);
+
     mockApi.put.mockRejectedValue(error);
-    axios.isAxiosError.mockReturnValue(true);
+    (axios.isAxiosError as unknown as jest.Mock).mockReturnValue(true);
 
     const { getByText, getByPlaceholderText } = render(<Settings />);
 
@@ -338,7 +362,7 @@ describe("Settings Component", () => {
       isAxiosError: true,
     };
     mockApi.put.mockRejectedValue(error);
-    axios.isAxiosError.mockReturnValue(true);
+    (axios.isAxiosError as unknown as jest.Mock).mockReturnValue(true);
 
     const { getByText, getByPlaceholderText } = render(<Settings />);
 
@@ -372,7 +396,7 @@ describe("Settings Component", () => {
   it("handles network error", async () => {
     // Mock network error
     mockApi.put.mockRejectedValue(new Error("Network Error"));
-    axios.isAxiosError.mockReturnValue(false);
+    (axios.isAxiosError as unknown as jest.Mock).mockReturnValue(false);
 
     const { getByText, getByPlaceholderText } = render(<Settings />);
 

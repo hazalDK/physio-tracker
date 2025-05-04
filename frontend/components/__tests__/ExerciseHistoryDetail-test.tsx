@@ -1,5 +1,5 @@
 import * as React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 import renderer from "react-test-renderer";
 
 import ExerciseHistoryDetail from "../ExerciseHistoryDetail";
@@ -64,7 +64,10 @@ describe("ExerciseHistoryDetail Component", () => {
   });
 
   it("renders correctly with data", () => {
-    const tree = renderer.create(<ExerciseHistoryDetail />).toJSON();
+    let tree;
+    act(() => {
+      tree = renderer.create(<ExerciseHistoryDetail />).toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 

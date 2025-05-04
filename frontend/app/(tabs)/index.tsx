@@ -169,11 +169,13 @@ export default function Index() {
       >
         {imageErrorMap.get(item.video_id) ? (
           <Image
+            testID="exercise-image"
             source={require("../../assets/images/placeholder.jpg")}
             style={tw`w-28 h-28 rounded-lg mx-auto mb-2`}
           />
         ) : (
           <Image
+            testID="exercise-image"
             source={{
               uri: `https://img.youtube.com/vi/${item.video_id}/maxresdefault.jpg`,
             }}
@@ -252,6 +254,7 @@ export default function Index() {
       </ScrollView>
 
       <Pressable
+        testID="chatbot-button"
         style={({ pressed, hovered }) => [
           tw`absolute bottom-4 right-4 p-4 rounded-full`,
           {

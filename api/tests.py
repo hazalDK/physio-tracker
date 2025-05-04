@@ -195,21 +195,27 @@ class APITests(APITestCase):
             category=self.category,
             name="Beginner Squat",
             difficulty_level="Beginner",
-            additional_notes="Start with small movements"
+            additional_notes="Start with small movements",
+            sets=4,
+            reps=8,
         )
         
         self.intermediate_exercise = Exercise.objects.create(
             category=self.category,
             name="Intermediate Squat",
             difficulty_level="Intermediate",
-            additional_notes="Use light weights"
+            additional_notes="Use light weights",
+            sets=4,
+            reps=8,
         )
         
         self.advanced_exercise = Exercise.objects.create(
             category=self.category,
             name="Advanced Squat",
             difficulty_level="Advanced",
-            additional_notes="Full range of motion required"
+            additional_notes="Full range of motion required",
+            sets=4,
+            reps=8,
         )
         
         # Create injury type
@@ -263,8 +269,6 @@ class APITests(APITestCase):
         user_exercise = UserExercise.objects.create(
             user=self.user,
             exercise=self.intermediate_exercise,
-            sets=3,
-            reps=10,
             pain_level=0,
             is_active=False,
             completed=False
@@ -317,7 +321,44 @@ class APITests(APITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('email', response.data)
-        self.assertIn('Enter a valid email address.', response.data['email'])
+        self.assertIn('Enter a valid email address.', response.data['email'])    
+
+    def test_user_register_existing_username(self):
+        """Test the user registration endpoint with existing username"""
+        url = reverse('user-register')
+        data = {
+            'username': 'testuser',
+            'email': 'newuser@example.com',
+            'password': 'Password123!',
+            'first_name': 'New',    
+            'last_name': 'User',
+            'date_of_birth': '1990-01-01',
+            'injury_type': self.injury_type.id
+        }
+        
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('username', response.data)
+        self.assertIn('A user with that username already exists.', response.data['username'])
+
+    def test_user_register_existing_email(self):
+        """Test the user registration endpoint with existing email"""
+        User.objects.filter(username='newuser').delete()  # Clean up any existing user with this username
+        url = reverse('user-register')
+        data = {
+            'username': 'newuser',
+            'email': 'test@example.com',
+            'password': 'Password123!',
+            'first_name': 'New',
+            'last_name': 'User',
+            'date_of_birth': '1990-01-01',
+            'injury_type': self.injury_type.id
+        }
+    
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('email', response.data)
+        self.assertIn('This email address is already in use.', response.data['email'])   
 
     def test_update_profile(self):
         """Test updating user profile"""
@@ -350,6 +391,71 @@ class APITests(APITestCase):
         self.assertIn('email', response.data)
         self.assertIn('username', response.data)
     
+    def test_update_profile_invalid_data(self):
+        """Test updating user profile with invalid data"""
+        url = reverse('user-update-profile')
+        self.client.force_authenticate(user=self.user)
+        
+        # Test data - invalid email format
+        data = {
+            'email': 'invalid-email-format'
+        }
+
+        response = self.client.put(url, data, format='json')
+        
+        # Assertions
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('email', response.data)
+        self.assertIn('Enter a valid email address.', response.data['email'])
+    
+    def test_update_profile_taken_username(self):
+        """Test updating user profile with taken username"""
+        # Create another user for testing
+        other_user = User.objects.create_user(
+            username='otheruser',    
+            password='Password123!',
+            email='otheruser@example.com'
+        )
+        self.assertEqual(other_user.username, 'otheruser')
+        self.assertEqual(other_user.email, 'otheruser@example.com')
+        
+        url = reverse('user-update-profile')
+        self.client.force_authenticate(user=self.user)
+
+
+        data = {
+            'username': 'otheruser',
+        }
+
+        response = self.client.put(url, data, format='json')
+        
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('username', response.data)
+        self.assertIn('This username is already taken.', response.data['username'])
+    
+    def test_update_profile_taken_email(self):
+        """Test updating user profile with taken email"""
+        # Create another user for testing
+        other_user = User.objects.create_user(
+            username='otheruser',    
+            password='Password123!',
+            email='otheruser@example.com'
+        )
+        self.assertEqual(other_user.username, 'otheruser')
+        self.assertEqual(other_user.email, 'otheruser@example.com')
+
+        url = reverse('user-update-profile')
+        self.client.force_authenticate(user=self.user)
+        data = {
+            'email': 'otheruser@example.com',
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('email', response.data)
+        self.assertIn('This email address is already in use.', response.data['email'])
+
+
     
     def test_update_password_wrong_current_password(self):
         url = reverse('user-update-password')

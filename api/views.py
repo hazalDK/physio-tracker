@@ -4,6 +4,7 @@ import openai
 from django.utils import timezone
 from django.db.models import Q
 from datetime import timedelta
+from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -297,6 +298,20 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         Register a new user and return JWT tokens with the user data.
         """
+        errors = {}
+        
+        # Check if email exists in request and validate it's not already in use
+        if 'email' in request.data:
+            new_email = request.data.get('email')
+            # Get the User model
+            User = get_user_model()
+            if User.objects.filter(email=new_email).exists():
+                errors['email'] = ["This email address is already in use."]
+        
+        # Return errors if any validation failed
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -313,11 +328,37 @@ class UserViewSet(viewsets.ModelViewSet):
         Update the profile of the authenticated user.
         """
         user = request.user
+        errors = {}
+        
+        # Check if username is being updated and validate
+        if 'username' in request.data:
+            new_username = request.data.get('username')
+            # Check if the username is different from current and already exists
+            if new_username != user.username:
+                # Get the User model
+                User = get_user_model()
+                if User.objects.filter(username=new_username).exists():
+                    errors['username'] = ["This username is already taken."]
+        
+        # Check if email is being updated and validate
+        if 'email' in request.data:
+            new_email = request.data.get('email')
+            # Check if the email is different from current and already exists
+            if new_email != user.email:
+                # Get the User model
+                User = get_user_model()
+                if User.objects.filter(email=new_email).exists():
+                    errors['email'] = ["This email address is already in use."]
+        
+        # Return errors if any validation failed
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Proceed with update if validations pass
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-    
     
     @action(detail=False, methods=['PUT'])
     def update_password(self, request):

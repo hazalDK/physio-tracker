@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 import renderer from "react-test-renderer";
 import Chatbot from "../chatbot";
 
@@ -83,7 +83,11 @@ describe("Chatbot Component", () => {
   });
 
   it("renders correctly with data", () => {
-    const tree = renderer.create(<Chatbot />).toJSON();
+    let tree;
+    act(() => {
+      tree = renderer.create(<Chatbot />).toJSON();
+    });
+
     expect(tree).toMatchSnapshot();
   });
 

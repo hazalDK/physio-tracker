@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent } from "@testing-library/react-native";
+import { render, fireEvent, act } from "@testing-library/react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import renderer from "react-test-renderer";
 import Analytics from "../analytics";
@@ -119,7 +119,10 @@ describe("Analytics Component", () => {
       loading: false,
     });
 
-    const tree = renderer.create(<Analytics />).toJSON();
+    let tree;
+    act(() => {
+      tree = renderer.create(<Analytics />).toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 
@@ -178,7 +181,6 @@ describe("Analytics Component", () => {
   });
 
   it("shows loading indicator when data is loading for adherence", () => {
-    console.log("Mocking loading state for adherence data");
     (useAnalyticsData as jest.Mock).mockReturnValue({
       ...mockAdherenceData,
       loading: true,
@@ -268,7 +270,6 @@ describe("Analytics Component", () => {
   });
 
   it("shows loading indicator when pain level data is loading", () => {
-    console.log("Mocking loading state for pain level data");
     (useAnalyticsData as jest.Mock).mockReturnValue({
       ...mockPainData,
       loading: true,

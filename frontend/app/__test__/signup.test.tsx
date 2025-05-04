@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 import { Alert } from "react-native";
 import renderer from "react-test-renderer";
 import axios from "axios";
@@ -22,8 +22,9 @@ jest.mock("expo-router", () => ({
   },
 }));
 jest.mock("@react-navigation/native", () => ({
-  Link: ({ children }) => children,
-  NavigationContainer: ({ children }) => children,
+  Link: ({ children }: { children: React.ReactNode }) => children,
+  NavigationContainer: ({ children }: { children: React.ReactNode }) =>
+    children,
 }));
 jest.mock("react-native", () => {
   const RN = jest.requireActual("react-native");
@@ -51,14 +52,14 @@ jest.mock("@/stores/authStore", () => ({
 }));
 jest.mock("react-native-safe-area-context", () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
-  SafeAreaProvider: ({ children }) => children,
+  SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 // Use the actual Signup component instead of mocking it
 jest.unmock("../signup");
 
 // Create a wrapper component with NavigationContainer
-const SignupWithNavigation = (props) => (
+const SignupWithNavigation = (props: any) => (
   <NavigationContainer>
     <Signup {...props} />
   </NavigationContainer>
@@ -99,7 +100,10 @@ describe("Signup Component", () => {
   });
 
   it("renders correctly with data", () => {
-    const tree = renderer.create(<SignupWithNavigation />).toJSON();
+    let tree;
+    act(() => {
+      tree = renderer.create(<SignupWithNavigation />).toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 

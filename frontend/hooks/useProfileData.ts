@@ -23,6 +23,7 @@ export function useProfileData() {
   const [open, setOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState<Record<string, string[]>>({});
   const { createApiInstance, refreshToken } = useAuth();
 
   // Function to fetch user profile data and handle token refresh if needed
@@ -76,7 +77,7 @@ export function useProfileData() {
         }
       }
     } catch (error) {
-      console.error("Failed to load exercise data:", error);
+      console.error("API request failed:", error);
     } finally {
       setLoading(false);
     }
@@ -92,6 +93,8 @@ export function useProfileData() {
   const handleEditProfile = async () => {
     // The button is disabled while the profile is being updated
     setIsUpdating(true);
+    // Clear any previous errors
+    setErrors({});
 
     // Validate input fields to ensure at least one field is filled
     if (
@@ -108,7 +111,7 @@ export function useProfileData() {
 
     // Basic email validation if email is provided
     if (newEmail && !validateEmail(newEmail)) {
-      Alert.alert("Error", "Please enter a valid email address");
+      Alert.alert("Error", "Invalid email format. (e.g., user@example.com)");
       setIsUpdating(false);
       return;
     }
@@ -130,10 +133,7 @@ export function useProfileData() {
         }),
       };
 
-      const response = await api.put(
-        "http://192.168.68.111:8000/users/update_profile/",
-        updatedData
-      );
+      const response = await api.put("/users/update_profile/", updatedData);
 
       if (response.status === 200 || response.status === 201) {
         // Handle success response from the API
@@ -151,9 +151,29 @@ export function useProfileData() {
       }
     } catch (error) {
       // Handle error response from the API
-      // This includes logging the error and showing an alert to the user
-      console.error("Error updating profile:", error);
-      Alert.alert("Error", "Failed to update profile");
+      if (axios.isAxiosError(error) && error.response) {
+        const { status, data } = error.response;
+
+        if (status === 400) {
+          setErrors(data);
+
+          // Check specifically for username errors
+          if (data.username) {
+            Alert.alert("Error", data.username[0]);
+          } else if (data.email) {
+            Alert.alert("Error", data.email[0]);
+          } else {
+            Alert.alert("Error", "Please check the form for errors.");
+          }
+        } else {
+          Alert.alert("Error", "Failed to update profile. Please try again.");
+        }
+
+        console.error("Error updating profile:", error.response.data);
+      } else {
+        console.error("Error updating profile:", error);
+        Alert.alert("Error", "Failed to update profile");
+      }
     } finally {
       setIsUpdating(false);
     }
@@ -169,6 +189,8 @@ export function useProfileData() {
   // This function is called when the user clicks the button to open or close the modal
   const toggleModal = () => {
     setIsModalVisible(!isModalVisible);
+    // Clear any previous errors when toggling modal
+    setErrors({});
 
     // If opening the modal, initialize form fields with current profile values
     if (!isModalVisible && userProfile) {
@@ -192,6 +214,7 @@ export function useProfileData() {
     newDateOfBirth,
     open,
     isUpdating,
+    errors,
     setNewUsername,
     setNewFirstName,
     setNewLastName,

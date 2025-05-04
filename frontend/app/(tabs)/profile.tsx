@@ -6,10 +6,12 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import tw from "tailwind-react-native-classnames";
 import { useProfileData } from "@/hooks/useProfileData";
+import { useState } from "react";
 
 // Profile screen component
 // This component displays the user's profile information and allows them to edit it.
@@ -36,6 +38,21 @@ export default function Profile() {
     handleEditProfile,
     toggleModal,
   } = useProfileData();
+  const [emailError, setEmailError] = useState("");
+
+  const validateEmail = (email: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email regex
+    return regex.test(email);
+  };
+
+  const handleEmailChange = (email: string) => {
+    setNewEmail(email);
+    if (!validateEmail(email)) {
+      setEmailError("Invalid email format (e.g, user@example.com)");
+    } else {
+      setEmailError("");
+    }
+  };
 
   // Check if the user profile is loading
   // If loading, show a loading indicator
@@ -64,8 +81,9 @@ export default function Profile() {
         <View style={tw`mb-4`}>
           <Text style={tw`text-gray-500 text-sm`}>Full Name</Text>
           <Text style={tw`text-gray-800`}>
-            {`${userProfile?.first_name} ${userProfile?.last_name}` ||
-              "Not provided"}
+            {userProfile?.first_name && userProfile?.last_name
+              ? `${userProfile.first_name} ${userProfile.last_name}`
+              : "Not provided"}
           </Text>
         </View>
 
@@ -120,6 +138,7 @@ export default function Profile() {
             <Text style={tw`text-xl font-bold mb-4`}>Update Profile</Text>
             <Text style={tw`mb-1`}>Update Username:</Text>
             <TextInput
+              testID="username-input"
               style={tw`border border-gray-300 p-2 mb-4 rounded`}
               placeholder="username"
               value={newUsername}
@@ -147,11 +166,16 @@ export default function Profile() {
               style={tw`border border-gray-300 p-2 mb-4 rounded`}
               placeholder="email"
               value={newEmail}
-              onChangeText={setNewEmail}
+              onChangeText={handleEmailChange}
               editable={!isUpdating}
               keyboardType="email-address"
               testID="email-input"
             />
+            {emailError ? (
+              <Text style={[tw` ml-4 mb-1 -mt-2`, { color: "red" }]}>
+                {emailError}
+              </Text>
+            ) : null}
             <Text style={[tw`mb-2`, { color: "#8f8e8e" }]}>Date of birth:</Text>
             <View style={tw`flex-row items-center mb-4`}>
               <TouchableOpacity

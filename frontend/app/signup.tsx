@@ -93,7 +93,7 @@ export default function Signup({
     // Check if email is valid
     if (!validateEmail(email)) {
       setEmailError("Invalid email format.");
-      Alert.alert("Error", "Invalid email format.");
+      Alert.alert("Error", "Invalid email format. (e.g., user@example.com)");
       return;
     }
 
