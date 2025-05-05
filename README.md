@@ -21,6 +21,7 @@ You'll need this IP address to connect your frontend and backend applications.
 
 1. Configure environment variables:
 
+   Please note that the chatbot will not work if there is no OPENAI API Key so please use one of yours if possible.
    Configure the `.env` file in the project root with the following variables:
 
    ```
@@ -28,7 +29,7 @@ You'll need this IP address to connect your frontend and backend applications.
    API_URL="http://192.168.68.111:8000"
    HOST_DOMAIN="192.168.68.111"
    # Replace 192.168.x.x with your actual IP address
-   # replace openapi key with your own key since secret keys cannot be pushed into public repositories
+   # replace OPENAI API key with your own key since secret keys cannot be pushed into public repositories
    ```
 
 2. Install dependencies:
