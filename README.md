@@ -26,9 +26,9 @@ You'll need this IP address to connect your frontend and backend applications.
 
    ```
    OPENAI_API_KEY="<your-key>"
-   API_URL="http://192.168.68.111:8000"
-   HOST_DOMAIN="192.168.68.111"
-   # Replace 192.168.x.x with your actual IP address
+   API_URL="http://192.168.xx.xxx:8000"
+   HOST_DOMAIN="192.168.xx.xxx"
+   # Replace 192.168.xx.xxx with your actual IP address
    # replace OPENAI API key with your own key since secret keys cannot be pushed into public repositories
    ```
 
@@ -51,6 +51,8 @@ You'll need this IP address to connect your frontend and backend applications.
    # This makes your Django server available at your IP address
    ```
 
+You can open the server at your IP address in this format (http://192.168.xx.xxx:8000/)
+
 ## Frontend Setup (React Native)
 
 1. Create and configure environment variables:
@@ -63,13 +65,18 @@ You'll need this IP address to connect your frontend and backend applications.
    # Do NOT use localhost as it won't work when testing on physical devices
    ```
 
-2. Install dependencies:
+2. Go the frontend directory
+   ```bash
+   cd frontend
+   ```
+
+3. Install dependencies:
 
    ```bash
    npm install
    ```
 
-3. Start the app:
+4. Start the app:
    ```bash
    npx expo start
    ```
@@ -80,6 +87,32 @@ In the output, you'll find options to open the app in a:
 - [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
 - [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+
+Please note that the backend must be running for the frontend to work.
+
+## Run unit tests for the backend
+
+1. Gather all static files into the staticfiles directory
+```bash
+python manage.py collectstatic
+```
+
+2. Run the test command
+```bash
+python manage.py test
+```
+
+## Run unit tests for the frontend
+
+1. Go the frontend directory
+   ```bash
+   cd frontend
+   ```
+
+2. Run the test command
+   ```bash
+   npm test
+   ```
 
 ## Note on Environment Files
 
