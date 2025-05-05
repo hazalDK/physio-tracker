@@ -8,6 +8,9 @@ djangorestframework>=3.14.0
 djangorestframework-simplejwt>=5.2.2
 django-cors-headers>=4.0.0
 
+# JWT token blacklisting
+djangorestframework-simplejwt[crypto]>=5.2.2
+
 # Database adapter (assuming PostgreSQL based on the database import)
 psycopg2-binary>=2.9.6
 
