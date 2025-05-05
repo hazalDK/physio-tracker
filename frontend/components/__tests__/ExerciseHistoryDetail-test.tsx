@@ -1,6 +1,5 @@
 import * as React from "react";
-import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
-import renderer from "react-test-renderer";
+import { render, fireEvent, waitFor } from "@testing-library/react-native";
 
 import ExerciseHistoryDetail from "../ExerciseHistoryDetail";
 
@@ -166,7 +165,6 @@ describe("ExerciseHistoryDetail Component", () => {
     expect(mockRefreshHistory).toHaveBeenCalled();
   });
 
-  // Instead of testing styles directly, test the component rendering and behavior
   it("displays exercises with pain levels correctly", () => {
     const { getByText } = render(<ExerciseHistoryDetail />);
 

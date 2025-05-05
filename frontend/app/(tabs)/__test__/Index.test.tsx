@@ -27,6 +27,7 @@ jest.mock("@react-navigation/native", () => {
 jest.mock("react-native-progress", () => ({
   Bar: () => "ProgressBar",
 }));
+// Mocks the material community icons
 jest.mock(
   "@expo/vector-icons/MaterialCommunityIcons",
   () => "MaterialCommunityIcons"

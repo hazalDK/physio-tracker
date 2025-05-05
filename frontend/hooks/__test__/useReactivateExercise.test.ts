@@ -4,8 +4,10 @@ import axios from "axios";
 import { useReactivateExercise } from "../useReactivateExercise";
 import { useAuth } from "../useAuth";
 
-// Mock dependencies
+// Mock use auth hook
 jest.mock("../useAuth");
+
+// Mock expo-expo secure-store and react-navigation
 jest.mock("expo-secure-store", () => ({
   setItemAsync: jest.fn(),
   getItemAsync: jest.fn(),
@@ -13,11 +15,15 @@ jest.mock("expo-secure-store", () => ({
 jest.mock("@react-navigation/native", () => ({
   useNavigation: jest.fn(),
 }));
+
+// Mock react native components
 jest.mock("react-native", () => ({
   Alert: {
     alert: jest.fn(),
   },
 }));
+
+// Mock axios
 jest.mock("axios");
 
 // Mock API instance
@@ -28,6 +34,25 @@ const mockCreateApiInstance = jest.fn().mockResolvedValue({
 
 // Mock refresh token function
 const mockRefreshToken = jest.fn();
+
+// Mock expo-constants
+jest.mock("expo-constants", () => ({
+  default: {
+    manifest: {
+      extra: {
+        apiUrl: "http://localhost:8000",
+        authDomain: "localhost:8000",
+      },
+    },
+    expoConfig: {
+      extra: {
+        apiUrl: "http://localhost:8000",
+        authDomain: "localhost:8000",
+      },
+    },
+    appOwnership: "expo",
+  },
+}));
 
 describe("useReactivateExercise", () => {
   beforeEach(() => {

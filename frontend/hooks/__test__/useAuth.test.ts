@@ -4,13 +4,17 @@ import * as SecureStore from "expo-secure-store";
 import { Alert } from "react-native";
 import { useAuth } from "../useAuth";
 
-// Mock dependencies
+// Mock axios
 jest.mock("axios");
+
+// Mock expo-secure-store
 jest.mock("expo-secure-store", () => ({
   setItemAsync: jest.fn(),
   getItemAsync: jest.fn(),
   deleteItemAsync: jest.fn(),
 }));
+
+// Mock react-native components
 jest.mock("react-native", () => ({
   Alert: {
     alert: jest.fn(),
@@ -40,6 +44,25 @@ jest.mock("@react-navigation/stack", () => {
   };
 });
 
+// Mock expo-constants
+jest.mock("expo-constants", () => ({
+  default: {
+    manifest: {
+      extra: {
+        apiUrl: "http://localhost:8000",
+        authDomain: "localhost:8000",
+      },
+    },
+    expoConfig: {
+      extra: {
+        apiUrl: "http://localhost:8000",
+        authDomain: "localhost:8000",
+      },
+    },
+    appOwnership: "expo",
+  },
+}));
+
 describe("useAuth", () => {
   const mockToken = "test_token";
   const mockRefreshToken = "test_refresh_token";
@@ -49,7 +72,7 @@ describe("useAuth", () => {
     jest.clearAllMocks();
 
     // Reset API URL
-    process.env.API_URL = "http://test-api.com";
+    process.env.API_URL = "http://localhost:8000";
   });
 
   describe("getToken", () => {
@@ -90,7 +113,7 @@ describe("useAuth", () => {
 
       expect(SecureStore.getItemAsync).toHaveBeenCalledWith("refresh_token");
       expect(axios.post).toHaveBeenCalledWith(
-        "http://test-api.com/api/token/refresh/",
+        "http://localhost:8000/api/token/refresh/",
         { refresh: mockRefreshToken }
       );
       expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
@@ -149,7 +172,7 @@ describe("useAuth", () => {
       const apiInstance = await result.current.createApiInstance();
 
       expect(axios.create).toHaveBeenCalledWith({
-        baseURL: "http://test-api.com",
+        baseURL: "http://localhost:8000",
         timeout: 10000,
         headers: {
           Authorization: `Bearer ${mockToken}`,

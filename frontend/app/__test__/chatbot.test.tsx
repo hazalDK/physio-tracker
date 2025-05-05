@@ -232,7 +232,7 @@ describe("Chatbot Component", () => {
     expect(queryByText("Test message")).toBeFalsy();
   });
 
-  it("reset chat history fails gracefully", async () => {
+  it("reset chat history fails", async () => {
     // Mock API error for reset but success for message
     const mockApi = {
       get: jest.fn().mockResolvedValue({ data: [] }),

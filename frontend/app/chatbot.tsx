@@ -28,7 +28,7 @@ import {
 } from "../components/ChatMessages";
 
 // The chatbot screen component which allows users to interact with a physiotherapy assistant
-// and get personalized feedback based on their exercise history and pain levels.
+// and get personalised feedback based on their exercise history and pain levels.
 // This component handles the chat interface, message sending, and API interactions.
 // It also includes a disclaimer message and a reset button to clear the chat history.
 export default function Chatbot() {

@@ -192,7 +192,7 @@ export function useProfileData() {
     // Clear any previous errors when toggling modal
     setErrors({});
 
-    // If opening the modal, initialize form fields with current profile values
+    // If opening the modal, initialise form fields with current profile values
     if (!isModalVisible && userProfile) {
       setNewUsername(userProfile.username || "");
       setNewFirstName(userProfile.first_name || "");

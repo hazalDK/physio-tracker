@@ -58,7 +58,7 @@ describe("RootLayout Component", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Initialize mock auth state
+    // Initialise mock auth state
     mockAuthState = {
       isAuthenticated: false,
       setIsAuthenticated: jest.fn((value) => {

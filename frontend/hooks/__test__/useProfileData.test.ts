@@ -5,9 +5,10 @@ import { useProfileData } from "../useProfileData";
 import { useAuth } from "../useAuth";
 import { useInjuryData } from "../useInjuryData";
 
-// Mock dependencies
+// mock useAuth and useInjuryData hooks
 jest.mock("@/hooks/useAuth");
 jest.mock("@/hooks/useInjuryData");
+// mock navigation and secure store
 jest.mock("@react-navigation/native", () => ({
   useNavigation: jest.fn(),
 }));
@@ -17,12 +18,32 @@ jest.mock("expo-secure-store", () => ({
   getItemAsync: jest.fn(),
 }));
 
+// Mock axios
 jest.mock("axios");
 
 // Mock Alert.alert
 jest.mock("react-native", () => ({
   Alert: {
     alert: jest.fn(),
+  },
+}));
+
+// Mock expo-constants
+jest.mock("expo-constants", () => ({
+  default: {
+    manifest: {
+      extra: {
+        apiUrl: "http://localhost:8000",
+        authDomain: "localhost:8000",
+      },
+    },
+    expoConfig: {
+      extra: {
+        apiUrl: "http://localhost:8000",
+        authDomain: "localhost:8000",
+      },
+    },
+    appOwnership: "expo",
   },
 }));
 
@@ -67,7 +88,7 @@ describe("useProfileData", () => {
     (axios.isAxiosError as unknown as jest.Mock) = jest.fn();
   });
 
-  it("should initialize with default values and fetch profile data", async () => {
+  it("should initialise with default values and fetch profile data", async () => {
     // Setup successful API response
     mockApi.get.mockResolvedValueOnce({
       data: mockUserProfileData,
@@ -123,7 +144,7 @@ describe("useProfileData", () => {
 
   it("should handle 401 error and try token refresh", async () => {
     // Setup axios error and isAxiosError
-    const error401 = new Error("401 Unauthorized");
+    const error401 = new Error("401 Unauthorised");
     (error401 as any).response = { status: 401 };
     (axios.isAxiosError as unknown as jest.Mock).mockReturnValueOnce(true);
 
@@ -156,7 +177,7 @@ describe("useProfileData", () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it("toggleModal should toggle modal visibility and initialize form fields", async () => {
+  it("toggleModal should toggle modal visibility and initialise form fields", async () => {
     // Setup successful API response
     mockApi.get.mockResolvedValueOnce({
       data: mockUserProfileData,
@@ -341,7 +362,7 @@ describe("useProfileData", () => {
     );
   });
 
-  it("toggleModal should initialize form with current profile values", async () => {
+  it("toggleModal should initialise form with current profile values", async () => {
     // Setup successful API response
     mockApi.get.mockResolvedValueOnce({
       data: mockUserProfileData,
@@ -357,7 +378,7 @@ describe("useProfileData", () => {
       result.current.toggleModal();
     });
 
-    // Form fields should be initialized with current profile values
+    // Form fields should be initialised with current profile values
     expect(result.current.newUsername).toBe(mockUserProfileData.username);
     expect(result.current.newFirstName).toBe(mockUserProfileData.first_name);
     expect(result.current.newLastName).toBe(mockUserProfileData.last_name);

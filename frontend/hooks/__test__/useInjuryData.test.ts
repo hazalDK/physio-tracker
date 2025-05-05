@@ -17,7 +17,7 @@ describe("useInjuryData Hook", () => {
     jest.clearAllMocks();
   });
 
-  it("should initialize with empty injury types and loading true", () => {
+  it("should initialise with empty injury types and loading true", () => {
     const { result } = renderHook(() => useInjuryData());
 
     expect(result.current.injuryTypes).toEqual([]);
@@ -47,7 +47,7 @@ describe("useInjuryData Hook", () => {
     );
   });
 
-  it("should handle API errors gracefully", async () => {
+  it("should handle API errors", async () => {
     // Mock API error
     mockedAxios.get.mockRejectedValueOnce(new Error("API Error"));
 

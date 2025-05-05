@@ -215,7 +215,7 @@ def increase_difficulty(user, exercise_name):
     """
     Increase the difficulty level of the exercise for the user.
     """
-    # Initialize new_user_exercise to None
+    # Initialise new_user_exercise to None
     new_user_exercise = None
     
     user_exercises = UserExercise.objects.filter(user=user, is_active=True)
@@ -223,7 +223,7 @@ def increase_difficulty(user, exercise_name):
         if user_exercise.exercise.name == exercise_name:
             current_exercise = user_exercise.exercise
             current_category = current_exercise.category
-            new_exercise = None  # Initialize new_exercise to None
+            new_exercise = None
 
             try:
                 # Use match case to handle different difficulty levels
@@ -509,7 +509,7 @@ class UserExerciseViewSet(viewsets.ModelViewSet):
         instance.pain_level = updated_pain_level
         instance.save()
 
-        # Initialize flags for potential actions
+        # Initialise flags for potential actions
         should_decrease = False
         should_increase = False
         should_remove = False
@@ -901,7 +901,7 @@ class ReportViewSet(viewsets.ModelViewSet):
                 processed_ids = []
 
         
-        # Initialize pain calculation
+        # Initialise pain calculation
         total_pain_level = instance.pain_level * instance.exercises_completed.count()
         num_exercises = instance.exercises_completed.count()
         
@@ -986,7 +986,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             start_date = end_date - timedelta(days=6)
             date_range = [(start_date + timedelta(days=i)) for i in range(7)]
             
-            # Initialize data structure
+            # Initialise data structure
             daily_adherence = {date: {'completed': 0, 'total': 0} for date in date_range}
             
             # Get all reports in date range
@@ -1137,7 +1137,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             start_date = end_date - timedelta(days=6)
             date_range = [(start_date + timedelta(days=i)) for i in range(7)]
             
-            # Initialize data structure
+            # Initialise data structure
             daily_pain = {date: {'total_pain': 0, 'count': 0, 'total_exercises': 0} for date in date_range}
             
             # Get all reports in date range

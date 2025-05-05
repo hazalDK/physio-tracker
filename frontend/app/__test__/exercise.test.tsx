@@ -3,7 +3,7 @@ import { render, fireEvent, act } from "@testing-library/react-native";
 import Exercise from "../exercise";
 import renderer from "react-test-renderer";
 
-// Mock dependencies
+// Mock react navigation
 jest.mock("@react-navigation/native", () => ({
   ...jest.requireActual("@react-navigation/native"),
   useRoute: () => ({
@@ -17,10 +17,13 @@ jest.mock("@react-navigation/native", () => ({
   }),
 }));
 
+// Mock react-native-youtube-iframe library
 jest.mock("react-native-youtube-iframe", () => "YoutubePlayer");
+// Mock expo/vector-icons library
 jest.mock("@expo/vector-icons", () => ({
   Ionicons: "Ionicons",
 }));
+// Mock react-native-element-dropdown library
 jest.mock("react-native-element-dropdown", () => ({
   Dropdown: "Dropdown",
 }));
@@ -208,8 +211,6 @@ describe("Exercise Component", () => {
       },
     });
 
-    // Fix: Keep using the default mockUseExerciseUpdates implementation
-    // but override only the showCompletionForm value
     mockUseExerciseUpdates.mockReturnValue({
       ...mockUseExerciseUpdates(),
       showCompletionForm: true,

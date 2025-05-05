@@ -8,9 +8,11 @@ import { useAuth } from "@/hooks/useAuth";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 
-// Mock the hooks and modules
+// Mock navigation and useAuth hook
 jest.mock("@react-navigation/native");
 jest.mock("@/hooks/useAuth");
+
+// Mock expo-secure-store and axios
 jest.mock("expo-secure-store");
 jest.mock("axios", () => {
   const actualAxios = jest.requireActual("axios");
@@ -19,6 +21,8 @@ jest.mock("axios", () => {
     isAxiosError: jest.fn((payload) => actualAxios.isAxiosError(payload)), // Mock implementation
   };
 });
+
+// Mock reminder component
 jest.mock("../../../components/ReminderComponent", () => "ReminderComponent");
 
 // Mock Alert

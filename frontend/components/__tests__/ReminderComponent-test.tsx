@@ -4,7 +4,7 @@ import * as SecureStore from "expo-secure-store";
 import renderer from "react-test-renderer";
 import ReminderComponent from "../ReminderComponent";
 
-// Mock dependencies
+// Mock expo notifications
 jest.mock("expo-notifications", () => ({
   setNotificationHandler: jest.fn(),
   getPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
@@ -24,11 +24,13 @@ jest.mock("expo-notifications", () => ({
   AndroidNotificationVisibility: { PUBLIC: 1 },
 }));
 
+// Mock expo secure store
 jest.mock("expo-secure-store", () => ({
   getItemAsync: jest.fn().mockResolvedValue(null),
   setItemAsync: jest.fn(),
 }));
 
+// Mock expo device
 jest.mock("expo-device", () => ({
   isDevice: true,
   brand: "Test",
@@ -38,12 +40,14 @@ jest.mock("expo-device", () => ({
   osVersion: "Test",
 }));
 
+// Mock react-native
 jest.mock("react-native", () => {
   const rn = jest.requireActual("react-native");
   rn.Platform = { OS: "ios", Version: "14.0" };
   return rn;
 });
 
+// Mock react-native-community/datetimepicker
 jest.mock("@react-native-community/datetimepicker", () => "DateTimePicker");
 
 // Mock the current date
@@ -56,7 +60,7 @@ jest.spyOn(global, "Date").mockImplementation((args) => {
 describe("ReminderComponent", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useRealTimers(); // Use real timers as a base
+    jest.useRealTimers();
   });
 
   afterEach(() => {
@@ -146,7 +150,7 @@ describe("ReminderComponent", () => {
   it("saves reminder settings when Save Setting is pressed", async () => {
     const { getByText, unmount } = render(<ReminderComponent />);
 
-    // Wait for component to fully initialize
+    // Wait for component to fully initialise
     await act(async () => {
       await new Promise((resolve) => setImmediate(resolve));
     });

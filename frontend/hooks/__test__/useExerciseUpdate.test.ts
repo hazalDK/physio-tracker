@@ -3,9 +3,10 @@ import { Alert } from "react-native";
 import { useExerciseUpdates } from "../useExerciseUpdates";
 import { useAuth } from "../useAuth";
 
-// Mock dependencies
+// Mock use auth hook
 jest.mock("@/hooks/useAuth");
 
+// Mock react navigation and expo secure-store
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => ({
     goBack: jest.fn(),
@@ -21,6 +22,25 @@ jest.mock("expo-secure-store", () => ({
 jest.mock("react-native", () => ({
   Alert: {
     alert: jest.fn(),
+  },
+}));
+
+// Mock expo-constants
+jest.mock("expo-constants", () => ({
+  default: {
+    manifest: {
+      extra: {
+        apiUrl: "http://localhost:8000",
+        authDomain: "localhost:8000",
+      },
+    },
+    expoConfig: {
+      extra: {
+        apiUrl: "http://localhost:8000",
+        authDomain: "localhost:8000",
+      },
+    },
+    appOwnership: "expo",
   },
 }));
 
@@ -45,7 +65,7 @@ describe("useExerciseUpdates", () => {
     });
   });
 
-  it("should initialize with default values", () => {
+  it("should initialise with default values", () => {
     const { result } = renderHook(() =>
       useExerciseUpdates(mockUserExerciseId, mockExerciseDifficulty)
     );
