@@ -36,7 +36,7 @@ SECRET_KEY = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-load_dotenv() 
+load_dotenv(override=True)
 
 # Now you can access env vars:
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
