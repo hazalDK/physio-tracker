@@ -101,7 +101,6 @@ AUTH_USER_MODEL = 'api.User'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'frontend/dist')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -169,10 +168,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'frontend/dist/')
-]
 
 INTERNAL_IPS = ['127.0.0.1']
 
