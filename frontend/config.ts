@@ -1,9 +1,9 @@
-// config.ts - Environment configuration file
 import Constants from "expo-constants";
 
 // Define the shape of our environment variables
 interface EnvVariables {
   API_URL: string;
+  ENV_TIMESTAMP?: number; // Timestamp to track when env was loaded
   // Add other environment variables as needed
 }
 
@@ -19,7 +19,11 @@ export const ENV: EnvVariables = {
   ...Constants.expoConfig?.extra,
 };
 
+// Log when configuration is loaded
+console.log(`Environment loaded at: ${ENV.ENV_TIMESTAMP || "unknown"}`);
+console.log(`Using API URL: ${ENV.API_URL}`);
+
 // Helper function to get environment values with type safety
-export function getEnv(key: keyof EnvVariables): string {
+export function getEnv<T extends keyof EnvVariables>(key: T): EnvVariables[T] {
   return ENV[key];
 }

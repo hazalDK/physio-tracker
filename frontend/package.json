@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
+    "reload-env": "node scripts/reload-env.js",
     "build": "expo export && move dist\\index.html ..\\api\\templates\\api\\spa\\ && move dist\\* ..\\api\\static\\api\\spa\\",
     "android": "expo run:android",
     "ios": "expo run:ios",
