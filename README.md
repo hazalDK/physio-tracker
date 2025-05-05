@@ -69,14 +69,28 @@ You can open the server at your IP address in this format (http://192.168.xx.xxx
    ```bash
    cd frontend
    ```
-
+   
 3. Install dependencies:
-
    ```bash
    npm install
    ```
 
-4. Start the app:
+4. Reset API_URL (For any caching issues)
+   ```bash
+   # Command Prompt:
+   set API_URL=
+   # For PowerShell:
+   $env:API_URL = $null
+   # For Mac/Linux:
+   unset API_URL
+   ```
+   
+5. Reload the env after configuring the URL
+   ``` bash
+   npm run reload-env
+   ```
+
+6. Start the app:
    ```bash
    npx expo start
    ```
