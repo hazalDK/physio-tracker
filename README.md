@@ -122,7 +122,7 @@ python manage.py test
 2. Install dependencies:
 
    ```bash
-   pip install -r requirements.txt
+   npm install
    ```
 
 3. Run the test command
