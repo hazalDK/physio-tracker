@@ -32,11 +32,7 @@ You'll need this IP address to connect your frontend and backend applications.
    # replace OPENAI API key with your own key since secret keys cannot be pushed into public repositories
    ```
 
-2. Install dependencies:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
+u
 
 3. Run migrations:
 
@@ -123,7 +119,13 @@ python manage.py test
    cd frontend
    ```
 
-2. Run the test command
+2. Install dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Run the test command
    ```bash
    npm test
    ```
