@@ -140,7 +140,7 @@ describe("ReminderComponent", () => {
   it("toggles reminder state when button is pressed", async () => {
     const { getByText, queryByText, unmount } = render(<ReminderComponent />);
 
-    // Wait for component to fully initialize
+    // Wait for component to fully initialise
     await act(async () => {
       await new Promise((resolve) => setImmediate(resolve));
     });
@@ -163,7 +163,7 @@ describe("ReminderComponent", () => {
   it("saves reminder settings when Save Setting is pressed", async () => {
     const { getByText, unmount } = render(<ReminderComponent />);
 
-    // Wait for component to fully initialize
+    // Wait for component to fully initialise
     await act(async () => {
       await new Promise((resolve) => setImmediate(resolve));
     });
