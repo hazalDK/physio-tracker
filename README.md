@@ -127,7 +127,7 @@ python manage.py test
 
 3. Run the test command
    ```bash
-   npm test
+   npm test -- -u
    ```
 
 ## Note on Environment Files
