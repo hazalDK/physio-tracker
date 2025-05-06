@@ -208,7 +208,7 @@ describe("ReminderComponent", () => {
 
     const { getByText, unmount } = render(<ReminderComponent />);
 
-    // Wait for component to initialize
+    // Wait for component to initialise
     await act(async () => {
       await new Promise((resolve) => setImmediate(resolve));
     });
