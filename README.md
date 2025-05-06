@@ -51,7 +51,12 @@ You'll need this IP address to connect your frontend and backend applications.
    # This makes your Django server available at your IP address
    ```
 
-You can open the server at your IP address in this format (http://192.168.xx.xxx:8000/)
+You can open the server at your IP address in this format (http://192.168.xx.xxx:8000/).
+
+This server has a admin account only option to set a admin account run the following command:
+```bash
+   python manage.py createsuperuser
+```
 
 ## Frontend Setup (React Native)
 
