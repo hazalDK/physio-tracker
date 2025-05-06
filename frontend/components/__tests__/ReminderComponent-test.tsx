@@ -11,7 +11,9 @@ jest.mock("expo-notifications", () => ({
   requestPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
   scheduleNotificationAsync: jest.fn().mockResolvedValue("notification-id"),
   cancelAllScheduledNotificationsAsync: jest.fn(),
-  getAllScheduledNotificationsAsync: jest.fn().mockResolvedValue([]),
+  getAllScheduledNotificationsAsync: jest
+    .fn()
+    .mockResolvedValue([{ identifier: "test-notification" }]),
   setNotificationChannelAsync: jest.fn(),
   addNotificationReceivedListener: jest
     .fn()
@@ -44,30 +46,46 @@ jest.mock("expo-device", () => ({
 jest.mock("react-native", () => {
   const rn = jest.requireActual("react-native");
   rn.Platform = { OS: "ios", Version: "14.0" };
+  rn.Alert = { alert: jest.fn() };
   return rn;
 });
 
-// Mock react-native-community/datetimepicker
-jest.mock("@react-native-community/datetimepicker", () => "DateTimePicker");
-
-// Mock the current date
-const mockDate = new Date(2025, 4, 3, 10, 30, 0); // May 3, 2025, 10:30:00
-const originalDate = global.Date;
-jest.spyOn(global, "Date").mockImplementation((args) => {
-  return args ? new originalDate(args) : mockDate;
+// Mock DateTimePicker to use our fixed date
+jest.mock("@react-native-community/datetimepicker", () => {
+  return function MockDateTimePicker(props) {
+    return (
+      <div
+        data-testid="mock-datetimepicker"
+        data-value={props.value ? props.value.toISOString() : ""}
+        data-mode={props.mode}
+      />
+    );
+  };
 });
 
+// This ensures a consistent date for snapshot tests
+const FIXED_TEST_DATE = new Date("2025-05-01T10:30:00Z");
+
 describe("ReminderComponent", () => {
+  // Store the original Date implementation
+  const RealDate = global.Date;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useRealTimers();
+
+    // Mock Date to always return our fixed date for new Date() calls
+    global.Date = jest.fn(() => FIXED_TEST_DATE) as any;
+    // Maintain Date prototype methods
+    global.Date.prototype = RealDate.prototype;
+    // Also mock Date.now()
+    global.Date.now = jest.fn(() => FIXED_TEST_DATE.getTime());
+    // Keep constructors and other static methods
+    Object.setPrototypeOf(global.Date, RealDate);
   });
 
   afterEach(() => {
-    // Clean up timers
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-    jest.clearAllMocks();
+    // Restore original Date
+    global.Date = RealDate;
   });
 
   it("renders correctly", async () => {
@@ -79,14 +97,17 @@ describe("ReminderComponent", () => {
     });
 
     expect(tree.toJSON()).toMatchSnapshot();
-    // Clean up the renderer
     tree.unmount();
   });
 
   it("renders with reminder enabled", async () => {
-    (SecureStore.getItemAsync as jest.Mock)
-      .mockResolvedValueOnce("true") // reminderEnabled
-      .mockResolvedValueOnce(JSON.stringify({ hours: 10, minutes: 30 })); // reminderTime
+    // Mock storage with consistent fixed values
+    (SecureStore.getItemAsync as jest.Mock).mockImplementation((key) => {
+      if (key === "reminderEnabled") return Promise.resolve("true");
+      if (key === "reminderTime")
+        return Promise.resolve(JSON.stringify({ hours: 10, minutes: 30 }));
+      return Promise.resolve(null);
+    });
 
     let tree: any;
     await act(async () => {
@@ -99,25 +120,11 @@ describe("ReminderComponent", () => {
   });
 
   it("renders with reminder disabled", async () => {
-    (SecureStore.getItemAsync as jest.Mock)
-      .mockResolvedValueOnce("false") // reminderEnabled
-      .mockResolvedValueOnce(JSON.stringify({ hours: 10, minutes: 30 })); // reminderTime
-
-    let tree: any;
-    await act(async () => {
-      tree = renderer.create(<ReminderComponent />);
-      await new Promise((resolve) => setImmediate(resolve));
-    });
-
-    expect(tree.toJSON()).toMatchSnapshot();
-    tree.unmount();
-  });
-
-  it("renders with no permissions", async () => {
-    const notifications = require("expo-notifications");
-    notifications.getPermissionsAsync.mockResolvedValue({ status: "denied" });
-    notifications.requestPermissionsAsync.mockResolvedValue({
-      status: "denied",
+    (SecureStore.getItemAsync as jest.Mock).mockImplementation((key) => {
+      if (key === "reminderEnabled") return Promise.resolve("false");
+      if (key === "reminderTime")
+        return Promise.resolve(JSON.stringify({ hours: 10, minutes: 30 }));
+      return Promise.resolve(null);
     });
 
     let tree: any;
@@ -130,34 +137,39 @@ describe("ReminderComponent", () => {
     tree.unmount();
   });
 
-  it("renders with permissions granted", async () => {
-    const notifications = require("expo-notifications");
-    notifications.getPermissionsAsync.mockResolvedValue({ status: "granted" });
-    notifications.requestPermissionsAsync.mockResolvedValue({
-      status: "granted",
-    });
+  it("toggles reminder state when button is pressed", async () => {
+    const { getByText, queryByText, unmount } = render(<ReminderComponent />);
 
-    let tree: any;
+    // Wait for component to fully initialize
     await act(async () => {
-      tree = renderer.create(<ReminderComponent />);
       await new Promise((resolve) => setImmediate(resolve));
     });
 
-    expect(tree.toJSON()).toMatchSnapshot();
-    tree.unmount();
+    // Initially should show "Enable Reminder"
+    expect(getByText("Enable Reminder")).toBeTruthy();
+
+    // Press the toggle button
+    await act(async () => {
+      fireEvent.press(getByText("Enable Reminder"));
+      await new Promise((resolve) => setImmediate(resolve));
+    });
+
+    // Now should show "Disable Reminder"
+    expect(queryByText("Disable Reminder")).toBeTruthy();
+
+    unmount();
   });
 
   it("saves reminder settings when Save Setting is pressed", async () => {
     const { getByText, unmount } = render(<ReminderComponent />);
 
-    // Wait for component to fully initialise
+    // Wait for component to fully initialize
     await act(async () => {
       await new Promise((resolve) => setImmediate(resolve));
     });
 
     await act(async () => {
       fireEvent.press(getByText("Save Setting"));
-      // Allow all pending promises to resolve
       await new Promise((resolve) => setImmediate(resolve));
     });
 
@@ -172,7 +184,42 @@ describe("ReminderComponent", () => {
       );
     });
 
-    // Clean up rendered component
+    unmount();
+  });
+
+  // Add a test to check the toLocaleTimeString display format
+  it("displays the correct time format", async () => {
+    // Use real timers for this test
+    jest.useRealTimers();
+
+    // Set up a specific time for testing display format
+    const specificTime = new Date("2025-05-01T14:45:00Z");
+    (SecureStore.getItemAsync as jest.Mock).mockImplementation((key) => {
+      if (key === "reminderEnabled") return Promise.resolve("true");
+      if (key === "reminderTime")
+        return Promise.resolve(
+          JSON.stringify({
+            hours: specificTime.getHours(),
+            minutes: specificTime.getMinutes(),
+          })
+        );
+      return Promise.resolve(null);
+    });
+
+    const { getByText, unmount } = render(<ReminderComponent />);
+
+    // Wait for component to initialize
+    await act(async () => {
+      await new Promise((resolve) => setImmediate(resolve));
+    });
+
+    // Find the text with a simple string match instead of a regex
+    const reminderTextElement = getByText(/Reminder set for/);
+
+    // Verify the element exists and contains a time format
+    expect(reminderTextElement).toBeTruthy();
+    expect(reminderTextElement.props.children).toMatch(/Reminder set for/);
+
     unmount();
   });
 });

@@ -30,11 +30,13 @@ interface SignupProps {
   setInjuryTypeForTest?: (
     setter: React.Dispatch<React.SetStateAction<any>>
   ) => void;
+  initialDate?: Date;
 }
 
 export default function Signup({
   testInjuryType,
   setInjuryTypeForTest,
+  initialDate = new Date(),
 }: SignupProps) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");

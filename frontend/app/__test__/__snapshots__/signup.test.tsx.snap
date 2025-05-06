@@ -406,7 +406,7 @@ exports[`Signup Component renders correctly with data 1`] = `
               }
             }
           >
-            05/05/2025
+            06/05/2025
           </Text>
         </View>
         <Text

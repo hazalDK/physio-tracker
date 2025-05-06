@@ -109,9 +109,11 @@ describe("Signup Component", () => {
   });
 
   it("renders correctly with data", async () => {
+    const fixedDate = new Date("2023-01-01");
+
     let tree: any;
     await act(async () => {
-      tree = renderer.create(<SignupWithNavigation />);
+      tree = renderer.create(<SignupWithNavigation initialDate={fixedDate} />);
     });
 
     // Allow any pending state updates and async operations to complete

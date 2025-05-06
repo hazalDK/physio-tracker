@@ -19,10 +19,6 @@ export const ENV: EnvVariables = {
   ...Constants.expoConfig?.extra,
 };
 
-// Log when configuration is loaded
-console.log(`Environment loaded at: ${ENV.ENV_TIMESTAMP || "unknown"}`);
-console.log(`Using API URL: ${ENV.API_URL}`);
-
 // Helper function to get environment values with type safety
 export function getEnv<T extends keyof EnvVariables>(key: T): EnvVariables[T] {
   return ENV[key];
